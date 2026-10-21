@@ -54,4 +54,9 @@ Set-Location D:\DeepSeekHarnessData\qqbot-hymemory
 
 ## 回滚代码
 
-停止受管服务，保存数据，切回明确的Git提交，再按该提交依赖安装和补丁版本恢复。不要用旧SDK强行打开已被新SDK迁移的数据。GitHub当前版本保留配套插件0.3.1的tgz和可重建源码；历史0.1.0包没有作为当前部署入口。
+停止受管服务，保存数据，切回明确的Git提交，再按该提交依赖安装和补丁版本恢复。不要用旧SDK强行打开已被新SDK迁移的数据。当前归档保留配套插件0.4.3的tgz、早期版本包和可重建源码；历史0.1.0包没有作为当前部署入口。
+
+
+## 0.4.3 虚构长期记忆
+
+停机后完整备份 data/companion，包含 worlds、journals、people、fiction-index.sqlite3 和独立 hy-memory 数据库。运行中不可只复制SQLite主文件而漏掉WAL。原真实记忆JSON导出不含虚构库；设定和日记JSON可直接查阅，完整恢复仍需配套索引与数据库。详见MEMORY_MANAGEMENT。

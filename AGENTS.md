@@ -9,9 +9,9 @@
 ## 本项目约定
 
 - 默认 Windows；项目 `D:\DeepSeekHarnessData\qqbot-hymemory`，Harness Home `D:\DeepSeekHarnessData\home`，只管理 `qqbot` profile。先检查环境，不假定路径存在或已登录。
-- QQ 官方 Bot + `@tencent-connect/dsh-qqbot@0.5.2` + 本地 Cordis 插件 + Hy Memory 2.0.4。固定 DSH 0.2.1-rc.2，配套插件 0.3.1；不要无说明升级。
+- QQ 官方 Bot + `@tencent-connect/dsh-qqbot@0.5.2` + 本地 Cordis 插件 + Hy Memory 2.0.4。固定 DSH 0.2.1-rc.2，配套插件 0.4.3；不要无说明升级。
 - 群/私聊身份隔离；自动召回在入站 Agent 前完成，自动写入在当前轮空闲后提交持久队列。不要只做可选的 MCP 搜索工具。
-- 陪伴功能见 `docs/COMPANION.md`：虚构日常/剧情存data/companion，真实用户记忆继续走Hy Memory。主动分享只发已配对私聊；高频20–30分钟考虑、每小时最多3条、默认23–09静默。暂停和平台拒绝必须生效，不能假报发送成功。
+- 陪伴功能见 `docs/COMPANION.md`：虚构日常/剧情存data/companion，并写入独立Hy Memory库；底层人设、世界设定、情景、事件进度分层管理，详见docs/MEMORY_MANAGEMENT.md。真实用户记忆继续走原Hy Memory库。主动分享只发已配对私聊；高频20–30分钟考虑、每小时最多3条、默认23–09静默。暂停和平台拒绝必须生效，不能假报发送成功。未回复时按实际check-in计数降频，旧生活分享不能冒充已发问候；沉默不提炼成用户性格。
 - 私聊、群聊分别有记忆命名空间；不能把私聊长期记忆自动分享到群。
 - 人格在 `personality.md`。PyYAML 编辑 DSH 配置时使用 `personality_config.PromptLoader/PromptDumper`，保证 YAML 1.2 的 `off` 为字符串。
 - `.env` 不能包含 `DSH_HOME`。先设置启动环境；DSH 主程序不需要全局安装。

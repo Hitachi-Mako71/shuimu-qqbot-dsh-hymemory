@@ -38,17 +38,26 @@
 | `docs/DEBUG_HISTORY.md` | 专项部署、配置、交接或排错说明 |
 | `docs/FROM_ZERO.md` | 专项部署、配置、交接或排错说明 |
 | `docs/HANDOFF.md` | 专项部署、配置、交接或排错说明 |
+| `docs/MEMORY_MANAGEMENT.md` | 专项部署、配置、交接或排错说明 |
 | `dsh-hymemory-plugin/bridge.js` | 身份与自动记忆钩子、显式命令入口 |
 | `dsh-hymemory-plugin/codex-relay.js` | 双向同步、配对、游标与待发队列 |
+| `dsh-hymemory-plugin/companion-attention.js` | 插件源码 |
 | `dsh-hymemory-plugin/companion-state.js` | 插件源码 |
 | `dsh-hymemory-plugin/companion.js` | 插件源码 |
 | `dsh-hymemory-plugin/cordis.patch.yml` | Cordis服务注册补丁 |
+| `dsh-hymemory-plugin/fiction-engine.js` | 插件源码 |
+| `dsh-hymemory-plugin/fiction-ledger.js` | 插件源码 |
+| `dsh-hymemory-plugin/fiction-ui.js` | 插件源码 |
 | `dsh-hymemory-plugin/index.js` | Cordis插件与prompt扩展点 |
 | `dsh-hymemory-plugin/model-proxy.js` | 原生DSH模型代理 |
 | `dsh-hymemory-plugin/package.json` | 插件版本与导出声明 |
 | `dsh-qqbot.patch.yml` | 独立qqbot profile配置模板 |
 | `export-memory.ps1` | 暂停/恢复服务，导出并限制文件权限 |
 | `export_memories.py` | 离线分页导出ACTIVE事实与画像 |
+| `fiction-canon.json` | 原机历史配置/验收元数据，不含记忆正文和凭证 |
+| `fiction-memory-verification.json` | 原机历史配置/验收元数据，不含记忆正文和凭证 |
+| `fiction_memory.py` | 项目文件 |
+| `fiction_sdk.py` | 项目文件 |
 | `hymemory_service.py` | Hy Memory SDK、本地HTTP服务、模型预热及向量接口 |
 | `import-local-config.ps1` | 读取本机配置并设置启动环境 |
 | `install-qqbot.ps1` | 固定版本依赖安装、专用profile配置与模型预热 |
@@ -58,6 +67,9 @@
 | `memory_outbox.py` | SQLite持久写入队列、幂等、重试与删除屏障 |
 | `packages/dsh-hymemory-qq-0.2.0.tgz` | 配套插件归档包；当前版本安装会从源码重新打包 |
 | `packages/dsh-hymemory-qq-0.3.1.tgz` | 配套插件归档包；当前版本安装会从源码重新打包 |
+| `packages/dsh-hymemory-qq-0.4.1.tgz` | 配套插件归档包；当前版本安装会从源码重新打包 |
+| `packages/dsh-hymemory-qq-0.4.2.tgz` | 配套插件归档包；当前版本安装会从源码重新打包 |
+| `packages/dsh-hymemory-qq-0.4.3.tgz` | 配套插件归档包；当前版本安装会从源码重新打包 |
 | `patch-qq-plugin.py` | 对固定官方插件生成明确生命周期/视觉/同步钩子 |
 | `patches/@tencent-connect__dsh-qqbot@0.5.2.patch` | 官方QQ0.5.2的合并unified diff |
 | `personality-application.json` | 原机历史配置/验收元数据，不含记忆正文和凭证 |

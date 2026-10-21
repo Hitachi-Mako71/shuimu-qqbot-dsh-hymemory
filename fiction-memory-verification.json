@@ -1,0 +1,22 @@
+{
+  "recorded_at_utc": "2026-10-21T14:35:02.815268+00:00",
+  "version": "0.4.3",
+  "actual_runtime": {
+    "qq_ready": true,
+    "fiction_records_written_and_read_back": 5,
+    "hy_search_records_returned": 5,
+    "returned_types": [
+      "episodic",
+      "event-state",
+      "world-fact"
+    ],
+    "pending_at_readback": 0,
+    "index_errors_at_readback": 0,
+    "legacy_cleanup_remaining": 0,
+    "legacy_entries_quarantined": 1
+  },
+  "application_test_suites_run": false,
+  "timed_45m_4h_24h_human_acceptance": false,
+  "fresh_windows_install": false,
+  "scope": "Original-machine runtime evidence recorded before publication; publication receipt is separate"
+}

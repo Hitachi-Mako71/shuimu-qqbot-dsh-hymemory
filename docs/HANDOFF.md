@@ -1,5 +1,9 @@
 # 项目交接：让下次Codex接着做
 
+## 当前更新：0.4.3
+
+本机现已安装0.4.3，底层人格、世界设定、情景和事件分层；虚构记忆经来源核对写入隔离的Hy库。未回复时先45分钟轻问候，再4小时、再隔日；用户回来重置等待，角色日常可私下继续。等待信息不写成用户长期性格。分层详情、命令、数据和实际范围见MEMORY_MANAGEMENT.md。保留一段旧日记待核对，不能当权威事实。本次归档已获用户明确授权；后续上传仍按当次用户要求执行。
+
 ## 用户目标和选定方案
 
 最新追加：用户要求水木持续经历虚构日常并主动分享，可接受每小时两三条。0.3.1已安装、默认20–30分钟考虑、每小时最多3条、23–09静默，并取得无msgId/eventId的真实主动推送成功回执。日记、真实互动片段、夜市/舞会/花园剧情分别保存，详见COMPANION文档；完整一小时频率和全部剧情尚未真人验收。
@@ -14,7 +18,7 @@ QQ官方Bot已创建，用户希望通过QQ和DeepSeek Harness对话，跨会话
 
 - Windows，Node24.11.1，pnpm11.25.0，Python3.12.14。
 - 项目 `D:\DeepSeekHarnessData\qqbot-hymemory`，Harness Home `D:\DeepSeekHarnessData\home`。
-- DSH0.2.1-rc.2，本地runtime启动；官方QQ0.5.2，原生Cordis配套0.3.1。
+- DSH0.2.1-rc.2，本地runtime启动；官方QQ0.5.2，原生Cordis配套0.4.3。
 - Hy Memory2.0.4，FastEmbed0.9.0，Chroma1.5.9，Kuzu0.11.3；graph关闭。
 - DSH本机账号 `deepseek-account/deepseek-flash` 负责对话、视觉和记忆提炼；本地BAAI/bge-small-zh-v1.5负责512维向量。
 - 没有假定DeepSeek API提供Embedding；没有新增百炼向量API或独立DeepSeek API Key。

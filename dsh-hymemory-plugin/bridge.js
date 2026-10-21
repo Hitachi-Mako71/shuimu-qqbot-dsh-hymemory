@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { beforeCodexRelayTurn } from './codex-relay.js';
 import { registerQQRelay as registerRelay } from './codex-relay.js';
-import { beforeCompanionTurn, afterCompanionTurn, registerCompanion } from './companion.js';
+import { beforeCompanionTurn, afterCompanionTurn, registerCompanion, recordCompanionInbound } from './companion.js';
 export function registerQQRelay(ctx, sender, appId) {
   registerRelay(ctx, sender, appId);
   registerCompanion(ctx, sender, appId);
@@ -37,13 +37,15 @@ function render(memories = []) {
 }
 
 export async function beforeQQTurn({ identity, text = '', messageId = '' }) {
+  try { await recordCompanionInbound({ identity, text, messageId }); }
+  catch { console.warn('[qq-companion] inbound state unavailable'); }
   const relay = await beforeCodexRelayTurn({ identity, text, messageId });
   if (relay?.handled) return relay;
   let companion;
   try { companion = await beforeCompanionTurn({ identity, text, messageId }); }
   catch {
     console.warn('[qq-companion] state unavailable; normal conversation remains available');
-    if (/^(?:暂停主动消息|关闭主动消息|恢复主动消息|开启主动消息|开启陪伴|主动消息状态|主动频率|安静两小时|夜间免打扰|夜间也可以聊|公主日记|水木日记|清空陪伴记录)/.test(text.trim())) return { handled: true, reply: '陪伴资料暂时不可用，本次设置未确认成功，请稍后重试。' };
+    if (/^(?:生活设定|事件进度|生活记忆状态|查生活记忆|更正生活设定|待核对日记|写一段日常|暂停主动消息|关闭主动消息|恢复主动消息|开启主动消息|开启陪伴|主动消息状态|主动频率|安静两小时|夜间免打扰|夜间也可以聊|公主日记|水木日记|清空陪伴记录)/.test(text.trim())) return { handled: true, reply: '陪伴资料暂时不可用，本次设置未确认成功，请稍后重试。' };
   }
   if (companion?.handled) return companion;
   const companionContext = companion?.context || '';

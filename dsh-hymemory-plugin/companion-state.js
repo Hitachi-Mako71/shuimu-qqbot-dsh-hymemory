@@ -13,7 +13,9 @@ export function write(name, value) {
   const target = path.join(directory(), name);
   fs.mkdirSync(path.dirname(target), { recursive: true });
   const temporary = `${target}.${randomUUID()}.tmp`;
-  fs.writeFileSync(temporary, JSON.stringify(value), { mode: 0o600 });
+  const fd = fs.openSync(temporary, 'wx', 0o600);
+  try { fs.writeFileSync(fd, JSON.stringify(value)); fs.fsyncSync(fd); }
+  finally { fs.closeSync(fd); }
   fs.renameSync(temporary, target);
 }
 const locks = new Map();

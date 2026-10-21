@@ -21,21 +21,21 @@
     },
     {
       "path": "AGENTS.md",
-      "bytes": 4104,
-      "git_blob_sha1": "28f4be4a5b57b8ac2eaf17ce80632309052ca812",
-      "sha256": "67c78b3f19f5cc56adcee36c2cf18bdb0cc94dddf5f39e7cc0d9dfdb4f750720"
+      "bytes": 4359,
+      "git_blob_sha1": "33e5adfa3dd15e40db54015a336c16ec3390194a",
+      "sha256": "c415a12ded7e4bf87f5569cb0865cb0896061c4ecdc03acd7d1fe34b410c1375"
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 1503,
-      "git_blob_sha1": "a6ea33da5ef2a60ce1f7e86309c3bb78d544bf82",
-      "sha256": "58291b8465523c1247804365f1ceffaa5fc2169e1a5353d9a89e778135bc6324"
+      "bytes": 2114,
+      "git_blob_sha1": "1cdd34ebdb48acdde1b949312f7d0c1d51b7d5b0",
+      "sha256": "ec63f3be5d8f2d2e5f4d5f5a21f58c75d1d4e04b0aec47c40dffc4b785d68df1"
     },
     {
       "path": "README.md",
-      "bytes": 17917,
-      "git_blob_sha1": "d01cb7c38ec7cb324f995fae7c899181d9bc3fe4",
-      "sha256": "2e06b2a56aa354aaf849da8152218fabe1cc97caa6b38c8eb67114ba714504fc"
+      "bytes": 18118,
+      "git_blob_sha1": "583fade3909c32b3e8aed18cff00a3a8aad2f2dd",
+      "sha256": "2f2ef9813da0aca4f09c24242c1a7c3e1c26d5d822dc82c358d8458374be7c69"
     },
     {
       "path": "THIRD_PARTY.md",
@@ -45,9 +45,9 @@
     },
     {
       "path": "acceptance-checklist.md",
-      "bytes": 7228,
-      "git_blob_sha1": "bcb395dd4f8dfb0e946b7bb909f582c6578d4a97",
-      "sha256": "debd335949ddff98b8b31d4265502c6555fcf37d35b890f1e8d96ad74b556bea"
+      "bytes": 7790,
+      "git_blob_sha1": "f4508e3e054bb1892b476ba3cb81146e60fe9c3b",
+      "sha256": "90a5cc3fa0ee9107f372df3b8fc17c1ca4ea6b12470de7b7e74c0610277144cf"
     },
     {
       "path": "acceptance-command-results.json",
@@ -130,14 +130,14 @@
     {
       "path": "dependency-locks/qqbot-profile/package.json",
       "bytes": 387,
-      "git_blob_sha1": "86e9f4224093d86b72febfa063808a2bab9795b4",
-      "sha256": "88f2caf3e2bf298fc9b303eaaea241946714bd2a177f5379bf0737e4f97b7fad"
+      "git_blob_sha1": "c8ee38ae423c471387b21d8f5492175f71e0906b",
+      "sha256": "875c8a67aee4e102058082cf533587cd4adf4c2481eb9566af6cfaae7170d717"
     },
     {
       "path": "dependency-locks/qqbot-profile/pnpm-lock.yaml",
       "bytes": 10480,
-      "git_blob_sha1": "eb3b91eb7bddfda7c0bf2c72f342ea1caffd8508",
-      "sha256": "e1d96df9faeec3107c777153a8ea79f24b076b0049cf1e6cc7dd4eb045228d81"
+      "git_blob_sha1": "73688eea8c38b13fb9eb98fbe9827226bec654c8",
+      "sha256": "ab21da4b3a51a0e4f7976823bdb9294188c2669305b9c75ee1ba7ab9d92de17d"
     },
     {
       "path": "dependency-locks/qqbot-profile/pnpm-workspace.yaml",
@@ -178,20 +178,20 @@
     {
       "path": "docs/ARCHIVE_VERIFICATION.json",
       "bytes": 602,
-      "git_blob_sha1": "469ad5a4c1988b1e828b7224977beeb570288345",
-      "sha256": "50bb3615c90525ed01d16e90966496358fd98e97bcaab2badf96404be82bdfbd"
+      "git_blob_sha1": "af981d7861a09bd55a5909c0c3fda9a9fd0f2087",
+      "sha256": "060d747ad72b78c68e954aececa7b7ef3fde64896a36b2ae83257e993bdbe58d"
     },
     {
       "path": "docs/BACKUP_AND_RECOVERY.md",
-      "bytes": 4037,
-      "git_blob_sha1": "33da836990998b92cd4e731130d52eedc920d461",
-      "sha256": "0fad6fc3532eb2e75db2d673975e0dc9db8a6c7b5936ce5e17c71a52ec5b9cca"
+      "bytes": 4415,
+      "git_blob_sha1": "40a91b4707ef88cd0f5c952b7ff6fe54fb0b291d",
+      "sha256": "158f36ee57c15bcc120316f6bbe7475a0071a3d18ea5db9483c6c87f8c56a9cc"
     },
     {
       "path": "docs/COMPANION.md",
-      "bytes": 5731,
-      "git_blob_sha1": "dae4e3e9b13965f24c2eb3e57fc4ba4059c3a8f2",
-      "sha256": "e620b32e5825715bf4a23686330deea09eb1f798db744352e217599b51f051ff"
+      "bytes": 6161,
+      "git_blob_sha1": "300d6c501dec5202ae08e541ecae53c4b17e1909",
+      "sha256": "8aee3c2147cdf601471f72a716001e3dfafcff1eb6328cc68d77339e36092512"
     },
     {
       "path": "docs/CONFIGURATION.md",
@@ -201,33 +201,39 @@
     },
     {
       "path": "docs/DEBUG_HISTORY.md",
-      "bytes": 9262,
-      "git_blob_sha1": "ae2b4807ef418c3a60546076b275f2aacfde2c26",
-      "sha256": "ca7cb43af4102960ceead7d2a00318d6c3686408df36b91f590871926a11e75f"
+      "bytes": 9940,
+      "git_blob_sha1": "744a4849f77282bfe471b9afca98346faeafd2c0",
+      "sha256": "240601fe3404f0d2fca2d426694542f6a22926f60e5a8391306e4e6da8986001"
     },
     {
       "path": "docs/FILE_INDEX.md",
-      "bytes": 7819,
-      "git_blob_sha1": "40a4408873baee6c84358d021f9eb31e824ce039",
-      "sha256": "9ea8b7e426126d533c45a20d4546f3ea86e6df917154ccb6aef563c9b28724de"
+      "bytes": 8739,
+      "git_blob_sha1": "d4a60be2918ba8d6f0de7a3cbadc32573d405eca",
+      "sha256": "c9cf9a733e058652b6afa8a843610bfafd4d5fdd6a241a7d0d985e3bc1eb3539"
     },
     {
       "path": "docs/FROM_ZERO.md",
       "bytes": 9860,
-      "git_blob_sha1": "6f7d64bf3f8bdeaf530d3b92bb9393f50090eaa8",
-      "sha256": "49c2da0dd320c4953be75bbca4de6073767a7a2c66c4c5002d23a1bd3526fc31"
+      "git_blob_sha1": "06501454d45ebbe8057b152620dd98cb1de89cd7",
+      "sha256": "001905984a3da9af56553857b9f2d653411bea3c9f2b283b6c330eef12b60d88"
     },
     {
       "path": "docs/HANDOFF.md",
-      "bytes": 5690,
-      "git_blob_sha1": "186faaf6cad914d8c7e185ef2f8535efe3559596",
-      "sha256": "cc11d34ea29327ed1bc286d8763e92df1001e41e098ba135b3f78cf81950c9da"
+      "bytes": 6218,
+      "git_blob_sha1": "a3dcabf9a99978d3278640769322b3624d5dc58e",
+      "sha256": "33c95fc9332ab44258a3280b3cc0ff833b07644aa43c00682d56cb58a8eef88e"
+    },
+    {
+      "path": "docs/MEMORY_MANAGEMENT.md",
+      "bytes": 6005,
+      "git_blob_sha1": "cf23d474b5e40c6358f242537e38670a63776b3e",
+      "sha256": "79f7d84f46561699f789d5e99bebccdad7f5f22bc9469d6c37acdad5ccaa1266"
     },
     {
       "path": "dsh-hymemory-plugin/bridge.js",
-      "bytes": 6396,
-      "git_blob_sha1": "3567502dac427301ae97507b9b6697721e76f99a",
-      "sha256": "aae8eec307dab40e87e48be120d1822550d2f7439f8a106e59be8fe73df8929e"
+      "bytes": 6673,
+      "git_blob_sha1": "4b583c9c37b1ba9e6d16a781a453c0f3ccf9ba4d",
+      "sha256": "a6cf06a4fee11fd4fba8a543c828293c481a077379d02c57bb665ca44bb730a9"
     },
     {
       "path": "dsh-hymemory-plugin/codex-relay.js",
@@ -236,22 +242,46 @@
       "sha256": "bcba269d48d3cbc41b6d1a6447ae15f4a2ded1b2b529f10d1277d07d0b3687a1"
     },
     {
+      "path": "dsh-hymemory-plugin/companion-attention.js",
+      "bytes": 4283,
+      "git_blob_sha1": "ae674127e2adea4241f4fa4e569847608fbf9f8c",
+      "sha256": "b32c9e7da60c90b1e07d37ff98da0d923d0833ec1d470d59c3e3ec10ed12e891"
+    },
+    {
       "path": "dsh-hymemory-plugin/companion-state.js",
-      "bytes": 2637,
-      "git_blob_sha1": "f97fa2335cc3fd4418459390471868483277fb8b",
-      "sha256": "da7f413446b3bfe81b3038e4710c9471ea4e5c5bdb11945f33f7e7afd74a82ae"
+      "bytes": 2721,
+      "git_blob_sha1": "088a44d15b10fee805042dcd52133121c3120c55",
+      "sha256": "a6d28d22e893794e323a53f2b9975463c025ebac4b28b177b854c2e2c58f6f21"
     },
     {
       "path": "dsh-hymemory-plugin/companion.js",
-      "bytes": 21915,
-      "git_blob_sha1": "e5920d759164c423c7243a30af244e9593b30dcd",
-      "sha256": "66c407cd5f754bc0137e918ed5d325dd0fe94447d488e0dbfcb28286467cf532"
+      "bytes": 23970,
+      "git_blob_sha1": "61571ffa2e33839700b8ccd0d7baa693f7b589f4",
+      "sha256": "fedcff3aabd3f1fa9533a4c8239a3f8d46276bc24d236ed471f22ca6266d309b"
     },
     {
       "path": "dsh-hymemory-plugin/cordis.patch.yml",
       "bytes": 77,
       "git_blob_sha1": "5df01b516b8a3594db9b3f863d7e711514438337",
       "sha256": "ce9720371e8d41267a7e272729acb20cb17fd9aaa8cfec62d36f80a091deb358"
+    },
+    {
+      "path": "dsh-hymemory-plugin/fiction-engine.js",
+      "bytes": 8858,
+      "git_blob_sha1": "25a44934f91672e00fbf1ae55e2c80161febfd41",
+      "sha256": "979d59d118c758efc47992807388d068471a7b6a52cc01615c99c7ffe27f8fa6"
+    },
+    {
+      "path": "dsh-hymemory-plugin/fiction-ledger.js",
+      "bytes": 12285,
+      "git_blob_sha1": "dd9a252dd7905612095af3389a281abc675876f7",
+      "sha256": "ecc5cf949fe3676c2876f7a62cd772fda1d41f58271340c8b7b056f17b0a8f43"
+    },
+    {
+      "path": "dsh-hymemory-plugin/fiction-ui.js",
+      "bytes": 5270,
+      "git_blob_sha1": "7a932ebe8933bc05e65198bfbabb83377a374774",
+      "sha256": "541c593571ed516f99162b1e1425946c85665c43282f775e9dee9b3b827b7041"
     },
     {
       "path": "dsh-hymemory-plugin/index.js",
@@ -267,9 +297,9 @@
     },
     {
       "path": "dsh-hymemory-plugin/package.json",
-      "bytes": 336,
-      "git_blob_sha1": "fa8234119458b7cdf1e430a6e27d7f7011a5a4bc",
-      "sha256": "a8a22702d77533cb6a727d0597df7afd373d75e6bb49cf0703051a39f32671ec"
+      "bytes": 372,
+      "git_blob_sha1": "eac267b2abdfcd167af8470bf351b872a03cf83e",
+      "sha256": "d91120f53a17d70bfa383fcec101a4adf44a213ebef352f835cafa89e179955a"
     },
     {
       "path": "dsh-qqbot.patch.yml",
@@ -290,10 +320,34 @@
       "sha256": "d432e4b485416d00ea3397d0bfb1fce28653998ee88abf32546c39ba13569b11"
     },
     {
+      "path": "fiction-canon.json",
+      "bytes": 880,
+      "git_blob_sha1": "65b9499b0c769fa62421622834e756d023998c4c",
+      "sha256": "d95d6c67b05779dbd8bef903ae54d13db428072f8bca20c0934133b59947830d"
+    },
+    {
+      "path": "fiction-memory-verification.json",
+      "bytes": 670,
+      "git_blob_sha1": "7e43b405f26b9c0e88ebc8f72cc3b1844a42d9eb",
+      "sha256": "60d274e8a4f6c18d11023f39afb2a94ad8f930ff4d4cdc50c9d04dce4cd29d8c"
+    },
+    {
+      "path": "fiction_memory.py",
+      "bytes": 10208,
+      "git_blob_sha1": "54dc84053405227a5c1fe0a2a8dca789f29a70c8",
+      "sha256": "85c15298a59bf6cd154e67407c66d078e7b929e0f85ce597cad116e8713ce7e5"
+    },
+    {
+      "path": "fiction_sdk.py",
+      "bytes": 3520,
+      "git_blob_sha1": "dae0f12008aee975224861416936b6c35c51dfd3",
+      "sha256": "e4df346acbf7d6e93651163d947b84f479de3e712cd132121dc818f85bff4835"
+    },
+    {
       "path": "hymemory_service.py",
-      "bytes": 11573,
-      "git_blob_sha1": "a760c663191a949423e3b20a318fd5270744d2d4",
-      "sha256": "eb2492cc455ebdab7ff06fa3b1dacd69d6eb159cf8028b1570f03b385ed5ad11"
+      "bytes": 13680,
+      "git_blob_sha1": "621c81db4f6d003431353f0209ab4d616deb3940",
+      "sha256": "9124721941c440f380f888262c932b4495257b0f7846c4aa5f06798f13de6f80"
     },
     {
       "path": "import-local-config.ps1",
@@ -342,6 +396,24 @@
       "bytes": 17255,
       "git_blob_sha1": "4234ce56c0d42404f81a824f6792e502a08a55d8",
       "sha256": "c8af58435c0e573e12aa65cb8e42fa400881256e82400f515fecadd456534f23"
+    },
+    {
+      "path": "packages/dsh-hymemory-qq-0.4.1.tgz",
+      "bytes": 28187,
+      "git_blob_sha1": "88773f6ac69e7c01e2c0d1c354588541d3b6ccf3",
+      "sha256": "4e34bb2a89e6314cf9f1573dc008f3cf8c4cf217629b8dc647edff33d9a93b5a"
+    },
+    {
+      "path": "packages/dsh-hymemory-qq-0.4.2.tgz",
+      "bytes": 28308,
+      "git_blob_sha1": "afc44748cef46b153a33f9380f71698f4c895e60",
+      "sha256": "5158857a030bd5d1b81a7f063583464a535bcfd3fcc2772f7f8a01a4d7d676b8"
+    },
+    {
+      "path": "packages/dsh-hymemory-qq-0.4.3.tgz",
+      "bytes": 28331,
+      "git_blob_sha1": "db84eefd7feaf7b4d3ab206ec214b5ae577b35b8",
+      "sha256": "ddd70950f979c186069cdd0b25941d82131ac683846774edcc7f142cca63df16"
     },
     {
       "path": "patch-qq-plugin.py",
@@ -472,8 +544,8 @@
     {
       "path": "tools/materialize-dependency-locks.py",
       "bytes": 3985,
-      "git_blob_sha1": "c4188f038fe583344a9417bd980ef13bef517685",
-      "sha256": "b081ca2cdba33bc582daeb361f814988c445cdaa4fc0e95bdb19af578046e782"
+      "git_blob_sha1": "e8ff00af8871a5a5182fd72fab54b89dcc915670",
+      "sha256": "c368f54a57fdb2e6071f087932285ad9438d8bdeb84b2161fea8895a01ae49df"
     },
     {
       "path": "verification-results.json",
@@ -490,8 +562,8 @@
     {
       "path": "versions.json",
       "bytes": 418,
-      "git_blob_sha1": "eccc46d566d7f187fef8709ead9c262598647e31",
-      "sha256": "3083feec9022c011ea6cc28441d5ccfc6ae6ad671f31c863a23f8b940321fa0a"
+      "git_blob_sha1": "ee9c92bab7d5fe3fa5b724a03c1b8a25de08def6",
+      "sha256": "44efe317fa8a70734fe86ae63ed1dddacd668f95e1334d0fd6287ce69c8a1af7"
     }
   ]
 }

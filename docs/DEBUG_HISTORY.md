@@ -51,3 +51,8 @@
 - First background DSH boot failed because DSH intentionally refuses DSH_HOME in a discovered .env. Confirmed in app-boot readEnvLayer/BOOTSTRAP_PREFIXES. DSH_HOME must remain in the launching environment; remove it from the .env template and deployed config, retaining the launcher fallback.
 - One independent model probe returned 503 during the verification sequence; the same probe passed after the final installation/restart, without changing provider configuration. Real SDK acceptance passed again. Retain graceful failure behavior for transient provider errors.
 - After restart, logs showed the first recall exceeding the companion's 5-second deadline. Inspection established SDK/model initialization occurred on the first request. Added a failing startup warmup regression, then SDK/local-model warmup plus a maximum 30-second wait before starting QQ. Python regression went from the expected missing-warmup failure to 8 passing tests. Actual cold-start readiness validation follows.
+
+
+## 2026-10-21 虚构记忆索引
+
+首次同库调用add_extracted仍自动reconcile，出现成功但无返回ID的情况，队列坚持未回读不算完成。按systematic-debugging查SDK writer/client后第一次修复：独立SDK子进程、数据库，仅对已核对虚构条目关闭reconcile和搜索去重；真实用户SDK保留默认冲突处理。迁移重新排队并只清理旧的派生fiction agent空间。实际5条全部写入回读、5条召回，错误及待处理0。通用低相似度查询有时无命中，查询原情景可返回记录，界面明确本地降级。没有第二次盲修。Windows python别名不能执行时改用项目既有venv。

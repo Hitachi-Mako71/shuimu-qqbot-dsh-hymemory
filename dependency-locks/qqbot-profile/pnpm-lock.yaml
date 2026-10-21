@@ -15,8 +15,8 @@ importers:
         specifier: 0.5.2
         version: 0.5.2(patch_hash=8d3919d06d9048f0e20949166945b20c749963728c72a99e239f050fa33bd743)
       dsh-hymemory-qq:
-        specifier: file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz
-        version: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz
+        specifier: file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-hymemory-qq-0.4.3.tgz
+        version: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.4.3.tgz
 
 packages:
 
@@ -82,9 +82,9 @@ packages:
   dijkstrajs@1.0.3:
     resolution: {integrity: sha512-qiSlmBq9+BCdCA/L46dw8Uy93mloxsPSbwnm5yrKn2vMPiy8KyAskTF6zuV/j5BMsmOGZDPs7KjU+mjb670kfA==}
 
-  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz:
-    resolution: {integrity: sha512-n8i9aReXMBSKqR6xI7s/EvZMXBLKyNqGVP/hEC/97i4uCpNYZLwuSeAiTvRmpf1DlrVw0KAv5vK9fCpRuy3sdw==, tarball: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz}
-    version: 0.3.1
+  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.4.3.tgz:
+    resolution: {integrity: sha512-IRc7/EtNlXc3B1/KmluV9BkFWkaTBs019mcpwB/sikEjQs2HLZeX7IB/o2WAnaMdcrBfXQtzT1hF9djr5A0CgA==, tarball: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.4.3.tgz}
+    version: 0.4.3
     peerDependencies:
       '@deepseek-ai/cordis': '>=4.0.1'
       '@deepseek-ai/dsh-llm': 0.2.1-rc.2
@@ -240,7 +240,7 @@ snapshots:
 
   dijkstrajs@1.0.3: {}
 
-  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz: {}
+  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.4.3.tgz: {}
 
   emoji-regex@8.0.0: {}
 

@@ -1,0 +1,6 @@
+packages:
+- .
+nodeLinker: hoisted
+autoInstallPeers: false
+patchedDependencies:
+  '@tencent-connect/dsh-qqbot@0.5.2': patches/@tencent-connect__dsh-qqbot@0.5.2.patch

@@ -1,0 +1,20 @@
+{
+  "verified_at_utc": "2026-10-21T12:49:33.612931+00:00",
+  "companion_plugin": "0.2.0",
+  "qq_ready": true,
+  "paired_private_identity": true,
+  "enabled": true,
+  "queue_receipt_confirmed": true,
+  "actual_qq_acceptance_message_received_in_this_codex_chat": true,
+  "assistant_answer": "同步成功",
+  "qq_transport_success_count": 4,
+  "pending_forward_count_at_snapshot": 0,
+  "qq_push_error": null,
+  "extra_test_suites_run": false,
+  "remaining_live_checks": [
+    "second QQ identity and group relay rejection",
+    "platform proactive push quota exhaustion",
+    "Codex offline backlog",
+    "long reply chunk delivery"
+  ]
+}

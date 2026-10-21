@@ -1,0 +1,16 @@
+[
+  {
+    "icon": "D:\\DeepSeekHarnessData\\qqbot-hymemory\\launcher-icons\\start.ico,0",
+    "arguments": "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"D:\\DeepSeekHarnessData\\qqbot-hymemory\\desktop-control.ps1\" -Action Start",
+    "path": "C:\\Users\\NAGATO-YUKI\\Desktop\\启动水木机器人.lnk",
+    "name": "启动水木机器人",
+    "target": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+  },
+  {
+    "icon": "D:\\DeepSeekHarnessData\\qqbot-hymemory\\launcher-icons\\stop.ico,0",
+    "arguments": "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"D:\\DeepSeekHarnessData\\qqbot-hymemory\\desktop-control.ps1\" -Action Stop",
+    "path": "C:\\Users\\NAGATO-YUKI\\Desktop\\关闭水木机器人.lnk",
+    "name": "关闭水木机器人",
+    "target": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+  }
+]

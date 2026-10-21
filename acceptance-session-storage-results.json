@@ -1,0 +1,14 @@
+{
+  "real_dsh_jsonl_backend": true,
+  "read_only": true,
+  "sessions": [
+    {
+      "session_id": "4a736387-9011-b43c-ee03-34c4f91cb9e3",
+      "validated_event_count": 187
+    },
+    {
+      "session_id": "4ab5e01e-3b84-49d7-deae-e3479ce11178",
+      "validated_event_count": 108
+    }
+  ]
+}

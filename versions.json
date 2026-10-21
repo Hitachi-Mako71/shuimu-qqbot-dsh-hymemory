@@ -1,0 +1,15 @@
+{
+  "os": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.14",
+  "node": "v24.11.1",
+  "dsh": "0.2.1-rc.2",
+  "qq_plugin": "0.5.2",
+  "cordis_plugin": "0.2.0",
+  "hy-memory": "2.0.4",
+  "fastembed": "0.9.0",
+  "chromadb": "1.5.9",
+  "kuzu": "0.11.3",
+  "embedding_model": "BAAI/bge-small-zh-v1.5",
+  "embedding_dimensions": 512,
+  "qq_patch_sha256": "2a11377558ac1fa3e05e752a33c88bd2a1bba8837b011cade6f103ece7d6c55f"
+}

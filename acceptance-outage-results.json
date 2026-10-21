@@ -1,0 +1,6 @@
+{
+  "real_connection_refused": true,
+  "ordinary_turn_continues": true,
+  "explicit_command_reports_failure": true,
+  "scope": "Actual companion hook with real failed loopback connection; no live QQ outage message sent"
+}

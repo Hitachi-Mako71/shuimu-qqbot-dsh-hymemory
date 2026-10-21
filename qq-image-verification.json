@@ -1,0 +1,12 @@
+{
+  "qq_bot_ready": true,
+  "vision_provider": "deepseek-account",
+  "qq_image_user_confirmed": true,
+  "vision_reasoning_off_installed": true,
+  "vision_model": "deepseek-flash",
+  "memory_ready": true,
+  "official_model_inputs": [
+    "text",
+    "image"
+  ]
+}

@@ -1,0 +1,43 @@
+[
+  {
+    "check": "real extraction/write/semantic recall",
+    "passed": true,
+    "sources": [
+      {
+        "id": "1d889e1e-5306-4365-8126-10ed615dc649",
+        "score": 0.5888
+      }
+    ]
+  },
+  {
+    "check": "other private user isolation",
+    "passed": true
+  },
+  {
+    "check": "group isolation",
+    "passed": true
+  },
+  {
+    "check": "new preference supersedes old preference",
+    "passed": true,
+    "active_ids": [
+      "6143fc1d-8773-4044-82e3-6ab802d2420f"
+    ]
+  },
+  {
+    "check": "cross-identity deletion rejected",
+    "passed": true
+  },
+  {
+    "check": "deleted memory no longer recalled",
+    "passed": true,
+    "deleted_id": "6143fc1d-8773-4044-82e3-6ab802d2420f"
+  },
+  {
+    "check": "automatic durable outbox writes through real SDK",
+    "passed": true,
+    "source_ids": [
+      "d1d8865b-c598-4e9e-8104-3f266f8a5f8c"
+    ]
+  }
+]

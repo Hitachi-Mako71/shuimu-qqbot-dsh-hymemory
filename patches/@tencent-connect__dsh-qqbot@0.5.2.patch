@@ -1,0 +1,67 @@
+diff --git a/dist/transport/inbound.js b/dist/transport/inbound.js
+--- a/dist/transport/inbound.js
++++ b/dist/transport/inbound.js
+@@ -1,3 +1,4 @@
++import { beforeQQTurn, afterQQTurn, IDENTITY, MEMORY_CONTEXT } from 'dsh-hymemory-qq/bridge';
+ import { createUserMessage } from '@deepseek-ai/dsh-llm';
+ import { classifyContentType, isVoiceContentType, } from "./attachment.js";
+ import { clearGroupHistory } from "../features/history-store.js";
+@@ -20,7 +21,13 @@
+     const agentBody = assembleAgentBody(msg, mwState, scope, logger);
+     if (!agentBody)
+         return;
+-    logger.info(`Processing: scope=${scope} peerId=${peerId} body="${agentBody.slice(0, 200)}"`);
++    const identity = { appId: config.appId, scope, peerId };
++    const memory = await beforeQQTurn({ identity, text: msg.content || '', messageId: msg.messageId });
++    if (memory.handled) {
++        await bot.sendMarkdown(replyTarget, memory.reply);
++        return;
++    }
++    logger.info(`Processing: scope=${scope} (message content omitted)`);
+     // ── 获取或创建会话 ──
+     let record;
+     try {
+@@ -38,6 +45,8 @@
+         return;
+     }
+     // ── 构建 UserMessage → followup ──
++    record.agent[IDENTITY] = identity;
++    record.agent[MEMORY_CONTEXT] = memory.context || '';
+     const content = [{ type: 'text', text: agentBody }];
+     const message = createUserMessage({
+         content,
+@@ -56,6 +65,7 @@
+     catch (err) {
+         logger.warn(`whenIdle rejected: ${err instanceof Error ? err.message : String(err)}`);
+     }
++    await afterQQTurn({ identity, text: msg.content || '', messageId: msg.messageId, sessionId: record.sessionId });
+ }
+ // ══════════════════════════════════════════════════════════════
+ // Body Assembly（5 层组装）
+diff --git a/dist/media/vision-tool.js b/dist/media/vision-tool.js
+--- a/dist/media/vision-tool.js
++++ b/dist/media/vision-tool.js
+@@ -88,6 +88,7 @@
+     const options = {
+         provider: vision.provider,
+         model: vision.model,
++        reasoningEffort: 'off',
+         messages: [message],
+         maxTokens: vision.maxTokens,
+         signal,
+diff --git a/dist/gateway/bootstrap.js b/dist/gateway/bootstrap.js
+--- a/dist/gateway/bootstrap.js
++++ b/dist/gateway/bootstrap.js
+@@ -1,3 +1,4 @@
++import { registerQQRelay } from 'dsh-hymemory-qq/bridge';
+ import { QQBot } from '@tencent-connect/qqbot-nodejs';
+ import { SessionManager } from "../session/index.js";
+ import { handleInbound, createOutboundHandler } from "../transport/index.js";
+@@ -78,6 +79,7 @@
+             },
+         }),
+     };
++    registerQQRelay(ctx, sender, config.appId);
+     const outboundHandler = createOutboundHandler(manager, sender, config, logger, toolsRegistry);
+     ctx
+         .on('session/event', outboundHandler);

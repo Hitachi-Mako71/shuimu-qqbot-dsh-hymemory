@@ -1,0 +1,39 @@
+{
+  "verified_at_utc": "2026-10-20T15:57:14.946969+00:00",
+  "installer_rerun_exit_code": 0,
+  "node_regression_passed": 6,
+  "python_regression_passed": 8,
+  "python_source_compile": true,
+  "node_syntax": true,
+  "powershell_parse": true,
+  "qq_bot_ready": true,
+  "memory_health": {
+    "ok": true,
+    "sdk_ready": true,
+    "embedding_ready": true,
+    "queue": {
+      "done": 14
+    }
+  },
+  "model_proxy_health": {
+    "ok": true,
+    "provider": "deepseek-account",
+    "model": "deepseek-flash"
+  },
+  "credential_scan": {
+    "deliverables_and_current_logs_scanned": true,
+    "secret_found": false
+  },
+  "live_qq_user_confirmation": [
+    "private message and response",
+    "ordinary preference auto-write",
+    "/new recall",
+    "restart recall",
+    "group excludes private memory"
+  ],
+  "remaining_live_checks": [
+    "second real QQ account",
+    "short-term-only random passphrase across restart",
+    "normal QQ message during memory outage"
+  ]
+}

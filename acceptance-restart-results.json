@@ -1,0 +1,8 @@
+{
+  "real_memory_survived_service_restart": true,
+  "persisted_session_files": 2,
+  "memory_ids": [
+    "d1d8865b-c598-4e9e-8104-3f266f8a5f8c"
+  ],
+  "first_semantic_recall_seconds_after_warmup": 3.319
+}

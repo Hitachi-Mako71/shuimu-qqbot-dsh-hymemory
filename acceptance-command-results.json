@@ -1,0 +1,8 @@
+{
+  "real_remember_command": true,
+  "real_semantic_query_command": true,
+  "real_forget_command": true,
+  "deleted_id_absent": true,
+  "memory_id": "e7510511-401a-4b73-90d8-676c8d40d63f",
+  "scope": "Actual command handler and live Hy Memory SDK; synthetic identity"
+}

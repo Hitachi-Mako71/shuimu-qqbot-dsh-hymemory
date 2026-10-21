@@ -1,0 +1,17 @@
+{
+  "reviewed_at_utc": "2026-10-21T13:12:16.684164+00:00",
+  "scope": "exact Git staged contents and companion tgz members",
+  "staged_file_count": 77,
+  "archive_member_count": 6,
+  "actual_local_credential_match": false,
+  "private_runtime_files_staged": false,
+  "includes_runtime_and_profile_dependency_locks": true,
+  "application_test_suites_run_during_archive": false,
+  "fresh_windows_deployment_run_during_archive": false,
+  "excluded": [
+    "real credentials and account grants",
+    "private memory and exports",
+    "chat/session logs",
+    "runtime dependencies and model weights"
+  ]
+}

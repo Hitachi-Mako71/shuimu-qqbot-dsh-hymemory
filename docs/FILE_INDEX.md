@@ -17,7 +17,9 @@
 | `AGENTS.md` | 下一次Codex的执行和调试规则 |
 | `CHANGELOG.md` | 功能变更时间线 |
 | `codex-relay-verification.json` | 原机历史配置/验收元数据，不含记忆正文和凭证 |
+| `companion-verification.json` | 原机历史配置/验收元数据，不含记忆正文和凭证 |
 | `configure-codex-relay.ps1` | 指定Codex聊天并生成限时配对码 |
+| `configure-companion.ps1` | 项目文件 |
 | `configure-profile.py` | QQ profile模板生成、补丁与人格应用 |
 | `configure-qq-local.ps1` | 本机遮蔽凭证输入、腾讯验证与受限保存 |
 | `create-desktop-shortcuts.ps1` | 生成当前用户桌面的启动/关闭快捷方式 |
@@ -31,12 +33,15 @@
 | `docs/ARCHITECTURE.md` | 专项部署、配置、交接或排错说明 |
 | `docs/ARCHIVE_VERIFICATION.json` | 专项部署、配置、交接或排错说明 |
 | `docs/BACKUP_AND_RECOVERY.md` | 专项部署、配置、交接或排错说明 |
+| `docs/COMPANION.md` | 专项部署、配置、交接或排错说明 |
 | `docs/CONFIGURATION.md` | 专项部署、配置、交接或排错说明 |
 | `docs/DEBUG_HISTORY.md` | 专项部署、配置、交接或排错说明 |
 | `docs/FROM_ZERO.md` | 专项部署、配置、交接或排错说明 |
 | `docs/HANDOFF.md` | 专项部署、配置、交接或排错说明 |
 | `dsh-hymemory-plugin/bridge.js` | 身份与自动记忆钩子、显式命令入口 |
 | `dsh-hymemory-plugin/codex-relay.js` | 双向同步、配对、游标与待发队列 |
+| `dsh-hymemory-plugin/companion-state.js` | 插件源码 |
+| `dsh-hymemory-plugin/companion.js` | 插件源码 |
 | `dsh-hymemory-plugin/cordis.patch.yml` | Cordis服务注册补丁 |
 | `dsh-hymemory-plugin/index.js` | Cordis插件与prompt扩展点 |
 | `dsh-hymemory-plugin/model-proxy.js` | 原生DSH模型代理 |
@@ -51,7 +56,8 @@
 | `launcher-icons/stop.ico` | 已生成的桌面图标 |
 | `memory-export-verification.json` | 原机历史配置/验收元数据，不含记忆正文和凭证 |
 | `memory_outbox.py` | SQLite持久写入队列、幂等、重试与删除屏障 |
-| `packages/dsh-hymemory-qq-0.2.0.tgz` | 已安装配套插件0.2.0的归档包 |
+| `packages/dsh-hymemory-qq-0.2.0.tgz` | 配套插件归档包；当前版本安装会从源码重新打包 |
+| `packages/dsh-hymemory-qq-0.3.1.tgz` | 配套插件归档包；当前版本安装会从源码重新打包 |
 | `patch-qq-plugin.py` | 对固定官方插件生成明确生命周期/视觉/同步钩子 |
 | `patches/@tencent-connect__dsh-qqbot@0.5.2.patch` | 官方QQ0.5.2的合并unified diff |
 | `personality-application.json` | 原机历史配置/验收元数据，不含记忆正文和凭证 |

@@ -61,7 +61,13 @@ DSH JSONL 保存现有会话历史，Hy Memory 保存跨会话事实。记忆命
 
 `model-proxy.js` 只监听 `127.0.0.1:8766`，提供 `GET /health` 和带 bearer 的 `POST /v1/chat/completions`，将 SDK 的 OpenAI 风格请求转换为原生 DSH LLM 消息。它供本项目记忆提炼使用，不是所有 OpenAI API 的通用代理。
 
-## QQ 图片
+## 公主生活与主动分享
+
+`companion.js`在QQ原生sender注册后台调度，与QQ进程生命周期一致。`companion-state.js`使用相同身份哈希管理私有JSON，串行维护同一身份的日记、互动片段和故事。普通对话将生活连续性资料加到已有required prompt上下文；互动剧情直接生成回复并持久保存，不进入Hy Memory提炼队列。
+
+每20–30分钟推进一个虚构生活片段，模型判断是否值得分享；读取当前私聊相关记忆作为资料，生成时无工具权限。主动发送直接调用SDK且不传msgId/eventId，不使用被动回复缓存。设置、静默、限额和近期对话先检查，发送前再检查暂停。QQ拒绝后保留日记并退避，普通对话可继续。独立配对支持未安装Codex的用户。详细状态和边界见COMPANION文档。
+
+## 图片链路
 
 QQ 下载媒体并向 Agent 提供本机路径；官方 `qqbot_describe_image` 调用 `deepseek-flash`。固定补丁令视觉辅助请求 `reasoningEffort: off`，避免 1200 token 的预算被默认高强度思考占满。图像工具限制 10MB，官方下载器限制 20MB/保留24小时。图片文件和视觉事实没有自动写进 Hy Memory。
 

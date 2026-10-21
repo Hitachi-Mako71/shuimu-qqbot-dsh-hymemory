@@ -2,6 +2,8 @@
 
 ## 用户目标和选定方案
 
+最新追加：用户要求水木持续经历虚构日常并主动分享，可接受每小时两三条。0.3.1已安装、默认20–30分钟考虑、每小时最多3条、23–09静默，并取得无msgId/eventId的真实主动推送成功回执。日记、真实互动片段、夜市/舞会/花园剧情分别保存，详见COMPANION文档；完整一小时频率和全部剧情尚未真人验收。
+
 QQ官方Bot已创建，用户希望通过QQ和DeepSeek Harness对话，跨会话保留偏好、事实和经验。本项目使用腾讯官方QQ插件和腾讯Hy Memory SDK，独立qqbot profile，不修改desktop/web。
 
 **最初核心目标已完成并有原机实际验收：** QQ私聊收发、群触发、长期记忆自动召回/写入、记住/查询/忘记控制、`/new`与重启后的召回，以及群里没有私聊记忆。
@@ -12,7 +14,7 @@ QQ官方Bot已创建，用户希望通过QQ和DeepSeek Harness对话，跨会话
 
 - Windows，Node24.11.1，pnpm11.25.0，Python3.12.14。
 - 项目 `D:\DeepSeekHarnessData\qqbot-hymemory`，Harness Home `D:\DeepSeekHarnessData\home`。
-- DSH0.2.1-rc.2，本地runtime启动；官方QQ0.5.2，原生Cordis配套0.2.0。
+- DSH0.2.1-rc.2，本地runtime启动；官方QQ0.5.2，原生Cordis配套0.3.1。
 - Hy Memory2.0.4，FastEmbed0.9.0，Chroma1.5.9，Kuzu0.11.3；graph关闭。
 - DSH本机账号 `deepseek-account/deepseek-flash` 负责对话、视觉和记忆提炼；本地BAAI/bge-small-zh-v1.5负责512维向量。
 - 没有假定DeepSeek API提供Embedding；没有新增百炼向量API或独立DeepSeek API Key。

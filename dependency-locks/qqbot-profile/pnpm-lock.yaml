@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@tencent-connect/dsh-qqbot@0.5.2': 2a11377558ac1fa3e05e752a33c88bd2a1bba8837b011cade6f103ece7d6c55f
+  '@tencent-connect/dsh-qqbot@0.5.2': 8d3919d06d9048f0e20949166945b20c749963728c72a99e239f050fa33bd743
 
 importers:
 
@@ -13,10 +13,10 @@ importers:
     dependencies:
       '@tencent-connect/dsh-qqbot':
         specifier: 0.5.2
-        version: 0.5.2(patch_hash=2a11377558ac1fa3e05e752a33c88bd2a1bba8837b011cade6f103ece7d6c55f)
+        version: 0.5.2(patch_hash=8d3919d06d9048f0e20949166945b20c749963728c72a99e239f050fa33bd743)
       dsh-hymemory-qq:
-        specifier: file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-hymemory-qq-0.2.0.tgz
-        version: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.2.0.tgz
+        specifier: file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz
+        version: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz
 
 packages:
 
@@ -82,9 +82,9 @@ packages:
   dijkstrajs@1.0.3:
     resolution: {integrity: sha512-qiSlmBq9+BCdCA/L46dw8Uy93mloxsPSbwnm5yrKn2vMPiy8KyAskTF6zuV/j5BMsmOGZDPs7KjU+mjb670kfA==}
 
-  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.2.0.tgz:
-    resolution: {integrity: sha512-4eLGs9B9A0JvF8OOfv7/GwbNKG8KNlzYaYT20qh3qUKPSfIraXVppJyfACGOOFIB8xLOITV7YKsKR8L+4nCo7Q==, tarball: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.2.0.tgz}
-    version: 0.2.0
+  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz:
+    resolution: {integrity: sha512-n8i9aReXMBSKqR6xI7s/EvZMXBLKyNqGVP/hEC/97i4uCpNYZLwuSeAiTvRmpf1DlrVw0KAv5vK9fCpRuy3sdw==, tarball: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz}
+    version: 0.3.1
     peerDependencies:
       '@deepseek-ai/cordis': '>=4.0.1'
       '@deepseek-ai/dsh-llm': 0.2.1-rc.2
@@ -191,7 +191,7 @@ packages:
 
 snapshots:
 
-  '@tencent-connect/dsh-qqbot@0.5.2(patch_hash=2a11377558ac1fa3e05e752a33c88bd2a1bba8837b011cade6f103ece7d6c55f)':
+  '@tencent-connect/dsh-qqbot@0.5.2(patch_hash=8d3919d06d9048f0e20949166945b20c749963728c72a99e239f050fa33bd743)':
     dependencies:
       '@tencent-connect/qqbot-connector': 1.2.0
       '@tencent-connect/qqbot-nodejs': 1.0.5
@@ -240,7 +240,7 @@ snapshots:
 
   dijkstrajs@1.0.3: {}
 
-  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.2.0.tgz: {}
+  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz: {}
 
   emoji-regex@8.0.0: {}
 

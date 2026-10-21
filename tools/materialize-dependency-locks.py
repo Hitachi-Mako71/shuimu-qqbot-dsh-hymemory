@@ -54,9 +54,9 @@ if args.part in ('profile', 'all'):
     expected_deps = expected.get('dependencies', {})
     if set(deps) != set(expected_deps) or deps.get('@tencent-connect/dsh-qqbot') != '0.5.2':
         raise SystemExit('QQ profile plugin set differs; refusing to replace custom dependencies')
-    package = project / 'packages/dsh-hymemory-qq-0.2.0.tgz'
+    package = project / 'packages/dsh-hymemory-qq-0.3.1.tgz'
     if not package.exists():
-        raise SystemExit('Expected the packaged companion plugin 0.2.0')
+        raise SystemExit('Expected the packaged companion plugin 0.3.1')
     file_reference = 'file:' + package.as_posix()
     current_reference = deps.get('dsh-hymemory-qq', '')
     if current_reference != file_reference:
@@ -69,6 +69,6 @@ if args.part in ('profile', 'all'):
     archived_reference = expected_deps['dsh-hymemory-qq']
     text = text.replace(archived_reference, file_reference)
     relative_reference = 'file:' + os.path.relpath(package, profile).replace('\\', '/')
-    text = text.replace('file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.2.0.tgz', relative_reference)
+    text = text.replace('file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.3.1.tgz', relative_reference)
     write(profile / 'pnpm-lock.yaml', text.encode('utf-8'))
     print('Next: pnpm install --frozen-lockfile in ' + str(profile))

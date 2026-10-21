@@ -1,5 +1,13 @@
 # Debug attempts, 2026-10-20
 
+## Companion package installation, 2026-10-21
+
+- First 0.3.0 install reached Bot ready and actual no-msgId proactive sending succeeded, with an ID-bearing QQ receipt. New fiction diary was persisted.
+- Final source hardening was repacked under the same 0.3.0 filename/version. Re-add reported Already up to date. Exact source/installed SHA256 inspection showed bridge.js and companion.js remained old, while unchanged files matched.
+- Followed systematic-debugging before correction: archive-member bytes match new source, installed bytes do not; mismatch is at package extraction/cache, not the source, archive or QQ runtime.
+- Fix attempt 1: publish the corrected local package under a distinct 0.3.1 version/tgz path, preserving all user data and subscription state. Will compare actual installed bytes after installation and observe live startup. No new application test suite is added or run.
+- Validation passed: 0.3.1 caused pnpm to install a new package; actual installed bridge.js, companion.js, companion-state.js and package.json now match reviewed source bytes. Bot ready and model proxy ready were observed after restart. Existing diary, successful proactive receipt and subscription settings remained intact.
+
 ## QQ / current Codex chat relay, 2026-10-21
 
 - Followed OpenAI Docs and the systematic boundary investigation: installed CLI exposes queue; existing desktop control socket is not available. This was a capability check, not a change to desktop processes or database files.

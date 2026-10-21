@@ -14,6 +14,7 @@
 | `data/sessions` | 持久 DSH 会话 |
 | `data/memory-audit.jsonl` | 检索来源、分数和删除审计，不记记忆正文 |
 | `data/codex-relay` | 私聊配对、聊天绑定、游标、待发送正文 |
+| `data/companion` | 虚构日常、按日期日记、共同片段、剧情与主动分享设置 |
 | `exports` | 用户手动导出的私有 JSON |
 | `.run/services.json` | 受管启动器 PID 与脚本路径 |
 | `logs` | 当前进程日志，启动时会重建输出 |
@@ -60,6 +61,7 @@ DSH 模型登录由其官方账号功能写入 Harness Home；不在这里重建
 | `HTTP_PROXY`、`HTTPS_PROXY`、`NO_PROXY` | QQ 网络代理；localhost必须绕过代理 |
 | `NODE_USE_ENV_PROXY` | Node24启动时按代理设置启用 |
 | `QQBOT_CODEX_RELAY_DIR` | QQ启动器设置为本项目 `data/codex-relay` |
+| `QQBOT_COMPANION_DIR` | QQ启动器设置为本项目 `data/companion`，ACL及配对由configure-companion建立 |
 
 端口8765当前也出现在 Python 服务、启动预热、导出/诊断脚本；8766也出现在模型代理默认值和模板。变更端口应检查源码所有引用，再改客户端/健康检查，不能只修改上表一个键。
 
@@ -67,7 +69,7 @@ DSH 模型登录由其官方账号功能写入 Harness Home；不在这里重建
 
 `versions.json` 记录原机实际版本和 QQ 补丁 SHA256；`requirements-lock.txt` 保存完整 pip freeze。`dependency-locks/runtime` 保存 npm锁；`dependency-locks/qqbot-profile` 保存 pnpm锁与原机依赖清单。原机默认路径出现在锁快照内，转换工具会替换到当前安装位置。
 
-`packages/dsh-hymemory-qq-0.2.0.tgz` 是与源码一同归档的已安装包，可比较/回滚；正常安装会从仓库源码重新 npm pack。根目录和插件没有新增 npm运行依赖。
+`packages/dsh-hymemory-qq-0.3.1.tgz` 是与源码一同归档的已安装包，可比较/回滚；正常安装会从仓库源码重新 npm pack。根目录和插件没有新增 npm运行依赖。
 
 ## Profile 与人设
 

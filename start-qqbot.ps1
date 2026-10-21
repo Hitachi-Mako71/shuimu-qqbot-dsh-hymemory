@@ -3,6 +3,7 @@ $ProjectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 . (Join-Path $ProjectDir 'import-local-config.ps1')
 Import-QqLocalConfig $ProjectDir
 $env:QQBOT_CODEX_RELAY_DIR=Join-Path $ProjectDir 'data\codex-relay'
+$env:QQBOT_COMPANION_DIR=Join-Path $ProjectDir 'data\companion'
 # Node 24 does not use Windows' system proxy automatically. Apply it to this
 # process tree so both fetch and the QQ HTTPS/WebSocket transport can connect.
 $ProbeUri=[Uri]'https://api.bot.qq.com'

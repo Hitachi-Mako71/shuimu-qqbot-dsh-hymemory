@@ -1,6 +1,6 @@
 # 从零部署到 Windows
 
-本指南针对本仓库快照：DSH 0.2.1-rc.2、QQ 插件 0.5.2、配套插件 0.2.0、Hy Memory 2.0.4。历史原机验收通过；这次归档没有在另一台全新 Windows 上重复完整安装。
+本指南针对本仓库快照：DSH 0.2.1-rc.2、QQ 插件 0.5.2、配套插件 0.3.1、Hy Memory 2.0.4。历史原机验收通过；这次归档没有在另一台全新 Windows 上重复完整安装。
 
 ## 1. 准备软件与本机账号
 
@@ -114,6 +114,8 @@ Invoke-RestMethod http://127.0.0.1:8765/health
 详细历史证据、SDK/合约测试的范围与运行方法在根目录 `acceptance-checklist.md`。真实模型调用有用量，请在明确需要验收时运行。
 
 ## 9. 人格、导出和可选 Codex 同步
+
+新增陪伴功能：普通QQ对话打通后运行 `.\configure-companion.ps1 -Frequency High`，有已验证私聊时复用目标，否则将打印的“开启陪伴 配对码”发给水木。Codex可不安装。公主日记、共同片段、夜市/舞会/花园剧情和开关见 [陪伴说明](COMPANION.md)。高频会产生持续模型用量，夜间默认静默。
 
 - 人格：编辑 `personality.md`，运行 `.\.venv\Scripts\python.exe .\personality_config.py`，再重启。
 - JSON 导出：运行 `.\export-memory.ps1`，在 `exports` 查看；该命令暂停并恢复原先运行的服务。

@@ -19,6 +19,12 @@ if 'registerQQRelay' not in bootstrap_source:
         1,
     )
     bootstrap_path.write_text(bootstrap_source, encoding='utf-8', newline='\n')
+if 'sendProactiveMarkdown:' not in bootstrap_source:
+    proactive_anchor = '    const sender = {\n'
+    if bootstrap_source.count(proactive_anchor) != 1:
+        raise SystemExit('Official sender source differs from the reviewed version; no patch written')
+    bootstrap_source = bootstrap_source.replace(proactive_anchor, proactive_anchor + "        sendProactiveMarkdown: (target, content) => bot.sendMarkdown({ scope: target.scope, targetId: target.targetId }, content),\n", 1)
+    bootstrap_path.write_text(bootstrap_source, encoding='utf-8', newline='\n')
 vision_path = root / 'dist/media/vision-tool.js'
 vision_source = vision_path.read_text(encoding='utf-8')
 vision_anchor = '        model: vision.model,\n        messages: [message],'

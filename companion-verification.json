@@ -1,0 +1,38 @@
+{
+  "verified_at_utc": "2026-10-21T13:44:36.937643+00:00",
+  "installed_plugin": "0.3.1",
+  "first_proactive_receipt_plugin": "0.3.0",
+  "qq_bot_ready": true,
+  "first_real_proactive_result": {
+    "generated": true,
+    "sent": true,
+    "mode": "proactive-without-msg-id",
+    "receiptPresent": true,
+    "probe": true,
+    "completedAt": "2026-10-21T13:32:35.473Z"
+  },
+  "owner_bound": true,
+  "enabled": true,
+  "interval_minutes": [
+    20,
+    30
+  ],
+  "hourly_success_cap": 3,
+  "quiet_hours_local": "23:00-09:00 Asia/Shanghai",
+  "successful_proactive_pushes": 1,
+  "fiction_journal_files": 1,
+  "final_installed_source_matches": {
+    "bridge.js": true,
+    "companion.js": true,
+    "companion-state.js": true,
+    "package.json": true
+  },
+  "extra_test_suites_run": false,
+  "remaining_live_checks": [
+    "full hour cadence",
+    "all interactive story commands",
+    "standalone owner pairing on new installation",
+    "another actual QQ identity/group command isolation",
+    "platform quota rejection and long offline interval"
+  ]
+}

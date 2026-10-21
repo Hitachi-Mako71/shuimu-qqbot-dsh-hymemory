@@ -9,8 +9,9 @@
 ## 本项目约定
 
 - 默认 Windows；项目 `D:\DeepSeekHarnessData\qqbot-hymemory`，Harness Home `D:\DeepSeekHarnessData\home`，只管理 `qqbot` profile。先检查环境，不假定路径存在或已登录。
-- QQ 官方 Bot + `@tencent-connect/dsh-qqbot@0.5.2` + 本地 Cordis 插件 + Hy Memory 2.0.4。固定 DSH 0.2.1-rc.2，配套插件 0.2.0；不要无说明升级。
+- QQ 官方 Bot + `@tencent-connect/dsh-qqbot@0.5.2` + 本地 Cordis 插件 + Hy Memory 2.0.4。固定 DSH 0.2.1-rc.2，配套插件 0.3.1；不要无说明升级。
 - 群/私聊身份隔离；自动召回在入站 Agent 前完成，自动写入在当前轮空闲后提交持久队列。不要只做可选的 MCP 搜索工具。
+- 陪伴功能见 `docs/COMPANION.md`：虚构日常/剧情存data/companion，真实用户记忆继续走Hy Memory。主动分享只发已配对私聊；高频20–30分钟考虑、每小时最多3条、默认23–09静默。暂停和平台拒绝必须生效，不能假报发送成功。
 - 私聊、群聊分别有记忆命名空间；不能把私聊长期记忆自动分享到群。
 - 人格在 `personality.md`。PyYAML 编辑 DSH 配置时使用 `personality_config.PromptLoader/PromptDumper`，保证 YAML 1.2 的 `off` 为字符串。
 - `.env` 不能包含 `DSH_HOME`。先设置启动环境；DSH 主程序不需要全局安装。
@@ -22,6 +23,7 @@
 - Windows 删除/移动递归目录前核实绝对路径属于目标目录；启动后台程序时隐藏窗口。不要停止或修改无关进程。
 - 上传前检查暂存区并扫描真实凭证值、压缩包内部及私有数据路径。使用 `.gitignore`，不能依赖私有仓库替代凭证保护。
 - `dependency-locks` 是原机快照，不是可直接启动的 profile。可用 `tools/materialize-dependency-locks.py` 生成对应安装路径的锁文件。
+- 修改本地插件源码后，重新打包安装时必须递增插件版本和tgz文件名，并更新锁与文档。pnpm曾对同版本同路径新包显示Already up to date却沿用旧文件；完成前比较实际node_modules文件与源码哈希，不能只看CLI退出0。
 
 ## 调试兜底规则（用户要求）
 

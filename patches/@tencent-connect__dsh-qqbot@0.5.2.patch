@@ -57,7 +57,15 @@ diff --git a/dist/gateway/bootstrap.js b/dist/gateway/bootstrap.js
  import { QQBot } from '@tencent-connect/qqbot-nodejs';
  import { SessionManager } from "../session/index.js";
  import { handleInbound, createOutboundHandler } from "../transport/index.js";
-@@ -78,6 +79,7 @@
+@@ -69,6 +70,7 @@
+     // sendMarkdown 统一做被动回复限额管控：同一 msgId 超限/过期时降级主动推送。
+     const replyLimiter = new ReplyLimiter({ limit: 4 });
+     const sender = {
++        sendProactiveMarkdown: (target, content) => bot.sendMarkdown({ scope: target.scope, targetId: target.targetId }, content),
+         sendMarkdown: (target, content, opts) => sendResolvedMarkdown(bot, resolveReplyTarget(target, replyLimiter, true), content, opts),
+         openStream: (target) => bot.openStream({
+             target: {
+@@ -78,6 +80,7 @@
              },
          }),
      };

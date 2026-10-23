@@ -1,0 +1,46 @@
+{
+  "observed_at_utc": "2026-10-22T06:07:45.994139+00:00",
+  "controller_version": "2.0.0",
+  "cordis_plugin_version_unchanged": "0.5.4",
+  "deployed_source_matches": {
+    "robot-control.ps1": true,
+    "control-worker.ps1": true,
+    "control_settings.py": true
+  },
+  "isolated_configuration_checks": 10,
+  "isolated_check_details": [
+    "snapshot",
+    "companion save preserves pairing and unknown fields",
+    "stale save rejected",
+    "invalid settings do not mutate data",
+    "group save preserves runtime data and alias",
+    "unbound group cannot be enabled",
+    "persona applies to exact QQ profile and preserves YAML off",
+    "streaming save",
+    "shared log read and credential redaction",
+    "config backup excludes credentials"
+  ],
+  "windows_powershell_5": {
+    "syntax_valid": true,
+    "status_worker": "QQ ready; memory ready",
+    "snapshot_worker": "success; runtime persona and one group loaded",
+    "shared_log_worker": "success"
+  },
+  "real_window_seen": {
+    "sidebar_and_dashboard": true,
+    "runtime_persona_loaded": true,
+    "initial_load_message_cleared": true,
+    "services_ready_badge": true
+  },
+  "ps5_empty_request_reproduction_and_fix": true,
+  "agent_mutated_production_settings_during_validation": false,
+  "actual_service_stop_or_restart_exercised_this_upgrade": false,
+  "private_memory_export_exercised_this_upgrade": false,
+  "new_full_windows_deployment_exercised": false,
+  "github_push_performed": false,
+  "limits": [
+    "QQ ready state is derived from matching managed process and startup ready marker, not a live websocket probe",
+    "Concurrent group registry writes are checked and retried; no shared cross-process transaction lock",
+    "Save behavior was checked with isolated copies; actual service stop/restart and private memory export were not triggered during this UI upgrade"
+  ]
+}

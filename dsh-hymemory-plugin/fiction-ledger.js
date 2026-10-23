@@ -14,7 +14,18 @@ export function canon() {
 }
 export function loadWorld(key, skipLegacy = false) {
   const current = read(worldPath(key), null);
-  if (current) return current;
+  if (current) {
+    let changed = false;
+    for (const event of Object.values(current.events || {})) {
+      if (event.quarantined || event.evidenceVersion === 1 || !/^E[a-f0-9]{24}$/.test(event.eventId || '') || !event.detail) continue;
+      // Hy record IDs are immutable. Preserve the old summary, index a new revision.
+      event.recordId = `${event.eventId}.detail.v1`; event.evidenceVersion = 1;
+      indexRecord(current, event.recordId, episodeEvidence(event), { type: 'episodic', source: event.source, channel: event.channel || 'life' });
+      changed = true;
+    }
+    if (changed) saveWorld(key, current);
+    return current;
+  }
   const pending = [];
   const folder = path.join(directory(), 'journals', key);
   if (!skipLegacy && fs.existsSync(folder)) {
@@ -54,7 +65,9 @@ export function worldContext(world) {
   const facts = Object.values(world.facts).map((f) => ({ id: f.id, key: f.key, label: f.label, value: f.value, source: f.source, revision: f.revision }));
   const open = Object.values(world.threads).filter((t) => ['planned', 'active'].includes(t.status));
   const closed = Object.values(world.threads).filter((t) => ['completed', 'canceled'].includes(t.status)).slice(-24);
-  return { protectedPersona: canon(), confirmedWorldFacts: facts, unfinishedEvents: open.slice(-32), closedEvents: closed,
+  const recentEpisodes = Object.values(world.events).filter(e => !e.quarantined).slice(-4)
+    .map(e => ({ eventId: e.eventId, date: e.date, time: e.time, fiction: true, detail: e.detail?.slice(0, 1800), message: e.message, followups: e.followups || [] }));
+  return { protectedPersona: canon(), confirmedWorldFacts: facts, unfinishedEvents: open.slice(-32), closedEvents: closed, recentEpisodes,
     legacyEntriesAwaitingReview: world.migration.length, worldRevision: world.revision };
 }
 const normalized = (text) => text.normalize('NFKC').toLowerCase().replace(/\s+/g, '');
@@ -113,12 +126,15 @@ export function commitEpisode(key, world, episode, draft, verification, { legacy
       indexRecord(world, thread.recordId, `【虚构事件进度】${thread.title}，状态${thread.status}，${thread.progress}。来源事件：${id}。`, { type: 'event-state', source, revision: thread.revision });
     }
   }
-  const event = { ...episode, eventId: id, recordId: id, summary: sanitize(draft.summary || episode.detail, 450), source,
+  const event = { ...episode, eventId: id, recordId: id, evidenceVersion: 1, summary: sanitize(draft.summary || episode.detail, 450), source,
     quarantined: quarantine, legacy, checkedAt: stamp(), verification };
   world.events[id] = event;
-  if (!quarantine) indexRecord(world, id, `【水木虚构情景记忆】${episode.date} ${episode.time}，${event.summary}。来源事件：${id}。`, { type: 'episodic', source, channel: episode.channel || 'life' });
+  if (!quarantine) indexRecord(world, id, episodeEvidence(event), { type: 'episodic', source, channel: episode.channel || 'life' });
   saveWorld(key, world); // Commit the canonical record before publishing or indexing it.
   return event;
+}
+function episodeEvidence(event) {
+  return `【柚柚虚构情景记忆】${event.date} ${event.time}\n摘要：${event.summary}\n原始日常：${String(event.detail || '').slice(0, 5000)}\n已表达的话：${String(event.message || '').slice(0, 900)}\n可追问细节：${JSON.stringify(event.followups || []).slice(0, 700)}\n来源事件：${event.eventId}。`;
 }
 export function rejectEpisode(key, world, reason) {
   world.audit.push({ at: stamp(), type: 'candidate-rejected', reason: sanitize(reason, 300) });

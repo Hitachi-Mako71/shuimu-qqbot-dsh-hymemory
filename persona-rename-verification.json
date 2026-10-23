@@ -1,0 +1,19 @@
+{
+  "verified_at_utc": "2026-10-21T15:23:41.042354+00:00",
+  "version": "0.5.3",
+  "primary_name": "柚柚",
+  "previous_name": "水木",
+  "nicknames": [
+    "柚柚",
+    "水木",
+    "公主",
+    "大肥鱼"
+  ],
+  "direct_and_group_persona_config_verified": true,
+  "installed_source_files_match": 14,
+  "qq_ready": true,
+  "identity_namespace_unchanged": true,
+  "historical_events_rewritten": false,
+  "application_test_suites_run": false,
+  "github_pushed": false
+}

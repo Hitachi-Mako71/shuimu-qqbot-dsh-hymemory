@@ -1,2 +1,3 @@
 hy-memory==2.0.4
 fastembed==0.9.0
+pypdf==6.1.3

@@ -1,6 +1,8 @@
 # 从零部署到 Windows
 
-本指南针对本仓库快照：DSH 0.2.1-rc.2、QQ 插件 0.5.2、配套插件 0.4.3、Hy Memory 2.0.4。历史原机验收通过；这次归档没有在另一台全新 Windows 上重复完整安装。
+当前快照：控制台2.6.0、模型插件0.4.3、记忆插件0.7.1。默认先部署DeepSeek路由，再按需接入[原生Codex](NATIVE_CODEX.md)或[Chat工作通道](CHATGPT_CHAT_WORK.md)。阅读功能见[阅读书房](READING.md)。
+
+本指南固定DSH 0.2.1-rc.2、QQ插件0.5.2、配套插件0.7.1、模型插件0.4.3、Hy Memory 2.0.4、控制台2.6.0与pypdf 6.1.3。原机完成了真实账号探测、工具往返和服务启动；没有在另一台全新Windows上重复完整安装。可选生图和固定形象恢复见CODEX_IMAGES.md，三张私有参考图从本机配置备份另行恢复。
 
 ## 1. 准备软件与本机账号
 
@@ -17,7 +19,7 @@ py -3.12 --version
 ```
 
 - 一个 QQ 官方 Bot，准备 AppID、AppSecret，确认私聊/群聊发布范围或沙箱测试成员。登录 QQ 官方平台通过“扫码聊天”等入口添加机器人。
-- 一个可以在 DSH 中使用 `deepseek-account/deepseek-flash` 的账号。新电脑需要重新登录；GitHub 不保存登录令牌。本实现不假定 DeepSeek 提供 Embedding API。
+- 首先准备DSH的DeepSeek账号登录，以跑通默认对话与Hy Memory提炼链路。原生Codex为可选路由，需要已登录的本机Codex；Chat网页工作通道需浏览器、扩展与专用工作对话。各项登录与配对均在本机完成，令牌不保存在GitHub。本实现不假定DeepSeek提供Embedding API。
 - 能连接 npm、PyPI、首次模型下载源、腾讯 Bot API 和 DeepSeek 模型服务的网络。代理问题见后面的排错。
 
 ## 2. 获取代码、固定目录
@@ -31,7 +33,7 @@ Set-Location D:\DeepSeekHarnessData\qqbot-hymemory
 $env:DSH_HOME='D:\DeepSeekHarnessData\home'
 ```
 
-私有仓库克隆需要当前 GitHub 账号的正常 Git 登录。不要把 PAT 写进 clone URL。
+本仓库为公开源码仓库；推送修改需要相应GitHub权限。不要把PAT写进clone URL。
 
 默认 D 盘目录适合照抄部署。换盘或换 Harness Home 时阅读 `docs/CONFIGURATION.md`，不要只改一个环境变量便假定所有后台入口都会沿用它。
 
@@ -50,7 +52,7 @@ py -3.12 -m venv .venv
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install-qqbot.ps1 -DshHome $env:DSH_HOME
 ```
 
-安装脚本从自己的 `.venv` 运行，因而不依赖 PATH 上碰巧是哪一版 Python。它安装 Python SDK、固定 DSH、本地 Cordis 包和官方 QQ 插件，应用补丁，生成独立 `qqbot` profile 与本机随机接口 token，并预热 512 维本地向量模型。不会替你登录 DSH 账号或填写 QQ Secret。
+安装脚本从自己的 `.venv` 运行，因而不依赖 PATH 上碰巧是哪一版 Python。它安装 Python SDK、固定 DSH、官方QQ插件、配套Cordis包与ChatGPT账号提供方，应用补丁，生成独立 `qqbot` profile 与本机随机接口token，并预热512维本地向量模型。不会替你登录ChatGPT或填写QQ Secret。
 
 只修改专用 `qqbot` profile；原机的 `desktop/web` 不作为部署目标。重跑会保留数据与本机凭证，但会重新应用本仓库的 QQ profile 模板，手工改过 profile 时先备份。
 
@@ -64,9 +66,19 @@ try { pnpm.cmd install --frozen-lockfile } finally { Pop-Location }
 
 `dependency-locks` 保留原机的完整锁快照和完整性哈希；它不是另一个运行目录。恢复工具只支持快照对应的插件组合，发现额外插件会拒绝覆盖。不要把“安装已完成”当作 QQ 或模型已验收。
 
-## 5. 登录 DSH 模型账号
+## 5. 选择聊天模型
 
-**方式 A：已有 DSH 桌面版。** 打开桌面版账号设置完成登录，确认它使用的 Harness Home 与 `$env:DSH_HOME` 一致。先验证桌面版可使用 `deepseek-flash`。后台 QQ 进程必须使用同一个 Home，才能读取该本机登录。
+先完成同一Harness Home中的DeepSeek登录，在控制台“对话模型”页选择DeepSeek / deepseek-flash，验证后保存并按提示启动。私聊、群聊和Hy Memory提炼代理共用该路由。可选原生Codex使用官方App Server，复用持久线程，并能在Codex软件查看QQ聊天，详见[NATIVE_CODEX.md](NATIVE_CODEX.md)。Chat网页工作通道仅处理最新任务和附件，不携带QQ记忆，使用同一个专用工作对话，详见[CHATGPT_CHAT_WORK.md](CHATGPT_CHAT_WORK.md)；它不是默认部署步骤。旧账号API验收文档仅作历史参考。
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\robot-control.ps1
+```
+
+桌面控制台快捷方式可在安装完成后运行 `create-control-shortcut.ps1` 创建。完整授权细节和切回DeepSeek的步骤见 [ChatGPT账号提供方](CHATGPT_PLAN.md)。
+
+## 6. 可选：登录 DSH DeepSeek 备用模型账号
+
+**方式 A：已有 DSH 桌面版。** 打开桌面版账号设置完成登录，确认它使用的 Harness Home 与 `$env:DSH_HOME` 一致。要保留DeepSeek回退时，验证桌面版可使用 `deepseek-flash`。后台QQ进程必须使用同一个Home，才能读取该本机登录。只使用ChatGPT时可略过此步。
 
 **方式 B：没有桌面版，使用仓库安装的 DSH Web。** 从项目目录打开独立的登录用 Web profile，避免覆盖已有 web 配置：
 
@@ -79,7 +91,7 @@ node .\runtime\node_modules\@deepseek-ai\dsh\lib\bin.js --profile qqbot-login --
 
 如果未来版本的账号界面、账号服务或模型名称发生变化，以固定版本实际 UI 和官方说明为准。当前代码不是独立 API Key 方案；改用 API Key 需要同时调整 QQ 默认模型、视觉模型和记忆模型代理，不是只替换 `.env` 的一个值。
 
-## 6. 本机填写并验证 QQ 凭证
+## 7. 本机填写并验证 QQ 凭证
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\configure-qq-local.ps1
@@ -89,18 +101,18 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\configure-qq-local.ps1
 
 不要把截图中 OpenClaw/Hermes 的接入命令混用到本项目。
 
-## 7. 启动并创建桌面按钮
+## 8. 启动并创建桌面按钮
 
 ```powershell
 .\start-all.ps1
-.\create-desktop-shortcuts.ps1
+.\create-control-shortcut.ps1
 Get-Content .\logs\qqbot.out.log -Tail 20
 Invoke-RestMethod http://127.0.0.1:8765/health
 ```
 
-期望日志出现 `Bot ready!`，记忆健康报告 `sdk_ready`、`embedding_ready`。`start-all` 的输出只表示进程已创建，模型能否调用还需真实对话确认。桌面绿色按钮启动、红色按钮关闭，均后台运行。关闭命令为 `.\stop-all.ps1`。
+期望日志出现 `Bot ready!`，记忆健康报告 `sdk_ready`、`embedding_ready`。`start-all` 的输出只表示进程已创建，模型能否调用还需真实对话确认。桌面“柚柚机器人控制台”集中查看状态、启停和管理常用配置；关闭命令为 `.\stop-all.ps1`。
 
-## 8. QQ 验收
+## 9. QQ 验收
 
 1. 私聊发“验收QQ连接：请只回复连接成功”，确认消息往返。
 2. 发“我偏好简洁回答”，等回复后用“记忆状态”查看队列，再发“查记忆 回答风格”。
@@ -113,7 +125,7 @@ Invoke-RestMethod http://127.0.0.1:8765/health
 
 详细历史证据、SDK/合约测试的范围与运行方法在根目录 `acceptance-checklist.md`。真实模型调用有用量，请在明确需要验收时运行。
 
-## 9. 人格、导出和可选 Codex 同步
+## 10. 人格、导出和可选 Codex 同步
 
 新增陪伴功能：普通QQ对话打通后运行 `.\configure-companion.ps1 -Frequency High`，有已验证私聊时复用目标，否则将打印的“开启陪伴 配对码”发给水木。Codex可不安装。公主日记、共同片段、夜市/舞会/花园剧情和开关见 [陪伴说明](COMPANION.md)。高频会产生持续模型用量，夜间默认静默。
 
@@ -129,7 +141,7 @@ Invoke-RestMethod http://127.0.0.1:8765/health
 
 不要沿用原机聊天 UUID 或拷贝原机 Codex 登录数据。需要 Codex 和机器人都在运行；消息入队不等于已处理，QQ 平台也可能限制主动推送。命令表见 README。
 
-## 10. 网络与安装失败
+## 11. 网络与安装失败
 
 - npm/PyPI DNS 失败：分别确认 DNS、代理、registry 可访问；先解决网络再重跑，改一个同样不可达的镜像没有帮助。
 - Node 启动超时而 PowerShell 能访问：本项目 QQ 启动脚本会读取 Windows 系统代理、启用 Node 24 环境代理，并让 localhost 绕过代理。确认原机代理端口在新机器不被照抄为不存在的服务。
@@ -139,3 +151,8 @@ Invoke-RestMethod http://127.0.0.1:8765/health
 - `.env` 含 `DSH_HOME`：移除该行，改用启动环境设置。该规则由 DSH 自身检查。
 
 仓库能重建程序。恢复旧会话/旧记忆需要你自己的私有数据备份，见 [备份与恢复](BACKUP_AND_RECOVERY.md)。
+
+
+## 可选群友模式
+
+完成基础收发后阅读GROUP_PARTICIPATION.md。在QQ群机器人设置里打开全量群消息选项，再由主人私聊“开启群友模式”取得一次性绑定码，到目标群@水木绑定。仅修改本地requireMention不能代替QQ平台下发权限。

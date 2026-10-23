@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "柚柚 · Chat 工作桥接",
+  "version": "0.2.1",
+  "description": "仅在用户指定的 ChatGPT 工作标签页传递当前任务与附件，不读取其他标签页内容。",
+  "permissions": ["storage", "tabs", "downloads"],
+  "host_permissions": ["https://chatgpt.com/*", "http://127.0.0.1:8767/*"],
+  "background": {"service_worker": "background.js"},
+  "action": {"default_title": "柚柚 Chat 桥接", "default_popup": "popup.html"},
+  "content_scripts": [{"matches": ["https://chatgpt.com/*"], "js": ["dom.js", "content.js"], "run_at": "document_idle"}]
+}

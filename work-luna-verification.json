@@ -1,0 +1,41 @@
+{
+  "verifiedAt": "2026-10-22T13:17:05.284Z",
+  "route": {
+    "provider": "chatgpt-plan",
+    "model": "gpt-6-luna",
+    "reasoning": "low"
+  },
+  "officialWorkAuthorization": true,
+  "desktopChatWindowControlled": false,
+  "qqHumanConfirmed": true,
+  "browserBridgeStopped": true,
+  "workspace": "data/memory-workspace",
+  "persistedWorkspaceSessions": 1,
+  "persistedWorkspaceTurns": 4,
+  "preservedHistoricalSessions": 3,
+  "personaCharactersPreserved": 2953,
+  "boundGroupsPreserved": 2,
+  "realLocalToolRoundTrip": true,
+  "realHyMemory": {
+    "write": true,
+    "semanticRecall": true,
+    "otherIdentityIsolated": true,
+    "deleteAndRecallVerified": true,
+    "syntheticIdentityOnly": true,
+    "testFactsDeleted": true
+  },
+  "memorySdkReady": true,
+  "embeddingReady": true,
+  "outboxSnapshot": {
+    "done": 70
+  },
+  "pythonRegressionCases": 12,
+  "nodeRegressionCases": 8,
+  "publishedToGithub": false,
+  "pending": [
+    "Luna real QQ group participation",
+    "Luna image description",
+    "Luna multi-day proactive messages",
+    "Luna restart continuity human recheck"
+  ]
+}

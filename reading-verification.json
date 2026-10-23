@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-23",
+  "memory_plugin": "0.7.1",
+  "controller": "2.6.0",
+  "provider": "deepseek-account",
+  "model": "deepseek-flash",
+  "isolated_checks_passed": 37,
+  "actual_book_reading": {
+    "total_segments": 128,
+    "committed_contiguous_segments": 2,
+    "hy_sdk_readback_confirmed": 2,
+    "independent_review_passed": true,
+    "latest_note_links_to_previous_note": true,
+    "all_links_resolve_backward": true,
+    "retained_after_service_restart": true,
+    "whole_book_read": false
+  },
+  "installed_qq_command_functions_return_saved_progress_and_reflection": true,
+  "other_scope_cannot_access_book": true,
+  "powershell5_reading_status_worker": true,
+  "runtime_files_matched": 10,
+  "plugin_files_matched": 20,
+  "user_settings_preserved": true,
+  "qq_device_acceptance": "not_yet_requested",
+  "new_qq_messages_sent_by_checks": 0
+}

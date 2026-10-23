@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-22",
+  "scope": "Original Windows machine; ordinary Chat browser integration; local changes only",
+  "versions": {
+    "provider": "0.2.2",
+    "qq_memory_plugin": "0.6.2",
+    "controller": "2.3.0",
+    "extension": "0.1.4"
+  },
+  "production_route": {
+    "provider": "chatgpt-chat",
+    "model": "browser-chat"
+  },
+  "official_work_route_active": false,
+  "ordinary_chat_short_reply": true,
+  "ordinary_chat_two_round_ping_pong": true,
+  "installed_javascript_hashes_matched": 24,
+  "preserved_group_count": 2,
+  "preserved_persona_characters": 2953,
+  "qq_ready_after_install": true,
+  "memory_sdk_and_embedding_ready": true,
+  "broker_protocol_isolated_checks": 15,
+  "account_protocol_isolated_checks": 21,
+  "context_window_regression_assertions": 18,
+  "python_isolated_test_cases": 11,
+  "dom_fixture": {
+    "markdown_final_recovery": true,
+    "collapsed_prompt_reply": true,
+    "prompt_examples_rejected": true,
+    "tool_arguments_strict": true,
+    "real_chatgpt_requests": 0
+  },
+  "real_qq_retest_after_extension_0_1_4": true,
+  "real_long_prompt_retest_after_extension_0_1_4": true,
+  "new_route_memory_write_delete_and_identity_retest": true,
+  "new_route_image_upload": "pending",
+  "published_to_github": false,
+  "real_long_prompt_characters": 39233,
+  "node_test_cases": 8,
+  "memory_loopback_proxy_fix_deployed": true,
+  "currentStatus": "stopped-by-user-superseded-by-work-luna",
+  "supersededBy": "work-luna-verification.json"
+}

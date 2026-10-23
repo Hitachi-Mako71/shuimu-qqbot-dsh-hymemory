@@ -9,21 +9,22 @@ import multiprocessing
 import os
 from pathlib import Path
 import threading
+from memory_network import sdk_config
 
 
-def _serve(connection, directory):
+def _serve(connection, directory, collection='qq_fiction_512'):
     root = Path(directory).resolve()
     os.environ.update({
         'MEMORY_DATA_DIR': str(root),
         'MEMORY_PERSIST_DIR': str(root / 'vector_db'),
-        'MEMORY_COLLECTION_NAME': 'qq_fiction_512',
+        'MEMORY_COLLECTION_NAME': collection,
         'RECONCILE_ENABLED': 'false',
         'MEMORY_SEARCH_DEDUP_ENABLED': 'false',
     })
     client = None
     try:
         from hy_memory import HyMemoryClient
-        client = HyMemoryClient(mode='pro')
+        client = HyMemoryClient(config=sdk_config(), mode='pro')
         logging.disable(logging.INFO)
         while True:
             operation, args, kwargs = connection.recv()
@@ -44,8 +45,9 @@ def _serve(connection, directory):
 
 
 class FictionSDK:
-    def __init__(self, directory):
+    def __init__(self, directory, collection='qq_fiction_512'):
         self.directory = str(Path(directory).resolve())
+        self.collection = collection
         self.lock = threading.Lock()
         self.process = None
         self.connection = None
@@ -71,7 +73,7 @@ class FictionSDK:
                     self._close()
                     context = multiprocessing.get_context('spawn')
                     self.connection, child = context.Pipe()
-                    self.process = context.Process(target=_serve, args=(child, self.directory), daemon=True)
+                    self.process = context.Process(target=_serve, args=(child, self.directory, self.collection), daemon=True)
                     self.process.start()
                     child.close()
                 self.connection.send((operation, args, kwargs))

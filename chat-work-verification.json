@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-22",
+  "scope": "Local Windows deployment; dedicated Chat web work route",
+  "versions": {
+    "model_plugin": "0.4.1",
+    "extension": "0.2.1",
+    "controller": "2.5.0"
+  },
+  "default_route_preserved": "deepseek-account",
+  "qq_ready_after_plugin_update": true,
+  "memory_service_ready_after_restart": true,
+  "chat_loopback_bridge": true,
+  "chat_work_prompt_uses_latest_user_message_only": true,
+  "chat_work_skips_persona_and_hy_memory": true,
+  "input_attachments_supported": true,
+  "generated_file_copied_to_work_directory": true,
+  "automated_checks": {
+    "context_and_route_checks": 28,
+    "bridge_file_transfer_checks": 10,
+    "real_model_requests": 0
+  },
+  "browser_extension_reloaded": true,
+  "dom_mode_detection_regression_cases": 2,
+  "browser_chat_reply_verified": true,
+  "qq_work_route_verified": true,
+  "live_acceptance": {
+    "foreground_chat_probe": "passed",
+    "background_chat_probes": 2,
+    "qq_text_and_file_reply": "passed",
+    "file_name": "qq-chat-work-check.txt",
+    "file_bytes": 12,
+    "file_content_verified": true,
+    "local_copy": "data/memory-workspace/qq-chat-work-check.txt",
+    "deepseek_route_restored": true,
+    "qq_ready_after_restore": true,
+    "memory_ready_after_restore": true
+  },
+  "published_to_github": false
+}

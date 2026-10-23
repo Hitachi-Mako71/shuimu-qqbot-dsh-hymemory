@@ -1,5 +1,7 @@
 # 配置和依赖说明
 
+当前双路由实现和配置以 [原生Codex / DeepSeek](NATIVE_CODEX.md) 为准：控制台2.5.1，模型插件0.4.3，记忆插件0.6.6。旧账号API和网页记录为历史。
+
 ## 默认目录
 
 | 目录/文件 | 谁生成、保存什么 |
@@ -9,6 +11,9 @@
 | `%DSH_HOME%\profiles\qqbot` | 官方与本地插件依赖、补丁、独立配置 |
 | `.venv`、`runtime/node_modules` | Python 和固定 DSH 的本机依赖 |
 | `data/hy-memory` | SDK 数据、事实、画像、向量数据库 |
+| `data/chatgpt-plan` | 本机ChatGPT OAuth凭证、模型目录与验证状态；禁止提交Git或公开分享 |
+| `data/chatgpt-chat` | 普通Chat本机桥接令牌、一次性配对和探测状态；不包含在公开源码或配置备份 |
+| `data/model-routing.json` | 本机对话/记忆模型路由和DeepSeek回退值 |
 | `data/models` | 512维 CPU 向量模型缓存 |
 | `data/outbox.sqlite3` | 后台写入队列 |
 | `data/sessions` | 持久 DSH 会话 |
@@ -26,7 +31,7 @@
 
 `configure-qq-local.ps1` 将当前 Bot 的 AppID/Secret 保存为 `qq.credentials.json`，启动器导入子进程。原机 AppID不固化在仓库窗口内；已有本机配置时只预填 AppID。
 
-DSH 模型登录由其官方账号功能写入 Harness Home；不在这里重建或假造。**DSH_HOME 仅设置在进程环境，不写进 .env**。`import-local-config.ps1` 默认回落到原机 D 盘路径。换 Home 后，桌面入口新建的 PowerShell 也必须拿到正确环境：可给 Windows 当前用户持久设置 DSH_HOME，重新登录或重启相应应用；或审核并修改启动器默认值。
+DeepSeek模型登录由DSH官方账号功能写入Harness Home；ChatGPT账号令牌由专用提供方写入 `data/chatgpt-plan`。**DSH_HOME仅设置在进程环境，不写进 .env**。`import-local-config.ps1` 默认回落到原机D盘路径。换Home后，桌面入口新建的PowerShell也必须拿到正确环境：可给Windows当前用户持久设置DSH_HOME，重新登录或重启相应应用；或审核并修改启动器默认值。
 
 ## 环境变量
 
@@ -62,14 +67,19 @@ DSH 模型登录由其官方账号功能写入 Harness Home；不在这里重建
 | `NODE_USE_ENV_PROXY` | Node24启动时按代理设置启用 |
 | `QQBOT_CODEX_RELAY_DIR` | QQ启动器设置为本项目 `data/codex-relay` |
 | `QQBOT_COMPANION_DIR` | QQ启动器设置为本项目 `data/companion`，ACL及配对由configure-companion建立 |
+| `QQBOT_CHATGPT_DIR` | QQ启动器设置为本项目 `data/chatgpt-plan`，供原生模型适配器定位授权凭证 |
+| `QQBOT_CHAT_UI_DIR` | QQ启动器设置为本项目 `data/chatgpt-chat`，供普通Chat适配器定位本机桥接令牌 |
+| `QQBOT_MODEL_ROUTING_FILE` | QQ启动器设置为本项目 `data/model-routing.json`，由控制台保存 |
 
 端口8765当前也出现在 Python 服务、启动预热、导出/诊断脚本；8766也出现在模型代理默认值和模板。变更端口应检查源码所有引用，再改客户端/健康检查，不能只修改上表一个键。
 
+Windows的HTTPX可在没有HTTP_PROXY环境变量时发现系统代理。memory_network.py为Hy Memory真实库与虚构库生成配置；当LLM和Embedding地址都为loopback时，仅这两个SDK客户端使用显式直连传输，避免本机请求被送入代理。远程端点保留SDK默认代理行为，不更改系统设置或凭证。`MEMORY_LLM_MODEL`在本机兼容代理中只是请求名，实际模型依据data/model-routing.json路由。
+
 ## 固定版本与锁
 
-`versions.json` 记录原机实际版本和 QQ 补丁 SHA256；`requirements-lock.txt` 保存完整 pip freeze。`dependency-locks/runtime` 保存 npm锁；`dependency-locks/qqbot-profile` 保存 pnpm锁与原机依赖清单。原机默认路径出现在锁快照内，转换工具会替换到当前安装位置。
+`versions.json` 记录原机实际版本和 QQ 补丁 SHA256；`requirements-lock.txt` 保存完整 pip freeze。`dependency-locks/runtime` 保存npm锁；`dependency-locks/qqbot-profile`保存PNPM锁与本地配套插件、ChatGPT模型提供方的依赖清单。原机默认路径出现在锁快照内，转换工具会替换到当前安装位置。
 
-`packages/dsh-hymemory-qq-0.3.1.tgz` 是与源码一同归档的已安装包，可比较/回滚；正常安装会从仓库源码重新 npm pack。根目录和插件没有新增 npm运行依赖。
+`packages`归档当前配套插件0.6.2与ChatGPT提供方0.2.2。提供方随包捆绑JOSE 6.1.3，避免从零部署时再单独下载此依赖。依赖锁快照包含专用profile的本地插件组合。普通Chat网页使用额外的本机端口8767，见 [Chat网页桥接](CHATGPT_CHAT.md)；它的令牌和一次性配对码保存在私有data目录。
 
 ## Profile 与人设
 

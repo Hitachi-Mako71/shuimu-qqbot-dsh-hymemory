@@ -1,5 +1,19 @@
 # QQ Bot + DeepSeek Harness + Hy Memory
 
+本机当前：配套插件0.7.1 / 控制台2.6.0 / 模型插件0.4.3。可在DeepSeek、[原生Codex](docs/NATIVE_CODEX.md)和[Chat网页无QQ上下文工作路由](docs/CHATGPT_CHAT_WORK.md)间切换。DeepSeek与Codex共享Hy Memory；Chat工作路由只接收最新任务和附件，不读取柚柚记忆，并支持文件往返。本次公开源码快照更新于2026-10-23；当前优先使用DeepSeek / deepseek-flash。
+
+> 发布范围：控制台、模型路由、群聊、生图、识图和阅读书房的源码、插件包及部署资料。下文标注“本地／未推送”的旧段落保留当时的执行记录；本次快照已包含这些源码。实际Git上传以提交记录为准，历史验收不等于新电脑验收。
+
+当前人设正式名字：**柚柚**，旧名水木，保留公主和大肥鱼等称呼。[人设档案](docs/CHARACTER.md)。
+
+本地0.5.4：[群回复可靠性修复](docs/GROUP_RELIABILITY.md)。修复格式错误引发五分钟静默、多人呼唤覆盖及冷却丢弃；已核对两位群友各有一条QQ回复回执。
+
+本地0.5.2：水木、公主、大肥鱼均为认可的称呼；昵称保存在底层设定，群呼唤识别共用该列表。“生活设定”可查看。尚未同步GitHub。
+
+本地0.5.1：[回复速度优化](docs/RESPONSE_SPEED.md)。缩短群接话等待、QQ请求明确关闭思考、私聊原生流式显示；实际效果以真实消息记录为准。本轮尚未同步GitHub。
+
+本地新增0.5.0：[群友模式](docs/GROUP_PARTICIPATION.md)，按群开关、接收普通消息后择机接话。实际已收到全量群消息并取得非@接话发送回执。本轮尚未同步GitHub。
+
 **从 GitHub 在新电脑重建，请先阅读 [从零部署](docs/FROM_ZERO.md)。** 本仓库包含完整部署源码、人格、图标、补丁、依赖锁快照、历史验收和维护交接。真实凭证、私人记忆、聊天记录、模型缓存不随仓库上传。
 
 文档：[架构与接口](docs/ARCHITECTURE.md) · [配置说明](docs/CONFIGURATION.md) · [备份恢复](docs/BACKUP_AND_RECOVERY.md) · [维护交接](docs/HANDOFF.md) · [文件索引](docs/FILE_INDEX.md) · [调试历史](docs/DEBUG_HISTORY.md)。
@@ -8,9 +22,11 @@
 
 [水木的生活、主动分享与互动剧情](docs/COMPANION.md)。初始配套插件0.3.1支持白天每20–30分钟考虑一次分享、每小时最多3条，日记持续保存，并有夜间静默及暂停开关。原机已获得真正主动推送的QQ成功回执。
 
-以下“已部署/已验证”描述的是 **2026-10-20～21 原电脑的历史状态**；克隆仓库后需要重新安装、登录、绑定和验收。
+以下基础记忆“已部署/已验证”描述的是原电脑在DeepSeek路由下的历史验收；本轮Chat网页通道的实际范围以上方和最新验收小节为准。克隆仓库后需要重新安装、登录、绑定和验收。
 
 已在本机部署并运行。QQ 私聊收发、普通对话自动保存偏好、`/new` 后召回、服务重启后召回，以及群聊不读取私聊记忆，均已由用户在 QQ 验证。详细证据和测试范围见 [验收记录](acceptance-checklist.md)。
+
+新增：[阅读书房](docs/READING.md)。原书逐段阅读、书签与完整笔记、感悟先保存再分享，控制台提供导入、续读、暂停和导出。
 
 ## 当前部署
 
@@ -19,19 +35,26 @@
 | 项目与数据根目录 | `D:\DeepSeekHarnessData\qqbot-hymemory` |
 | Harness Home | `D:\DeepSeekHarnessData\home` |
 | 独立 profile | `qqbot` |
-| DSH / QQ 插件 | `0.2.1-rc.2` / `@tencent-connect/dsh-qqbot@0.5.2` |
+| DSH / QQ 插件 / 本地插件 | `0.2.1-rc.2` / `@tencent-connect/dsh-qqbot@0.5.2` / `dsh-hymemory-qq@0.7.1` |
+| ChatGPT模型插件 / 控制台 | `dsh-chatgpt-plan@0.4.3` / `2.6.0` |
 | 记忆 SDK / 场景 | `hy-memory==2.0.4` / `pro` 模式、`chat` 场景 |
-| 对话和记忆提炼模型 | `deepseek-account / deepseek-flash`，复用已有 DSH 本地登录 |
+| QQ对话和记忆提炼模型 | `deepseek-account / deepseek-flash`，按用户要求先验收DeepSeek Harness链路 |
+| Agent工作目录 | `D:\DeepSeekHarnessData\qqbot-hymemory\data\memory-workspace` |
+| 可选对话路由 | 原生Codex配置保留；本轮不扩展ChatGPT接入 |
 | 向量模型 | 本地 CPU `BAAI/bge-small-zh-v1.5`，512 维，FastEmbed 0.9.0 |
 | 运行环境 | Windows；Node 24.11.1；pnpm 11.25.0；Python 3.12.14 |
 
-向量模型已下载并在 Windows 实际运行，不需要额外的 Embedding API Key。模型提炼仍需联网访问已有 DSH 账号对应的模型服务。
+向量模型已下载并在 Windows 实际运行，不需要额外的 Embedding API Key。对话与记忆提炼需要可用的账号模型连接。
 
 ## 启动、停止
 
-桌面已有两个快捷方式：绿色“启动水木机器人”和红色“关闭水木机器人”。双击即可在后台启动或关闭 QQ/DSH 与长期记忆服务，完成后会有中文提示。关闭保留会话和记忆数据。连续点击同一操作会避免重复创建服务。
+桌面入口已整合为“柚柚机器人控制台”，可查看QQ和记忆服务状态、启停服务、打开日志，以及管理主动私聊、群聊、人格提示、对话模型和记忆导出。[控制台说明](docs/CONTROL_CONSOLE.md)。关闭服务会保留会话和记忆数据。
 
-需要重新创建桌面入口时，在项目目录执行 `create-desktop-shortcuts.ps1`。入口调用本项目的 `desktop-control.ps1`，图标在 `launcher-icons`。
+日常闲聊当前仍可用 [Work / Luna](docs/WORK_LUNA.md) 或切回DeepSeek。需要无QQ上下文地处理独立任务时，在控制台选择 [Chat网页工作路由](docs/CHATGPT_CHAT_WORK.md)；它需要已登录的Edge、扩展和专用Chat工作对话。
+
+控制台支持三路由选择、Chat工作页探测、后台启停/重启、独立状态卡、群备注、未保存提醒、设置冲突检查、内嵌日志、配置备份和记忆JSON导出。控制台窗口关闭后保留服务当前状态。
+
+需要重新创建桌面入口时，在项目目录执行 `create-control-shortcut.ps1`。图标在 `launcher-icons`。
 
 在 PowerShell 运行：
 

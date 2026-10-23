@@ -15,6 +15,8 @@ from dotenv import load_dotenv
 from memory_outbox import Outbox
 from fiction_memory import FictionMemory
 from fiction_sdk import FictionSDK
+from reading_library import ReadingLibrary, model_ready
+from memory_network import sdk_config
 
 load_dotenv(Path(__file__).with_name('.env'))
 HOST = '127.0.0.1'
@@ -30,6 +32,8 @@ _embedding: Any = None
 _outbox: Any = None
 _fiction: Any = None
 _fiction_sdk: Any = None
+_reading: Any = None
+_reading_sdk: Any = None
 _audit_lock = threading.Lock()
 _stop = threading.Event()
 
@@ -40,7 +44,7 @@ def get_client():
         if _client is None:
             from hy_memory import HyMemoryClient
             logging.getLogger('hy_memory').setLevel(logging.WARNING)
-            _client = HyMemoryClient(mode=os.environ.get('MEMORY_MODE', 'pro'))
+            _client = HyMemoryClient(config=sdk_config(), mode=os.environ.get('MEMORY_MODE', 'pro'))
             # The SDK installs INFO handlers during construction; suppress
             # request/query content while retaining our ID-only audit log.
             logging.disable(logging.INFO)
@@ -59,6 +63,47 @@ def get_fiction():
     if _fiction is None:
         _fiction = FictionMemory(DATA / 'companion')
     return _fiction
+
+
+def get_reading():
+    global _reading
+    if _reading is None:
+        _reading = ReadingLibrary(DATA / 'reading-workspace')
+    return _reading
+
+
+def reading_worker():
+    """Bounded reading continues independently of QQ typing and delivery."""
+    while not _stop.is_set():
+        worked = False
+        try:
+            if not model_ready():
+                _stop.wait(5)
+                continue
+            library = get_reading()
+            # Only the already paired private owner may be scheduled. Reading is
+            # independent of sending; no extra proactive messages bypass limits.
+            setting_file = DATA / 'companion/settings.json'
+            settings = json.loads(setting_file.read_text(encoding='utf-8-sig')) if setting_file.exists() else {}
+            owner = settings.get('owner', '')
+            if re.fullmatch(r'qq-[a-f0-9]{64}', owner):
+                library.enqueue(owner, automatic=True)
+            worked = library.process_one()
+        except Exception as error:
+            print(f'[qq-reading] worker unavailable ({type(error).__name__})', flush=True)
+        if not worked:
+            _stop.wait(5)
+
+
+def reading_index_worker():
+    while not _stop.is_set():
+        try:
+            worked = get_reading().index_one(_reading_sdk)
+        except Exception as error:
+            print(f'[qq-reading] index unavailable ({type(error).__name__})', flush=True)
+            worked = False
+        if not worked:
+            _stop.wait(3)
 
 
 def fiction_worker():
@@ -221,6 +266,23 @@ class Handler(BaseHTTPRequestHandler):
             user_id = str(body.get('user_id', ''))
             if not re.fullmatch(r'qq-[a-f0-9]{64}', user_id):
                 raise ValueError('a server-derived QQ identity namespace is required')
+            if self.path.startswith('/reading/'):
+                library = get_reading()
+                if self.path == '/reading/status':
+                    result = library.status(user_id)
+                elif self.path == '/reading/next':
+                    result = library.enqueue(user_id, str(body.get('book', '')))
+                elif self.path == '/reading/auto':
+                    result = library.set_auto(user_id, body.get('enabled'))
+                elif self.path == '/reading/recall':
+                    result = library.recall(user_id, str(body.get('query', ''))[:1200], min(max(int(body.get('limit', 5)), 1), 5))
+                elif self.path == '/reading/share':
+                    result = library.share(user_id, body.get('token'), body.get('note_id'), body.get('receipt') is True)
+                else:
+                    self._json(404, {'ok': False, 'error': 'not found'})
+                    return
+                self._json(200, {'ok': True, **result})
+                return
             if self.path.startswith('/fiction/'):
                 epoch = str(body.get('epoch', ''))
                 index = get_fiction()
@@ -301,7 +363,7 @@ def warmup():
 
 
 def main():
-    global _fiction_sdk
+    global _fiction_sdk, _reading_sdk
     if not TOKEN:
         raise SystemExit('Set MEMORY_BRIDGE_TOKEN in local .env before starting')
     DATA.mkdir(parents=True, exist_ok=True)
@@ -309,9 +371,13 @@ def main():
     get_outbox()
     get_fiction()
     _fiction_sdk = FictionSDK(DATA / 'companion' / 'hy-memory')
+    get_reading()
+    _reading_sdk = FictionSDK(DATA / 'reading-workspace' / 'hy-memory', 'qq_reading_512')
     threading.Thread(target=warmup, daemon=True).start()
     threading.Thread(target=worker, daemon=True).start()
     threading.Thread(target=fiction_worker, daemon=True).start()
+    threading.Thread(target=reading_worker, daemon=True).start()
+    threading.Thread(target=reading_index_worker, daemon=True).start()
     print(f'Hy Memory bridge listening on http://{HOST}:{PORT}', flush=True)
     try:
         server.serve_forever()
@@ -321,6 +387,7 @@ def main():
         _stop.set()
         server.server_close()
         _fiction_sdk.close()
+        _reading_sdk.close()
         if _client is not None:
             _client.close()
 

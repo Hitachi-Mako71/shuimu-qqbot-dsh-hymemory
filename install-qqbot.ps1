@@ -28,6 +28,11 @@ if($LASTEXITCODE -ne 0){throw 'Local Cordis plugin packaging failed.'}
 $PackageName=(($Packed -join "`n") | ConvertFrom-Json)[0].filename
 & node $DshBin plugin --profile qqbot add (Join-Path $ProjectDir ('packages\'+$PackageName))
 if($LASTEXITCODE -ne 0){throw 'Local Cordis plugin install failed.'}
+$ChatGptPacked=& npm.cmd pack (Join-Path $ProjectDir 'dsh-chatgpt-plugin') --pack-destination (Join-Path $ProjectDir 'packages') --json
+if($LASTEXITCODE -ne 0){throw 'ChatGPT plugin packaging failed.'}
+$ChatGptPackage=(($ChatGptPacked -join "`n")|ConvertFrom-Json)[0].filename
+& node $DshBin plugin --profile qqbot add (Join-Path $ProjectDir ('packages\'+$ChatGptPackage))
+if($LASTEXITCODE -ne 0){throw 'ChatGPT optional provider installation failed.'}
 & $Python (Join-Path $ProjectDir 'configure-profile.py') --project $ProjectDir --profile $ProfileDir
 if($LASTEXITCODE -ne 0){throw 'Dedicated profile configuration failed.'}
 Push-Location -LiteralPath $ProfileDir

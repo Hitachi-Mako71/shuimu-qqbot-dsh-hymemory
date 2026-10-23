@@ -1,15 +1,15 @@
 import { createServer } from 'node:http';
 import { createHash, timingSafeEqual, randomUUID } from 'node:crypto';
+import { modelRoute } from './model-route.js';
 
 export async function startModelProxy(ctx) {
   const { BlockAssembler, createUserMessage, createAssistantMessage, createSystemMessage, createToolResultMessage } = await import('@deepseek-ai/dsh-llm');
-  const provider = process.env.MEMORY_DSH_PROVIDER || 'deepseek-account';
-  const model = process.env.MEMORY_DSH_MODEL || 'deepseek-flash';
   const token = process.env.MEMORY_BRIDGE_TOKEN;
   if (!token) throw new Error('MEMORY_BRIDGE_TOKEN must be set');
   const digest = (s) => createHash('sha256').update(s).digest();
   const expected = digest(`Bearer ${token}`);
   const server = createServer(async (req, res) => {
+    const { provider, model } = modelRoute();
     const send = (status, body) => {
       if (res.destroyed) return;
       res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
@@ -61,6 +61,7 @@ export async function startModelProxy(ctx) {
       server.once('error', reject);
       server.listen(Number(process.env.MEMORY_DSH_PORT || 8766), '127.0.0.1', resolve);
     });
+    const { provider, model } = modelRoute();
     console.log(`[qq-hymemory-model] loopback proxy ready (${provider}/${model})`);
     return () => { server.closeAllConnections(); server.close(); };
   }, 'qq-hymemory.model-proxy');

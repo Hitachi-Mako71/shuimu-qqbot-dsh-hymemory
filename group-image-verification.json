@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-23T00:05:58.5860310+08:00",
+  "memoryPlugin": "0.6.4",
+  "modelPlugin": "0.4.2",
+  "modelRoute": "codex/gpt-6-luna",
+  "regressionChecks": 46,
+  "requestedByGroupController": true,
+  "fixedCharacterReferences": 3,
+  "targetScope": "group",
+  "deliveryStatus": "delivered",
+  "actualImageReceiptPresent": true,
+  "notifiedOriginalGroup": true,
+  "userDeviceReadConfirmed": false
+}

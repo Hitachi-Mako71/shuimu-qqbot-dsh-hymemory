@@ -1,0 +1,4 @@
+- insert:
+    - id: llm-chatgpt-plan
+      name: dsh-chatgpt-plan
+      config: {}

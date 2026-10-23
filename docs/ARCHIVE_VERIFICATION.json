@@ -1,17 +1,23 @@
 {
-  "reviewed_at_utc": "2026-10-21T14:37:40.626070+00:00",
-  "scope": "exact Git staged contents and companion tgz members",
-  "staged_file_count": 95,
-  "archive_member_count": 50,
+  "reviewed_at_utc": "2026-10-23T15:09:11.734521+00:00",
+  "source_files_scanned": 213,
+  "plugin_archives_scanned": 30,
+  "plugin_archive_members_scanned": 1331,
+  "local_credential_sources_checked": 37,
   "actual_local_credential_match": false,
-  "private_runtime_files_staged": false,
-  "includes_runtime_and_profile_dependency_locks": true,
-  "application_test_suites_run_during_archive": false,
-  "fresh_windows_deployment_run_during_archive": false,
+  "application_test_suites_run_during_upload": false,
+  "fresh_windows_deployment_run_during_upload": false,
+  "scope": "2026-10-23 public source release; source and every decompressed package member audited, staged blobs rechecked before commit",
+  "actual_private_identifiers_matched": false,
+  "private_runtime_files_in_source": false,
+  "bundled_third_party": "Declared jose 6.1.3 including MIT license and type declarations; no installed runtime directories",
   "excluded": [
-    "real credentials and account grants",
-    "private memory and exports",
-    "chat/session logs",
-    "runtime dependencies and model weights"
-  ]
+    "credentials and account login state",
+    "original books and extracted text",
+    "real reading notes and memory databases",
+    "QQ chats and generated jobs",
+    "private character references",
+    "model weights and local environments"
+  ],
+  "publication_receipt": "Use the Git commit and remote main reference, not historical runtime verification flags"
 }

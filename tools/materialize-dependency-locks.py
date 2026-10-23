@@ -54,21 +54,31 @@ if args.part in ('profile', 'all'):
     expected_deps = expected.get('dependencies', {})
     if set(deps) != set(expected_deps) or deps.get('@tencent-connect/dsh-qqbot') != '0.5.2':
         raise SystemExit('QQ profile plugin set differs; refusing to replace custom dependencies')
-    package = project / 'packages/dsh-hymemory-qq-0.4.3.tgz'
-    if not package.exists():
-        raise SystemExit('Expected the packaged companion plugin 0.4.3')
-    file_reference = 'file:' + package.as_posix()
-    current_reference = deps.get('dsh-hymemory-qq', '')
-    if current_reference != file_reference:
-        raise SystemExit('QQ profile must reference this installation companion tgz; run install-qqbot.ps1 first')
+    local_names = ('dsh-hymemory-qq', 'dsh-chatgpt-plan')
+    if not all(name in deps for name in local_names):
+        raise SystemExit('QQ profile must include the pinned Hy Memory and ChatGPT plugins')
+    local_packages = {}
+    for name in local_names:
+        archived_ref = expected_deps.get(name, '')
+        filename = Path(archived_ref.removeprefix('file:')).name
+        if not filename.endswith('.tgz') or not filename.startswith(name + '-'):
+            raise SystemExit('Archived local plugin reference is invalid: ' + name)
+        package = project / 'packages' / filename
+        if not package.exists():
+            raise SystemExit('Missing archived local plugin package: ' + str(package))
+        current_reference = 'file:' + package.as_posix()
+        if deps.get(name) != current_reference:
+            raise SystemExit('QQ profile must reference this installation package; run install-qqbot.ps1 first: ' + name)
+        local_packages[name] = (filename, archived_ref, current_reference, package)
     patch = profile / 'patches/@tencent-connect__dsh-qqbot@0.5.2.patch'
     expected_hash = json.loads((project / 'versions.json').read_text(encoding='utf-8'))['qq_patch_sha256']
     if not patch.exists() or hashlib.sha256(patch.read_bytes()).hexdigest() != expected_hash:
         raise SystemExit('The installed QQ patch does not match the archived lock')
     text = (origin / 'pnpm-lock.yaml').read_text(encoding='utf-8')
-    archived_reference = expected_deps['dsh-hymemory-qq']
-    text = text.replace(archived_reference, file_reference)
-    relative_reference = 'file:' + os.path.relpath(package, profile).replace('\\', '/')
-    text = text.replace('file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.4.3.tgz', relative_reference)
+    for name, (filename, archived_ref, current_reference, package) in local_packages.items():
+        text = text.replace(archived_ref, current_reference)
+        archived_relative = 'file:../../../qqbot-hymemory/packages/' + filename
+        relative_reference = 'file:' + os.path.relpath(package, profile).replace('\\', '/')
+        text = text.replace(archived_relative, relative_reference)
     write(profile / 'pnpm-lock.yaml', text.encode('utf-8'))
     print('Next: pnpm install --frozen-lockfile in ' + str(profile))

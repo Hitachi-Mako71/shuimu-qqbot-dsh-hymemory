@@ -1,5 +1,6 @@
-$ErrorActionPreference='Stop'
+﻿$ErrorActionPreference='Stop'
 $project=Split-Path -Parent $MyInvocation.MyCommand.Path
+if(Test-Path -LiteralPath (Join-Path $project 'stop-chat-ui.ps1')){& (Join-Path $project 'stop-chat-ui.ps1') -ProjectDir $project}
 $file=Join-Path $project '.run\services.json'
 if(-not(Test-Path $file)){Write-Host 'No managed services recorded.';exit 0}
 $services=Get-Content $file -Raw|ConvertFrom-Json

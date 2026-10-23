@@ -131,7 +131,7 @@ export function registerQQRelay(ctx, sender, appId) {
   }, 'qq-codex-relay.lifecycle');
 }
 
-function enqueue(cfg, message) {
+export function enqueue(cfg, message) {
   return new Promise((resolve, reject) => {
     const child = spawn(cfg.codexPath, ['queue', '--thread', cfg.threadId, '--message', message], {
       shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
@@ -179,7 +179,7 @@ async function handle({ identity, text = '', messageId = '' }) {
     state.activity = '已开启，等待新进展';
     state.pairedAt ||= new Date().toISOString();
     save(state);
-    return { handled: true, reply: '已开启当前 Codex 聊天的同步。\n转告Codex：你的消息\nCodex状态\n取Codex回复\n关闭Codex同步\n普通聊天仍由水木回答。只转发开启后的公开进展与回复。' };
+    return { handled: true, reply: '已开启当前 Codex 聊天的同步。\n转告Codex：你的消息\nCodex状态\n取Codex回复\n关闭Codex同步\n普通聊天仍由柚柚回答。只转发开启后的公开进展与回复。' };
   }
   if (state.owner !== owner) return command ? { handled: true, reply: '请先用本机提供的配对码开启私聊同步。' } : null;
   state.target = { scope: 'c2c', targetId: identity.peerId, msgId: messageId };
@@ -208,7 +208,7 @@ async function handle({ identity, text = '', messageId = '' }) {
   state.incoming = state.incoming.slice(-200);
   save(state);
   try {
-    const queuedId = await enqueue(cfg, `[来自已配对QQ私聊的用户消息，由水木转达]\n${message[1]}\n[回复和公开进展会自动转发到该用户QQ私聊。请正常处理此请求。]`);
+    const queuedId = await enqueue(cfg, `[来自已配对QQ私聊的用户消息，由柚柚转达]\n${message[1]}\n[回复和公开进展会自动转发到该用户QQ私聊。请正常处理此请求。]`);
     state.incoming.at(-1).status = 'queued';
     state.incoming.at(-1).queuedId = queuedId;
     state.lastQueuedAt = new Date().toISOString();

@@ -1,0 +1,58 @@
+{
+  "recorded_at_utc": "2026-10-21T15:12:49.437806+00:00",
+  "version": "0.5.1",
+  "local_only": true,
+  "baseline": {
+    "label": "before",
+    "components": [
+      {
+        "component": "real-memory-search",
+        "elapsed_ms": 83,
+        "ok": true,
+        "memory_hits": 2
+      },
+      {
+        "component": "fiction-search",
+        "elapsed_ms": 84,
+        "ok": true,
+        "memory_hits": 3
+      },
+      {
+        "component": "model-short-text",
+        "elapsed_ms": 1058,
+        "ok": true,
+        "memory_hits": null
+      }
+    ],
+    "historical_group_last_human_to_send_seconds": [
+      13.25
+    ]
+  },
+  "deployed_qq_ready": true,
+  "group_after_change_timings": [
+    {
+      "queuedMs": 812,
+      "recallMs": 31,
+      "modelMs": 2059,
+      "sent": true,
+      "sendMs": 605,
+      "totalMs": 3507
+    }
+  ],
+  "private_real_after_change_sample_confirmed": true,
+  "c2c_streaming_configured": true,
+  "application_test_suites_run": false,
+  "scope": "User sent actual private/group QQ messages; source, config, persisted text timing and group send receipt checked. Single samples only.",
+  "verification_updated_at_utc": "2026-10-21T15:17:42.312741+00:00",
+  "qq_agent_after_change_samples": [
+    {
+      "seconds": 2.988,
+      "firstTextMs": 2737,
+      "reasoningBlocks": 0,
+      "blockTypes": [
+        "text"
+      ]
+    }
+  ],
+  "user_confirmed_both_qq_messages_sent": true
+}

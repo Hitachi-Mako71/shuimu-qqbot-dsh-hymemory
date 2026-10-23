@@ -1,0 +1,43 @@
+{
+  "observed_at_utc": "2026-10-21T15:41:30.635346+00:00",
+  "version": "0.5.4",
+  "first_targeted_fix": true,
+  "root_cause": "Model returned ordinary prose; previous JSON parser raised SyntaxError and paused the group for five minutes. Single pending event and cooldown discard also lost named greetings.",
+  "prior_read_only_reproduction": {
+    "ordinary_text_chars": 52,
+    "valid_json": false,
+    "parse_error_position": 0
+  },
+  "installed_source_matches": true,
+  "installed_file_count": 14,
+  "qq_ready": true,
+  "qq_stderr_empty_at_observation": true,
+  "user_confirmed_two_members_sent_greetings_and_queried_status": true,
+  "distinct_member_reply_records": 2,
+  "accepted_named_call_receipts": 2,
+  "groups": [
+    {
+      "enabled": true,
+      "sent": 5,
+      "snoozeUntil": 0,
+      "backoffUntil": null,
+      "mentionsDetected": 3,
+      "lastTimings": {
+        "queuedMs": 806,
+        "recallMs": 934,
+        "modelMs": 3091,
+        "sent": true,
+        "sendMs": 4015,
+        "totalMs": 8846
+      }
+    }
+  ],
+  "receipt_means": "QQ accepted the outgoing message, not proof of device read status",
+  "limits": [
+    "One paired group observed; other groups and sustained hourly limits not exercised",
+    "Queue expiry and prolonged outages not exhaustively exercised",
+    "No fixed latency guarantee; latest individual sample 8846ms"
+  ],
+  "application_test_suites_run": false,
+  "github_push_performed": false
+}

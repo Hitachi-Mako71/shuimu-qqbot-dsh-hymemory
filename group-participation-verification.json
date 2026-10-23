@@ -1,0 +1,17 @@
+{
+  "recorded_at_utc": "2026-10-21T14:58:58.451004+00:00",
+  "version": "0.5.0",
+  "local_only": true,
+  "qq_ready": true,
+  "groups_observed": 1,
+  "groups_enabled": 1,
+  "actual_group_message_create_events": 13,
+  "actual_non_mention_reply_receipts": 1,
+  "device_read_receipt_claimed": false,
+  "user_confirmed_qq_full_message_setting": true,
+  "user_confirmed_group_pairing_and_normal_message_sent": true,
+  "application_test_suites_run": false,
+  "second_group_isolation_live_acceptance": false,
+  "hourly_limit_live_acceptance": false,
+  "three_frequency_profiles_fully_accepted": false
+}

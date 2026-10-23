@@ -1,0 +1,41 @@
+{
+  "verifiedAt": "2026-10-22T18:29:04+08:00",
+  "software": {
+    "dsh": "0.2.1-rc.2",
+    "qqPlugin": "0.5.2",
+    "hyMemoryPlugin": "0.6.0",
+    "chatgptPlugin": "0.1.0",
+    "node": "24.11.1",
+    "python": "3.12.14"
+  },
+  "model": {
+    "provider": "chatgpt-plan",
+    "id": "gpt-6.1-sol",
+    "accountAuthorized": true,
+    "realResponseProbe": true,
+    "nativeToolRoundTrip": "Responses protocol ping tool call and pong follow-up passed"
+  },
+  "runtime": {
+    "qqGateway": "ready",
+    "hyMemorySdk": "ready",
+    "embedding": "ready",
+    "memoryModelProxy": "chatgpt-plan/gpt-6.1-sol",
+    "boundGroupsPreserved": 2,
+    "personaCharacterCountPreserved": 2953,
+    "qqPrivateChatAcceptance": "Owner sent the requested model check and confirmed the expected reply",
+    "qqErrorLogBytes": 0,
+    "memoryErrorLogBytes": 0
+  },
+  "localChecks": {
+    "protocolRegressionChecks": 21,
+    "controlModelChecks": 8,
+    "controlSettingsChecks": 10,
+    "controllerWindowOpen": true,
+    "localDeliverableSecretMatches": 0,
+    "localArchiveBytes": 836319
+  },
+  "pendingAcceptance": [
+    "Owner verifies existing preference recall after /new or restart, private/group memory isolation, and image understanding through QQ after the model switch."
+  ],
+  "privacy": "No credentials, email, QQ message, memory text, or account token is included."
+}

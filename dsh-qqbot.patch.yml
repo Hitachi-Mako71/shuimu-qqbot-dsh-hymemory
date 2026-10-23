@@ -16,7 +16,7 @@
     model: deepseek-flash
     cwd: '__PROJECT_DIR__/agent-work'
     requireMention: true
-    streaming: false
+    streaming: true
     sessionIdleTimeout: 1800000
     processingTimeoutMs: 1800000
     debug: false

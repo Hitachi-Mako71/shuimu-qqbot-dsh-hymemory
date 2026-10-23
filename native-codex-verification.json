@@ -1,0 +1,54 @@
+{
+  "route": "codex/gpt-6-luna",
+  "routes": [
+    "deepseek-account/deepseek-flash",
+    "codex/gpt-6-luna"
+  ],
+  "versions": {
+    "controller": "2.4.0",
+    "modelPlugin": "0.3.0",
+    "memoryPlugin": "0.6.3",
+    "codex": "0.162.0-alpha.17.2"
+  },
+  "qqHumanConfirmedTwoTurns": true,
+  "sameCodexThread": true,
+  "desktopHistoryVisible": true,
+  "nativeDynamicToolRoundTrip": true,
+  "processRestartContinuity": {
+    "realProcessRestartResume": true,
+    "priorConversationRecalled": true
+  },
+  "sharedHyMemory": {
+    "success": true,
+    "nativeCodexSdkWrite": true,
+    "nativeRecall": true,
+    "deepseekRealReply": true,
+    "deepseekRecallsSameMemoryIds": true,
+    "otherIdentityIsolated": true,
+    "deleteVerified": true,
+    "testFactsDeleted": true,
+    "completedAt": "2026-10-22T13:50:10.771569+00:00"
+  },
+  "nodeTests": 13,
+  "pythonTests": 13,
+  "installedJsHashesMatched": 29,
+  "personaCharactersPreserved": 2953,
+  "boundGroupsPreserved": 2,
+  "controllerPageVisuallyChecked": true,
+  "openCodexButtonSucceeded": true,
+  "browserBridgeStopped": true,
+  "publishedToGitHub": false,
+  "pending": [
+    "真人复验原生Codex全量群聊、图片、连续多日主动日常",
+    "用户在Codex界面自行打开对应QQ历史"
+  ],
+  "activeRouteAtFinalCheck": {
+    "provider": "deepseek-account",
+    "model": "deepseek-flash"
+  },
+  "finalServices": {
+    "qq": "ready",
+    "memory": "ready",
+    "restartRequired": false
+  }
+}

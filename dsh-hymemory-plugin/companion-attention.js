@@ -1,3 +1,4 @@
+import { readingClaim } from './reading.js';
 // Interaction state is temporary context, never a judgment about the user.
 const minute = 60000;
 export function attention(state, now = Date.now()) {
@@ -37,9 +38,10 @@ export function attentionContext(state, now = Date.now()) {
 
 export async function makeCheckIn(state, model, status) {
   const result = JSON.parse((await model(
-    '写水木的一条主动私聊。输出JSON {"message":"一句到两句，最多90字"}。这是角色表现，不声称AI有真实情绪。根据等待状态，第一回可轻轻说有一点想念/稍稍落寞，带一个容易接的话头；长时间没回只温柔留话，不继续催。可以礼貌问“忙完了么”但不能要求回复、问去向、猜用户处境、说已读不回、质问忽略、卖惨、内疚施压、占有或夸大依赖，不罗列新日常，不虚构既往对话。',
+    '写柚柚的一条主动私聊。输出JSON {"message":"一句到两句，最多90字"}。这是角色表现，不声称AI有真实情绪。根据等待状态，第一回可轻轻说有一点想念/稍稍落寞，带一个容易接的话头；长时间没回只温柔留话，不继续催。可以礼貌问“忙完了么”但不能要求回复、问去向、猜用户处境、说已读不回、质问忽略、卖惨、内疚施压、占有或夸大依赖，不罗列新日常，不虚构既往对话。',
     JSON.stringify({ status, lastSharedMessage: state.lastSharedMessage || '', lastInboundAt: state.lastInboundAt || null }), 240)).trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));
   if (typeof result.message !== 'string' || !result.message.trim() || result.message.length > 180) throw new Error('InvalidCheckIn');
+  if (readingClaim(result.message)) throw Error('CheckInCannotInventReading');
   const review = JSON.parse((await model(
     '审核主动问候，仅输出JSON {"valid":true或false}。允许轻轻想念、短暂落寞、礼貌问忙完没。拒绝责备不回复、假称已读、查岗、虚构用户事实、以委屈伤心惩罚或感情责任索取回应、排他依赖，以及继续大段自说自话。内容含上述问题或不确定则false。',
     JSON.stringify({ message: result.message, waitingState: status }), 100)).trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));

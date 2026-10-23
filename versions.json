@@ -4,12 +4,19 @@
   "node": "v24.11.1",
   "dsh": "0.2.1-rc.2",
   "qq_plugin": "0.5.2",
-  "cordis_plugin": "0.4.3",
+  "cordis_plugin": "0.7.1",
   "hy-memory": "2.0.4",
   "fastembed": "0.9.0",
   "chromadb": "1.5.9",
   "kuzu": "0.11.3",
   "embedding_model": "BAAI/bge-small-zh-v1.5",
   "embedding_dimensions": 512,
-  "qq_patch_sha256": "8d3919d06d9048f0e20949166945b20c749963728c72a99e239f050fa33bd743"
+  "qq_patch_sha256": "9d249503fef2f1c69207ea746d23c6ad00382c7e040d664f4ed1f590eda08c30",
+  "controller": "2.6.0",
+  "chatgpt_plugin": "0.4.3",
+  "chat_ui_extension": "0.2.1",
+  "jose": "6.1.3",
+  "codex": "0.162.0-alpha.17.2",
+  "pypdf": "6.1.3",
+  "reading_schema": 1
 }

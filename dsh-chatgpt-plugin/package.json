@@ -1,0 +1,32 @@
+{
+  "name": "dsh-chatgpt-plan",
+  "version": "0.4.3",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./auth": "./auth.js",
+    "./protocol": "./protocol.js"
+  },
+  "files": [
+    "*.js",
+    "package.json",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "jose": "6.1.3"
+  },
+  "bundledDependencies": [
+    "jose"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.1",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.2"
+  }
+}

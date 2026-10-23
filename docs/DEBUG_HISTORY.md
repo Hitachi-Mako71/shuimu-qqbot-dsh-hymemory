@@ -1,5 +1,16 @@
 # Debug attempts, 2026-10-20
 
+## Native Codex writer conflict and controller diagnosis, 2026-10-22
+
+- Applied OpenAI Docs and systematic-debugging. Scoped native logs established actual `yuzu_qqbot` failures at `thread/resume`: an active writer already owned the stored thread. Desktop diagnostics showed the mapped QQ histories had been loaded. The old probe used a new ephemeral thread and therefore passed despite old-conversation failures.
+- User-requested control experiment: direct safe switch to GPT-6 Luna, verified saved configuration and runtime model agree; user reproduced the same error. Model selection was applied correctly.
+- Fix attempt 1: classify writer conflicts without persisting server text; retain safe method/code/time diagnostics. For a mapped source whose latest turn is explicitly completed/failed, fork through that turn, preserve the original and atomically continue the same QQ identity on a persistent replacement. Other errors and unfinished/uncertain history refuse automatic branching. Concurrent initialization shares one recovery.
+- Synthetic live verification first exposed an incomplete source fixture: it had yielded a dynamic tool call, and a separate process saw that unfinished history as interrupted. Tightened the terminal-state guard and explicit lastTurnId boundary; revised fixture requires a real final response. GPT-6 Luna then passed retained-history recall, one recovery reused for the next turn, and inherited dynamic-tool round trip. Only the two generated synthetic threads were archived.
+- Red/green regression passed for safe RPC framing, recovery, concurrent identity initialization and controller runtime reporting. Final checks: native10 cases, controller/route4 cases, related Node4 files all passed. A loopback fixture initially hit sandbox EACCES; rerunning with required local network permission passed without product changes.
+- Deployed model plugin0.4.2 and controller2.5.1. Installed15 source files matched; persona, native config, original mappings and profile were preserved during code deployment. User's subsequent route change to DeepSeek was retained, then switched to GPT-6 Luna with explicit user selection for acceptance.
+- Fresh production acceptance: user confirmed the previously failing QQ group now replies normally. Two mapped identities continued with their original histories retained; all3 mapping identity keys remain present; replacement threads are listed in Codex and their latest turns completed. Runtime reports ready, shared memory is healthy, and the actual console shows version2.5.1 with Codex/GPT-6 Luna selected. No private message bodies, IDs or credential values enter this report.
+- User's D:\柚柚 workspace categorization was not modified; native cwd and Hy Memory stay at their configured shared paths. Continued threads may require UI regrouping.
+
 ## Companion package installation, 2026-10-21
 
 - First 0.3.0 install reached Bot ready and actual no-msgId proactive sending succeeded, with an ID-bearing QQ receipt. New fiction diary was persisted.
@@ -56,3 +67,68 @@
 ## 2026-10-21 虚构记忆索引
 
 首次同库调用add_extracted仍自动reconcile，出现成功但无返回ID的情况，队列坚持未回读不算完成。按systematic-debugging查SDK writer/client后第一次修复：独立SDK子进程、数据库，仅对已核对虚构条目关闭reconcile和搜索去重；真实用户SDK保留默认冲突处理。迁移重新排队并只清理旧的派生fiction agent空间。实际5条全部写入回读、5条召回，错误及待处理0。通用低相似度查询有时无命中，查询原情景可返回记录，界面明确本地降级。没有第二次盲修。Windows python别名不能执行时改用项目既有venv。
+
+## 2026-10-21 群问候漏回与格式故障
+
+先按systematic-debugging取得真实SyntaxError/五分钟暂停和同模型52字符非JSON复现，再做第一次定向修复：最终文字协议、按成员呼唤排队、冷却延迟、控制优先和READY身份识别。实际两成员各一条QQ接受回执，安装14文件与源码一致，旧暂停解除。最新单次8846ms；不是固定延迟保证。没有第二次盲修，未运行应用测试套件。完整记录见GROUP_RELIABILITY.md和group-reliability-verification.json。
+
+## 2026-10-22 控制台状态与页签
+
+实际日志ReadAllText复现IOException，共享ReadWrite|Delete读取成功；首次定向修复为共享有界读取和失败时待确认状态。界面用TableLayoutPanel分开标题与页签。Windows PowerShell5实际函数确认QQ/记忆就绪，真实窗口截图确认绿色状态与四个标签。只重开控制台，没有重启机器人或修改用户配置。本次未运行配置保存或启停验收。
+
+
+## 2026-10-22 控制台2.0
+
+异步worker、侧栏与安全配置后端替代UI线程等待；旧人设保存误用自动变量Profile，改为显式校验qqbot路径。隔离副本10项检查覆盖配对/未知字段保留、冲突拒绝、未绑定群限制、YAML off、人设与流式保存、共享日志遮蔽和配置备份。真实UI首次Snapshot未载入，按systematic-debugging比较PS7与PS5发现piped null序列化长度4与0，修复为空对象显式JSON；真实窗口最终载入本机2953字符人设，底部已载入反馈和就绪状态可见。日志换行规范化为CRLF。截图工具将ToolTip当主窗口，改用C#内置null类名的FindWindow包装定位真实主窗，这不是产品故障。实际PS5后台三种只读动作均成功；没有主动停机或导出私人记忆。
+## 2026-10-22 内置生图与固定形象
+
+- 第一条QQ手动画图真实进入Codex、完成原生图片与正文回传。原生工具文件保存于USERPROFILE/.codex/generated_images，与进程CODEX_HOME可能不同；交付助手只放行这两个原生目录，继续验证格式和大小。
+- 控制台2.1/插件0.5.6把生图设置从持续变化的任务文件拆开，UI原值保存后任务、配对和关闭的文字同步保持。隔离检查覆盖取消、超时、明确重发、防重复、参考哈希、私有预览与备份。
+- 部署第一次在关闭控制台时被两秒退出检查中止；未停止机器人、未覆盖人设。按systematic-debugging只读复查发现旧窗口随后已正常退出，定向将退出等待改为最多12秒，再次部署成功。
+- 自动界面检查最初用同名窗口标题，UIAutomation无按钮，原生查找也无按钮；只读边界诊断确认命中了ConsoleWindowClass启动外壳，children=0。定向按WindowsForms窗口类筛选真实Form，原生生图页与预览检查成功；不是产品按钮缺失。已恢复隐藏外壳。
+- 第一版日常图裙子混入金边与蕾丝。只针对裙子调用内置编辑，第一次网络错误，第二次仅带原插画重试成功；没有改用API。最终原生图已取得QQ回执，正文原样，原事件来源与唯一发送记录匹配。
+
+# 2026-10-22 — ChatGPT tool replay round-trip
+
+- **Observed:** A basic ChatGPT account response worked and the model emitted a local namespace tool call. The follow-up request containing the tool result was rejected with HTTP 400 because its `function_call_output.call_id` had no matching `function_call` in the input.
+- **Reproduction:** The streaming response emitted `response.output_item.done` for a function call, while `response.completed.response.output` was an empty array. The adapter stored the empty terminal array as replay state, dropping the completed call item.
+- **Fix:** Retain completed output items by `output_index`, merge missing items into the terminal response replay, and use the reconstructed replay for the next turn. Added a regression that exercises the finish replay together with the corresponding tool result.
+- **Verification:** 21 protocol checks passed; a real, non-private `ping` tool call and `pong` follow-up completed using the authorized `gpt-6.1-sol` account route. No QQ profile/model routing was changed during this protocol check.
+
+## 2026-10-22 普通Chat网页：边界逐层定位
+
+- 用户明确普通Chat而非Work；官方账号授权确实使用Work/Codex共享用量，旧理解已更正。正常Edge登录+本地扩展方案不复制Cookie或调用内部接口。
+- 旧固定输入框选择器不适配新页面。按systematic-debugging在无登录本地HTML复现，再改为受约束的通用编辑器匹配，排除搜索/只读/歧义。
+- 原assistant DOM属性不匹配。0.1.3按本轮nonce读取结构化回复，真实Chat短回复及两轮本机ping/pong通过。
+- 首次QQ真人验收发现旧历史超过网页桥接上限。只读真实DSH持久事件，输出结构/长度而非正文；旧单条工具结果约11.5万字符。回归先复现，模型插件0.2.2按完整轮次控制发送上下文，保留system、当前轮和工具链，标注省略数量，持久历史与Hy库不变。
+- QQ下一次网页已回复，回读超时。用户提供带Markdown反斜杠星号的JSON；本地DOM用例先失败，随后仅兼容final正文的标点转义，工具参数仍严格。长提示词折叠用例又定位完整提示词DOM匹配依赖，改为nonce筛选并排除原提示词中的JSON示例，扩展0.1.4全部DOM回归通过。
+- 配套0.6.2修正模型状态命令的名称，避免browser-chat误显示DeepSeek。已部署并核对24个插件JS哈希，人设及两个群保留。真实QQ最终复测及新通道记忆写删/图片边界见chat-ui-verification.json；未通过的项目必须保留pending。
+- 扩展0.1.4重载后，39233字符的合成长提示词在普通Chat真实回读成功，用户随后确认QQ正常收到回答。
+- 后台新记忆仍持续RuntimeError重试。独立HTTPX只读对照复现：trust_env=True对8765/8766均RemoteProtocolError，trust_env=False均200，即使HTTP_PROXY等环境变量不存在，Windows系统代理仍被发现。按systematic-debugging新增SDK初始化失败回归后，仅为两个loopback端点注入显式AsyncHTTPTransport，真实库与虚构库共享，不改第三方包、系统代理或远程端点默认行为。Python11项通过，含不可达代理下真实本机HTTP请求；已只重启记忆服务，QQ和网页配对保留。真实记忆写删结果见最终报告。
+
+
+## 原生Codex双路由，2026-10-22
+
+通过官方App Server使用桌面真实Home，测试证明默认历史列表可见。没有复用浏览器Cookie或给旧API重命名。SDK首轮合成话术明确说“临时验收事实”，Hy按长期记忆过滤，改为稳定偏好后提炼成功；生产代码不改。第二次验收脚本访问本机模型代理漏带鉴权被401拒绝，补齐测试鉴权后双路由、同ID召回、隔离与删除均通过。所有合成事实已删除。Node/Python各13项隔离检查通过，原生工具往返、真实进程重启续接通过。安装JS29份哈希匹配，QQ用户两轮连续聊天确认正常。
+
+## 2026-10-22 群内声称画好但没有图片
+
+调查：实际images-state只有两条历史已交付任务，本次未创建任务；命令只识别画图冒号，授权和目标又硬编码c2c。回归先复现自然请求返回null。修复尝试1：自然意图识别、群绑定管理者授权、原群目标持久化、发送前复查、真实回执与重复保护；隔离模拟46项检查通过，未调用模型或QQ。部署和真实回执仍需单独核对。
+
+## 2026-10-23 生图独立投递
+
+群生图0.6.4真实验收已取得QQ图片回执，用户确认生成成功。随后指出生图误入维护对话：根因是submit复用了文字同步cfg.threadId。回归先证实错误目标；修复尝试1加入独立imageThreadId且保留原文字绑定，50项隔离检查覆盖独立队列目标、配置非法拒绝、群回传与撤权取消。按用户明确选择新建“柚柚·生图工作室”；真实工作室投递验证另存本机记录。
+
+## 2026-10-23 记忆连续性与图片输入
+
+调查：活动群已核对事件数为0；普通群模型未接虚构上下文，省略式追问未分流，旧情景只索引摘要。媒体与vision均已开启，视觉提供方codex/gpt-6-luna，但官方视觉工具的plugin来源消息被原生prepareInput过滤，复现CODEX_INPUT_MISSING。引用缓存不保留附件且在群门控后。修复尝试1分层处理：视觉辅助保留实际图块（12项模拟回归）；完整情景证据/旧索引新修订/追问（14项）；作用域图片引用缓存、直接图块（12项）；既有生图50项回归通过。实际模型与QQ验收记录独立保存，不能以模拟替代。首次检查受管进程已停止，已由既有启动器恢复。
+
+
+## 2026-10-23 真实读书替代虚构读书
+
+调查确认旧日常没有原书或阅读书签。按用户要求增加独立阅读账本，限定连续片段与原文证据，先保存后分享。首个真实导入已完成文本提取和存储，状态SELECT因indexed保留字报错；定向给别名加引号后复用既有书源继续，未重置数据。开发期间未新增或运行自动化测试；实际读取与部署状态另记。
+
+
+### 阅读续接与原文编号（最终）
+
+首读严格引用检查发现句子真实存在但页码错，改为显式分页后DeepSeek第一段保存与Hy回读成功。第二段摘要996字、问题6项超合同，补齐预算并允许一次格式修正后仍出现改写引文。按systematic-debugging重新审视架构，以程序原文引用编号替代让模型抄录；不放宽原文真实性检查。此后DeepSeek第二段真实续读、独立核对、Hy回读成功，原书进度2/128。新增紧凑阅读上下文支持省略追问，保留全部版本和旧笔记。37项隔离检查通过；本机原书路径、身份与失败候选不入Git。

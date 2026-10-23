@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-22",
+  "actual_event_source_matched": true,
+  "installed_files_hash_matched": 17,
+  "plugin": "0.5.6",
+  "controller": "2.1.0",
+  "actual_daily_delivery_records": 1,
+  "github_pushed": false,
+  "real_ps5": [
+    "ImageTasks",
+    "SaveImages-original-values",
+    "ImagePreview",
+    "Status"
+  ],
+  "native_generation": true,
+  "actual_daily_caption_preserved": true,
+  "used_separate_image_api": false,
+  "limits": [
+    "QQ receipt is not a user read receipt",
+    "offline and multi-day unattended operation not fully exercised",
+    "image reference consistency is not pixel-exact"
+  ],
+  "private_assets_committed": false,
+  "actual_qq_daily_image_receipt": true,
+  "isolated_checks": 62
+}

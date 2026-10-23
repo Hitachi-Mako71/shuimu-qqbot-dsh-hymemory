@@ -105,6 +105,17 @@ def export(project, output, namespace=None, include_test_data=False):
         'excludes': ['raw conversation layer', 'deleted/superseded facts', 'embeddings', 'credentials', 'personality prompt'],
         'partitions': partitions,
     }
+    reading_db = project / 'data/reading-workspace/reading.sqlite3'
+    if reading_db.exists():
+        with closing(sqlite3.connect(reading_db.as_uri() + '?mode=ro', uri=True)) as db:
+            db.row_factory = sqlite3.Row
+            condition, params = (' WHERE owner=?', (namespace,)) if namespace else ('', ())
+            notes = [{**dict(row), 'payload': json.loads(row['payload']), 'hy_ids': json.loads(row['hy_ids'])}
+                     for row in db.execute('SELECT id,owner,book,seq,payload,created,index_status,hy_ids,shared_at FROM notes' + condition + ' ORDER BY owner,book,seq', params)]
+            positions = [dict(row) for row in db.execute('SELECT owner,book,cursor,overview,auto FROM books' + condition, params)]
+            milestones = [dict(row) for row in db.execute('SELECT owner,book,through_seq,overview,note_id,created FROM milestones' + condition, params)]
+        result['reading'] = {'format': 'grounded-reading-v1', 'notes': notes, 'positions': positions, 'milestones': milestones,
+                             'note_count': len(notes), 'original_books_included': False}
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:

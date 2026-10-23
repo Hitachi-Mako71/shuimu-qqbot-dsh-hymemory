@@ -1,6 +1,10 @@
 # 架构、事件顺序和接口
 
+当前主链路：QQ → 腾讯DSH插件 → 共享身份/Hy Memory钩子 → DeepSeek 或 Codex原生App Server。Codex以DSH sessionId映射持久线程、当前消息增量追加，使用同一个桌面Codex Home。辅助提炼采用ephemeral线程；详见[NATIVE_CODEX.md](NATIVE_CODEX.md)。
+
 ## 消息链路
+
+本地0.6.0补充：对话和Hy Memory提炼通过控制台选择的DSH LLM路由运行，当前为授权ChatGPT账号的 `gpt-6.1-sol`；切回DeepSeek仍使用原生DSH适配器。Hy Memory向量仍由本机FastEmbed生成。QQ“画图”或已核对的主动日记 → 持久图片任务 → 配对的Codex聊天内置image_gen → 原生图片交付助手 → QQ富媒体图片携带原正文。固定外貌资料与图片链路独立。详见CHATGPT_PLAN.md与CODEX_IMAGES.md。
 
 ```mermaid
 flowchart TD
@@ -18,7 +22,9 @@ flowchart TD
   Idle --> Outbox[SQLite WAL 持久写入队列]
   Outbox --> Hy[真实 Hy Memory SDK chat]
   Hy --> LLM[本机 8766 模型代理]
-  LLM --> Native[ctx.llm.stream 与已有 DSH 登录]
+  LLM --> Native[ctx.llm.stream 与当前账号路由]
+  Native -->|ChatGPT账号或DeepSeek回退| Selected[DSH原生模型适配器]
+  Selected --> Agent
   Hy --> Emb[本机 FastEmbed 512维]
   Hy --> Store[Chroma 与 SDK 文件数据]
 ```
@@ -59,7 +65,7 @@ DSH JSONL 保存现有会话历史，Hy Memory 保存跨会话事实。记忆命
 | `POST /delete` | 检查身份并删除指定记忆 |
 | `POST /v1/embeddings` | 供 SDK 使用的本地向量接口 |
 
-`model-proxy.js` 只监听 `127.0.0.1:8766`，提供 `GET /health` 和带 bearer 的 `POST /v1/chat/completions`，将 SDK 的 OpenAI 风格请求转换为原生 DSH LLM 消息。它供本项目记忆提炼使用，不是所有 OpenAI API 的通用代理。
+`model-proxy.js` 只监听 `127.0.0.1:8766`，提供 `GET /health` 和带 bearer 的 `POST /v1/chat/completions`，将SDK的OpenAI风格请求转换为当前路由下的原生DSH LLM消息。它供本项目记忆提炼使用，不是通用OpenAI API代理。
 
 ## 公主生活与主动分享
 

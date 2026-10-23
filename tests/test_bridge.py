@@ -26,6 +26,55 @@ class StartupWarmup(unittest.TestCase):
             sdk.assert_called_once()
 
 
+class LoopbackSdkNetwork(unittest.TestCase):
+    def test_local_sdk_endpoints_use_an_explicit_direct_transport(self):
+        previous = bridge._client
+        bridge._client = None
+        try:
+            with patch.dict(os.environ, {'MEMORY_LLM_BASE_URL': 'http://127.0.0.1:8766/v1',
+                                         'MEMORY_EMBEDDER_BASE_URL': 'http://127.0.0.1:8765/v1'}):
+                with patch('hy_memory.HyMemoryClient') as factory:
+                    bridge.get_client()
+                    config = factory.call_args.kwargs.get('config')
+                    self.assertIsNotNone(config, 'SDK must receive explicit loopback transport configuration')
+                    self.assertTrue(callable(config.http_transport_factory))
+        finally:
+            bridge._client = previous
+
+    def test_explicit_transport_bypasses_an_unreachable_proxy(self):
+        import asyncio
+        import httpx
+        from memory_network import sdk_config
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        class Health(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'ok')
+            def log_message(self, *args):
+                pass
+        server = ThreadingHTTPServer(('127.0.0.1', 0), Health)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        async def request(config):
+            async with httpx.AsyncClient(transport=config.http_transport_factory()) as client:
+                response = await client.get(f'http://127.0.0.1:{server.server_port}/health')
+                self.assertEqual(response.status_code, 200)
+        try:
+            with patch.dict(os.environ, {'MEMORY_LLM_BASE_URL': 'http://127.0.0.1:8766/v1',
+                                         'MEMORY_EMBEDDER_BASE_URL': 'http://127.0.0.1:8765/v1',
+                                         'HTTP_PROXY': 'http://127.0.0.1:1', 'ALL_PROXY': 'http://127.0.0.1:1', 'NO_PROXY': ''}):
+                asyncio.run(request(sdk_config()))
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_remote_endpoint_keeps_default_transport(self):
+        from memory_network import sdk_config
+        with patch.dict(os.environ, {'MEMORY_LLM_BASE_URL': 'https://example.invalid/v1',
+                                     'MEMORY_EMBEDDER_BASE_URL': 'http://127.0.0.1:8765/v1'}):
+            self.assertIsNone(sdk_config().http_transport_factory)
+
+
 class SdkShape:
     def list_memories(self, **kwargs):
         return {'vdb': {'memories': [{'memory_id': 'test-memory', 'content': 'a preference', 'user_id': USER}], 'total': 1}}

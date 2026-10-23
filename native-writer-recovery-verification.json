@@ -1,0 +1,30 @@
+{
+  "success": true,
+  "model": "gpt-6-luna",
+  "historyRetained": true,
+  "sameReplacementForNextTurn": true,
+  "dynamicToolsInherited": true,
+  "oneRecovery": true,
+  "syntheticThreadsArchived": 2,
+  "checkedAt": "2026-10-22T15:43:52.036Z",
+  "deployed": {
+    "plugin": "0.4.2",
+    "controller": "2.5.1"
+  },
+  "activeRoute": "codex/gpt-6-luna",
+  "qqHumanConfirmed": true,
+  "runtimeReady": true,
+  "lastQQSuccessAt": "2026-10-22T15:41:11.599Z",
+  "persistentThreadCount": 3,
+  "recoveredIdentities": 2,
+  "identityKeysPreserved": true,
+  "priorHistoriesRetained": true,
+  "recoveredThreadsListed": true,
+  "latestRecoveredTurnsCompleted": true,
+  "sharedMemoryReady": true,
+  "nativeTests": 10,
+  "controllerRouteTests": 4,
+  "relatedNodeTestFilesPassed": 4,
+  "controllerVersionAndRouteVisuallyChecked": true,
+  "controllerRuntimeSnapshotReady": true
+}

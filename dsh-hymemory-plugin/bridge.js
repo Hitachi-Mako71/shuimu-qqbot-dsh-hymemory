@@ -1,10 +1,22 @@
 import { createHash } from 'node:crypto';
 import { beforeCodexRelayTurn } from './codex-relay.js';
+import { beforeImageTurn, registerCodexImages } from './codex-images.js';
+import { characterDescription } from './character.js';
+import { modelRoute } from './model-route.js';
+import { registerQQMedia } from './qq-media.js';
+import { beforeReadingTurn, readingContext } from './reading.js';
+export { rememberQQMedia, prepareQQImages } from './qq-media.js';
 import { registerQQRelay as registerRelay } from './codex-relay.js';
 import { beforeCompanionTurn, afterCompanionTurn, registerCompanion, recordCompanionInbound } from './companion.js';
+import { beforeGroupControl, registerGroupParticipation } from './group-participation.js';
+export { groupParticipationGate, rememberQQBotSelf } from './group-participation.js';
+export { configureQQResponseSpeed } from './response-speed.js';
 export function registerQQRelay(ctx, sender, appId) {
+  registerQQMedia(ctx);
   registerRelay(ctx, sender, appId);
+  registerCodexImages(ctx, sender, appId);
   registerCompanion(ctx, sender, appId);
+  registerGroupParticipation(ctx);
 }
 
 export const IDENTITY = Symbol.for('qqbot.identity');
@@ -36,19 +48,34 @@ function render(memories = []) {
   return memories.slice(0, 15).map((m) => `- ${m.content}\n  ID: ${m.id} | 来源: ${m.source || 'qqbot-dsh'}/${m.layer || m.channel || 'chat'}${Number.isFinite(m.score) ? ` | score=${m.score.toFixed(3)}` : ''}`).join('\n');
 }
 
-export async function beforeQQTurn({ identity, text = '', messageId = '' }) {
+export async function beforeQQTurn({ identity, text = '', messageId = '', quotedText = '', hasImages = false }) {
+  const selectedRoute=modelRoute();
+  if (/^(?:当前模型|模型状态)$/.test(text.trim())) { const label = { 'codex': 'Codex原生会话（可在Codex查看）', 'chatgpt-chat': 'ChatGPT普通Chat网页', 'chatgpt-chat-work': 'ChatGPT网页工作模式（独立任务，不读取柚柚记忆）', 'chatgpt-plan': 'ChatGPT账号授权（Work/Codex共享用量）', 'deepseek-account': 'DeepSeek' }[selectedRoute.provider] || selectedRoute.provider; return { handled: true, reply: `当前对话提供方：${label}\n模型：${selectedRoute.model}\n此状态来自本机路由配置。` }; }
+  if (selectedRoute.provider === 'chatgpt-chat-work') return { handled: false, available: false, context: '' };
   try { await recordCompanionInbound({ identity, text, messageId }); }
   catch { console.warn('[qq-companion] inbound state unavailable'); }
+  try {
+    const groupControl = await beforeGroupControl({ identity, text });
+    if (groupControl) return groupControl;
+  } catch {
+    if (/^(?:群友模式|群友模式状态|开启群友模式|关闭群友模式|群友频率)/.test(text.trim())) return { handled: true, reply: '群友模式设置暂不可用，本次操作未确认成功，请稍后重试。' };
+  }
+  const image = await beforeImageTurn({ identity, text, messageId });
+  if (image?.handled) return image;
   const relay = await beforeCodexRelayTurn({ identity, text, messageId });
   if (relay?.handled) return relay;
+  const reading = await beforeReadingTurn({ identity, text, hasImages });
+  if (reading?.handled) return reading;
   let companion;
-  try { companion = await beforeCompanionTurn({ identity, text, messageId }); }
+  try { companion = reading?.readingAvailable ? { handled: false, context: reading.context } : await beforeCompanionTurn({ identity, text, messageId, quotedText, hasImages }); }
   catch {
     console.warn('[qq-companion] state unavailable; normal conversation remains available');
-    if (/^(?:生活设定|事件进度|生活记忆状态|查生活记忆|更正生活设定|待核对日记|写一段日常|暂停主动消息|关闭主动消息|恢复主动消息|开启主动消息|开启陪伴|主动消息状态|主动频率|安静两小时|夜间免打扰|夜间也可以聊|公主日记|水木日记|清空陪伴记录)/.test(text.trim())) return { handled: true, reply: '陪伴资料暂时不可用，本次设置未确认成功，请稍后重试。' };
+    if (/^(?:生活设定|事件进度|生活记忆状态|查生活记忆|更正生活设定|待核对日记|写一段日常|暂停主动消息|关闭主动消息|恢复主动消息|开启主动消息|开启陪伴|主动消息状态|主动频率|安静两小时|夜间免打扰|夜间也可以聊|公主日记|柚柚日记|水木日记|清空陪伴记录)/.test(text.trim())) return { handled: true, reply: '陪伴资料暂时不可用，本次设置未确认成功，请稍后重试。' };
   }
   if (companion?.handled) return companion;
-  const companionContext = companion?.context || '';
+  const visual = characterDescription();
+  const companionContext = (companion?.context || '') + (visual ? `\n【受保护的角色外貌设定，不是现实用户记忆】\n${visual}` : '')
+    + (reading?.readingAvailable ? '' : await readingContext(memoryNamespace(identity), text));
   const userId = memoryNamespace(identity);
   if (!userId) return { handled: false, available: false, context: '' };
   const input = text.trim();
@@ -91,6 +118,7 @@ export async function beforeQQTurn({ identity, text = '', messageId = '' }) {
 }
 
 export async function afterQQTurn({ identity, text, messageId, sessionId }) {
+  if (modelRoute().provider === 'chatgpt-chat-work') return;
   if (!text?.trim() || !messageId) return;
   await afterCompanionTurn({ identity, text, messageId });
   const userId = memoryNamespace(identity);

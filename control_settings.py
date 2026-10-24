@@ -14,7 +14,6 @@ import zipfile
 import yaml
 import control_images
 import control_models
-import control_reading
 from personality_config import GROUP_STYLE, PromptLoader, PromptDumper
 
 CHINA = timezone(timedelta(hours=8))
@@ -267,7 +266,7 @@ def backup(project, profile):
     _, _, _, config = qq_config(profile)
     safe_bot = {key: config.get(key) for key in ('provider', 'model', 'streaming')}
     with zipfile.ZipFile(destination, 'x', zipfile.ZIP_DEFLATED) as archive:
-        for relative in ('personality.md', 'fiction-canon.json', 'data/companion/settings.json', 'data/companion/groups/registry.json', 'data/control-console/preferences.json', 'data/codex-relay/images-settings.json', 'data/character/profile.json'):
+        for relative in ('personality.md', 'data/companion/settings.json', 'data/companion/groups/registry.json', 'data/control-console/preferences.json', 'data/codex-relay/images-settings.json', 'data/character/profile.json'):
             path = project / relative
             if path.exists():
                 archive.writestr(relative, sanitize(project, path.read_text(encoding='utf-8-sig')))
@@ -286,8 +285,6 @@ def backup(project, profile):
 
 
 def perform(project, profile, action, payload):
-    if action.startswith('Reading'):
-        return control_reading.perform(project, action, payload)
     if action == 'Snapshot':
         return snapshot(project, profile)
     if action == 'SaveCompanion':
@@ -306,9 +303,6 @@ def perform(project, profile, action, payload):
         return control_images.preview(project, payload)
     elif action == 'ImageTasks':
         return control_images.snapshot(project)
-    elif action == 'ImageProbe':
-        import uuid
-        commit(project / 'data/companion/control' / (str(uuid.uuid4()) + '.json'), encoded({'type': 'share_verified_image', 'createdAt': int(time.time() * 1000)}))
     elif action == 'Logs':
         return logs(project, payload)
     elif action == 'Backup':

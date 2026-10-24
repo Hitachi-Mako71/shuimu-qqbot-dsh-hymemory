@@ -72,32 +72,6 @@ const count = sends.length; await flush(); check(read().jobs.at(-1).status === '
 await turn('画图：校验篡改', 'sixth'); ready(read().jobs.at(-1), { sha256: 'bad' }); await flush();
 check(sends.length === count && read().jobs.at(-1).status === 'queued');
 await turn('关闭生图'); await turn('开启生图');
-const companion = { enabled: true, owner: 'qq-' + owner, target: { scope: 'c2c', targetId: identity.peerId }, quietDisabled: true, hourlyMax: 3, dailyMax: 42 };
-fs.writeFileSync(path.join(process.env.QQBOT_COMPANION_DIR, 'settings.json'), JSON.stringify(companion));
-const episode = { id: 'fiction-1', eventId: 'E111', imagePrompt: '只画茉莉花', message: '茉莉开花了。', detail: '花园里茉莉开了一朵花。' };
-check(Boolean(await module.queueLifeImage({ identity, episode })));
-check(module.hasPendingLifeImage(identity));
-ready(read().jobs.at(-1)); await flush();
-check(read().jobs.at(-1).status === 'delivered' && sends.at(-1).args[2].content === episode.message);
-const personFile = path.join(process.env.QQBOT_COMPANION_DIR, 'people', 'qq-' + owner + '.json');
-check(JSON.parse(fs.readFileSync(personFile)).deliveries.length === 1);
-check(await module.queueLifeImage({ identity, episode: { ...episode, eventId: 'E222' } }) === null);
-state = read(); for (const j of state.jobs) j.createdAt -= 7200000; write('images-state.json', state);
-fs.writeFileSync(personFile, JSON.stringify({ moments: [], life: [], deliveries: [], attention: {} }));
-check(Boolean(await module.queueLifeImage({ identity, episode: { ...episode, eventId: 'E333' } })));
-companion.enabled = false; fs.writeFileSync(path.join(process.env.QQBOT_COMPANION_DIR, 'settings.json'), JSON.stringify(companion));
-ready(read().jobs.at(-1)); const beforePause = sends.length; await flush();
-check(read().jobs.at(-1).status === 'canceled' && sends.length === beforePause);
-for (const mode of ['quiet', 'busy']) {
-  state=read();for(const j of state.jobs)j.createdAt-=7200000;write('images-state.json',state);
-  companion.enabled=true;companion.quietDisabled=true;
-  fs.writeFileSync(path.join(process.env.QQBOT_COMPANION_DIR,'settings.json'),JSON.stringify(companion));
-  fs.writeFileSync(personFile,JSON.stringify({moments:[],life:[],deliveries:[],attention:{}}));
-  check(Boolean(await module.queueLifeImage({identity,episode:{...episode,eventId:'E-'+mode}})));
-  if(mode==='quiet'){companion.quietDisabled=false;companion.quietStart=0;companion.quietEnd=24;fs.writeFileSync(path.join(process.env.QQBOT_COMPANION_DIR,'settings.json'),JSON.stringify(companion));}
-  else fs.writeFileSync(personFile,JSON.stringify({moments:[],life:[],deliveries:[],attention:{quietUntil:Date.now()+3600000}}));
-  ready(read().jobs.at(-1));const before=sends.length;await flush();check(read().jobs.at(-1).status==='canceled' && sends.length===before);
-}
 state = read(); state.jobs.push({ ...state.jobs[0], id: '00000000-0000-0000-0000-000000000099', status: 'sending' }); write('images-state.json', state); await flush();
 check(read().jobs.at(-1).status === 'uncertain');
 state = read(); const uncertain = state.jobs.find((j) => j.status === 'uncertain' && fs.existsSync(path.join(imageRoot, j.id, 'ready.json')));

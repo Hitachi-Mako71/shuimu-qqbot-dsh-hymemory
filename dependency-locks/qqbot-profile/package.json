@@ -4,7 +4,7 @@
   "dependencies": {
     "@tencent-connect/dsh-qqbot": "0.5.2",
     "dsh-chatgpt-plan": "file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-chatgpt-plan-0.4.3.tgz",
-    "dsh-hymemory-qq": "file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-hymemory-qq-0.7.1.tgz"
+    "dsh-hymemory-qq": "file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz"
   },
   "dsh": {
     "profile": {

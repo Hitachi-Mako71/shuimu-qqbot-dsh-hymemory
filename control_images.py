@@ -24,7 +24,7 @@ def configuration(project):
     directory = project / 'data/codex-relay'
     old = read(directory / 'images-state.json', {})
     raw = read(directory / 'images-settings.json', {'enabled': bool(old.get('enabled')), 'auto': bool(old.get('auto'))})
-    return {**DEFAULTS, **raw}
+    return {**DEFAULTS, **raw, 'auto': False}
 
 
 def revision(value):
@@ -41,6 +41,8 @@ def snapshot(project):
     character = read(project / 'data/character/profile.json', {})
     jobs = []
     for job in state.get('jobs', [])[-30:][::-1]:
+        if job.get('kind') != 'manual':
+            continue
         jobs.append({'id': job['id'], 'status': job.get('status', ''), 'label': LABELS.get(job.get('status'), '待确认'),
                      'kind': '日常配图' if job.get('kind') == 'life' else '手动画图', 'caption': job.get('caption', '')[:350],
                      'createdAt': job.get('createdAt'), 'reason': REASONS.get(job.get('reason'), ''),
@@ -70,6 +72,7 @@ def save(project, payload, commit, conflict_type):
         if type(payload.get(key)) is not int or not low <= payload[key] <= high:
             raise ValueError(f'{key}应在{low}至{high}之间。')
     settings.update({key: payload[key] for key in DEFAULTS})
+    settings['auto'] = False
     commit(path, json.dumps(settings, ensure_ascii=False, indent=2).encode(), hashlib.sha256(raw).hexdigest(), project / '.run/control-console/backups')
 
 

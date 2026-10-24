@@ -78,34 +78,18 @@ function Refresh-Enabled{
     $script:Ui.PendingButton.Enabled=-not $script:Ui.Busy
     Update-ImageSelection
 }
-function Apply-Reading($Data){
-    $script:Ui.ReadingRows=@($Data.books)
-    $selected=if($script:Ui.ReadingBooks.SelectedIndex -ge 0 -and $script:Ui.ReadingOldRows){$script:Ui.ReadingOldRows[$script:Ui.ReadingBooks.SelectedIndex].book}else{''}
-    $script:Ui.ReadingBooks.Items.Clear();$index=0;$chosen=0
-    foreach($b in $script:Ui.ReadingRows){[void]$script:Ui.ReadingBooks.Items.Add(('《'+$b.title+'》  '+$b.cursor+'/'+$b.total+' 段'));if($b.book -eq $selected){$chosen=$index};$index++}
-    $script:Ui.ReadingOldRows=$script:Ui.ReadingRows
-    if($script:Ui.ReadingRows.Count){$script:Ui.ReadingBooks.SelectedIndex=$chosen}
-    $script:Ui.ReadingSummary.Text=(@($Data.books|ForEach-Object {"《$($_.title)》 · 已读 $($_.cursor)/$($_.total) 段 · 书签到PDF第 $($_.lastPage) 页 · Hy Memory已确认 $($_.indexed) 段 · "+$(if($_.auto){'自动阅读开启'}else{'已暂停'})+$(if($_.error){' · 上次读取未完成，书签未推进'}else{''})}) -join "`r`n")
-    if(-not $Data.books.Count){$script:Ui.ReadingSummary.Text='书架为空。导入只建立书源，模型不会一次接收整本PDF。'}
-    $notes=@($Data.notes)
-    if($notes.Count){$n=$notes[0];$script:Ui.ReadingNotes.Text="《$($n.title)》 · PDF第 $($n.pages -join '、') 页的一段内容`r`n`r`n感悟`r`n$($n.reflection)`r`n`r`n逐段摘要`r`n$($n.summary)`r`n`r`n截至此处的整体理解`r`n$($n.overview)`r`n`r`n原文依据`r`n"+(@($n.evidence|ForEach-Object {"PDF第$($_.page)页：$($_.quote)"}) -join "`r`n")+"`r`n`r`n未解问题`r`n"+($n.questions -join "`r`n")}else{$script:Ui.ReadingNotes.Text='尚无已完成并核对的阅读笔记，不展示虚构感悟。'}
-}
-
 function Show-Page([string]$Key){
     foreach($name in $script:Ui.Pages.Keys){$script:Ui.Pages[$name].Visible=($name -eq $Key);$script:Ui.Nav[$name].BackColor=if($name -eq $Key){$C.Input}else{$C.Side};$script:Ui.Nav[$name].ForeColor=if($name -eq $Key){$C.Accent}else{$C.Muted}}
     $script:Ui.Page=$Key;$script:Ui.Pages[$Key].BringToFront()
-    $titles=@{home=@('概览','查看柚柚的运行情况与常用操作');companion=@('主动消息','调整她主动分享日常的节奏');group=@('群聊设置','为不同群聊设置独立的参与方式');persona=@('人设与回复','编辑交流风格，调整回复显示方式');logs=@('运行日志','查看最近200行，凭证会自动遮蔽');tools=@('备份与导出','把配置和记忆安全保存到本机')}
-    $titles.images=@('生图与形象','管理配图节奏、任务与柚柚的固定形象')
-    $titles.reading=@('阅读书房','逐段读原书，保存书签、出处、感悟和前后联系')
+    $titles=@{home=@('概览','查看柚柚的运行情况与常用操作');companion=@('主动消息','调整轻问候和免打扰');group=@('群聊设置','为不同群聊设置独立的参与方式');persona=@('人设与回复','编辑交流风格，调整回复显示方式');logs=@('运行日志','查看最近200行，凭证会自动遮蔽');tools=@('备份与导出','把配置和记忆安全保存到本机')}
+    $titles.images=@('生图与形象','管理手动生图任务与柚柚的固定形象')
     $titles.models=@('对话模型','切换DeepSeek、Codex，或无记忆上下文的Chat工作模式')
     $script:Ui.Title.Text=$titles[$Key][0];$script:Ui.Subtitle.Text=$titles[$Key][1]
-    if($Key -eq 'reading'){Begin-Job 'ReadingStatus' $null $true}
     if($Key -eq 'logs'){Begin-Job 'Logs' @{channel=$script:Ui.LogChannels[$script:Ui.LogChoice.SelectedIndex]} $true}
     if($Key -eq 'images'){Begin-Job 'ImageTasks' $null $true;if(-not $script:Ui.ImagePicture.Image){Begin-Job 'ImagePreview' @{id='character'} $true}}
 }
 function Begin-Job([string]$Action,$Payload=$null,[bool]$Quiet=$false){
     if($script:Ui.Jobs.ContainsKey($Action)){return}
-    $readOnly=$Action -in @('Status','Snapshot','Logs','ImageTasks','ImagePreview','ReadingStatus')
     if(-not $readOnly -and $script:Ui.Busy){Notify '请等待当前操作完成。' 'warning';return}
     $id=[Guid]::NewGuid().ToString('N');$result=Join-Path $JobDir ($id+'.result.json');$request=Join-Path $JobDir ($id+'.request.json')
     if($null -eq $Payload){$Payload=@{}}
@@ -180,12 +164,9 @@ function Handle-Result($Job,$Reply){
         'ImageTasks'{Apply-Images $Reply.data}
         {$_ -in @('ConnectChatGPT','RefreshChatGPT','ProbeChatGPT','ConnectChatUI','ProbeChatUI','RefreshCodex','ProbeCodex','OpenCodex')}{Notify $Reply.message 'success';Begin-Job 'Snapshot' $null $true}
         {$_ -in @('CancelImage','RetryImage')}{Notify '已提交任务操作，机器人将在下一次检查时处理；已在发送中的消息可能无法撤回。' 'success';Begin-Job 'ImageTasks' $null $true}
-        'ImageProbe'{Notify '已请求分享一条有配图构想、尚未发送的日记；暂停、免打扰和等待回复规则继续生效。' 'success'}
         'ImagePreview'{
             try{$stream=[IO.File]::OpenRead([string]$Reply.data.path);try{$loaded=[Drawing.Image]::FromStream($stream);try{$picture=New-Object Drawing.Bitmap($loaded)}finally{$loaded.Dispose()}}finally{$stream.Dispose()};$old=$script:Ui.ImagePicture.Image;$script:Ui.ImagePicture.Image=$picture;if($old){$old.Dispose()};Notify '图片已在右侧预览。' 'success'}catch{Notify '此图片暂不能预览，文件仍保存在本机。' 'warning'}
         }
-        {$_ -in @('ReadingStatus','ReadingImport','ReadingNext','ReadingAuto')}{Apply-Reading $Reply.data;Notify $Reply.message 'success'}
-        'ReadingExport'{Apply-Reading $Reply.data.snapshot;Notify ('阅读笔记已导出：'+$Reply.data.path) 'success'}
         'ExportMemory'{$script:Ui.LastExport.Text='最近保存：'+$Reply.data.path;Notify ("已导出 $($Reply.data.memoryCount) 条记忆，按 $($Reply.data.partitionCount) 个身份分区。") 'success';Begin-Job 'Status' $null $true}
     }
 }
@@ -260,7 +241,7 @@ function Apply-ChatModel($Data){
     }finally{$script:Ui.Loading=$old}
 }
 function Save-Images{
-    Begin-Job 'SaveImages' @{version=$script:Ui.ImageVersion;enabled=$script:Ui.ImageEnabled.Checked;auto=$script:Ui.ImageAuto.Checked;characterEnabled=$script:Ui.ImageCharacter.Checked;dailyMax=[int]$script:Ui.ImageDaily.Value;minMinutes=[int]$script:Ui.ImageInterval.Value;manualDailyMax=[int]$script:Ui.ImageManual.Value;timeoutMinutes=[int]$script:Ui.ImageTimeout.Value}
+    Begin-Job 'SaveImages' @{version=$script:Ui.ImageVersion;enabled=$script:Ui.ImageEnabled.Checked;auto=$false;characterEnabled=$script:Ui.ImageCharacter.Checked;dailyMax=6;minMinutes=60;manualDailyMax=[int]$script:Ui.ImageManual.Value;timeoutMinutes=[int]$script:Ui.ImageTimeout.Value}
 }
 function Update-ImageSelection{
     if(-not $script:Ui.ImageList){return};$i=$script:Ui.ImageList.SelectedIndex;$job=if($i -ge 0 -and $i -lt $script:Ui.ImageRows.Count){$script:Ui.ImageRows[$i]}else{$null}
@@ -272,8 +253,8 @@ function Update-ImageSelection{
 function Apply-Images($Data){
     if(-not $Data){return};$wasLoading=$script:Ui.Loading;$script:Ui.Loading=$true
     try{
-        if(-not $script:Ui.Dirty.images){$s=$Data.settings;$script:Ui.ImageEnabled.Checked=[bool]$s.enabled;$script:Ui.ImageAuto.Checked=[bool]$s.auto;$script:Ui.ImageCharacter.Checked=[bool]$s.characterEnabled;$script:Ui.ImageVersion=$Data.version
-            foreach($pair in @(@('ImageDaily','dailyMax'),@('ImageInterval','minMinutes'),@('ImageManual','manualDailyMax'),@('ImageTimeout','timeoutMinutes'))){$control=$script:Ui[$pair[0]];$control.Value=[Math]::Max($control.Minimum,[Math]::Min($control.Maximum,[decimal]$s.($pair[1])))}
+        if(-not $script:Ui.Dirty.images){$s=$Data.settings;$script:Ui.ImageEnabled.Checked=[bool]$s.enabled;$script:Ui.ImageCharacter.Checked=[bool]$s.characterEnabled;$script:Ui.ImageVersion=$Data.version
+            foreach($pair in @(@('ImageManual','manualDailyMax'),@('ImageTimeout','timeoutMinutes'))){$control=$script:Ui[$pair[0]];$control.Value=[Math]::Max($control.Minimum,[Math]::Min($control.Maximum,[decimal]$s.($pair[1])))}
         }
         $script:Ui.ImageInfo.Text=if(-not $Data.configured){'尚未配置生图通道。请先完成本机QQ与Codex配对。'}else{"已配对私聊  ·  待处理 $($Data.active) 个任务`r`nCodex桌面版需保持打开，文字同步开关独立。"}
         $script:Ui.CharacterInfo.Text=if($Data.characterReady){'固定形象已就绪：冬日针织装 + 蓝发圆脸。只用于柚柚自己的画面，不会套用到普通画图。'}else{'尚未配置固定形象参考图。'}
@@ -292,8 +273,8 @@ foreach($style in @((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]:
 $side=New-Object Windows.Forms.Panel;$side.Dock='Fill';$side.Margin=New-Object Windows.Forms.Padding(0);$side.BackColor=$C.Side;$side.Padding=New-Object Windows.Forms.Padding(14,24,14,16);$root.Controls.Add($side,0,0);$root.SetRowSpan($side,3)
 $sideStack=Stack-Panel;$side.Controls.Add($sideStack)
 $brand=Text-Line '柚柚' 23 $true 46;$brand.ForeColor=$C.Green;Stack-Add $sideStack $brand 0
-$brandHint=Text-Line '机器人控制台  2.6.0' 9 $false 38;$brandHint.ForeColor=$C.Muted;Stack-Add $sideStack $brandHint 20
-foreach($entry in @(@('home','概览'),@('models','对话模型'),@('companion','主动消息'),@('group','群聊设置'),@('persona','人设与回复'),@('images','生图与形象'),@('reading','阅读书房'),@('logs','运行日志'),@('tools','备份与导出'))){$button=Action-Button $entry[1];$button.Tag=$entry[0];$button.TextAlign='MiddleLeft';$button.Padding=New-Object Windows.Forms.Padding(12,0,0,0);$button.Height=45;$button.Add_Click({param($sender,$eventArgs) Show-Page ([string]$sender.Tag)});Stack-Add $sideStack $button 6;$script:Ui.Nav[$entry[0]]=$button}
+$brandHint=Text-Line '机器人控制台  2.7.0' 9 $false 38;$brandHint.ForeColor=$C.Muted;Stack-Add $sideStack $brandHint 20
+foreach($entry in @(@('home','概览'),@('models','对话模型'),@('companion','主动消息'),@('group','群聊设置'),@('persona','人设与回复'),@('images','生图与形象'),@('logs','运行日志'),@('tools','备份与导出'))){$button=Action-Button $entry[1];$button.Tag=$entry[0];$button.TextAlign='MiddleLeft';$button.Padding=New-Object Windows.Forms.Padding(12,0,0,0);$button.Height=45;$button.Add_Click({param($sender,$eventArgs) Show-Page ([string]$sender.Tag)});Stack-Add $sideStack $button 6;$script:Ui.Nav[$entry[0]]=$button}
 $sideFoot=Text-Line "本机配置 · 独立记忆`r`nQQ / DSH / Hy Memory" 8 $false 48;$sideFoot.Dock='Bottom';$sideFoot.ForeColor=$C.Muted;$side.Controls.Add($sideFoot)
 $top=New-Object Windows.Forms.TableLayoutPanel;$top.Dock='Fill';$top.ColumnCount=3;$top.RowCount=2;$top.Padding=New-Object Windows.Forms.Padding(24,16,20,8);$top.Margin=New-Object Windows.Forms.Padding(0)
 [void]$top.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Percent,100)));[void]$top.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Absolute,145)));[void]$top.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Absolute,145)))
@@ -320,30 +301,6 @@ $script:Ui.LastCheck=Text-Line '状态在后台自动更新' 8 $false 30;$script
 $overview=Card '当前配置' '常用设置都可以在左侧页面查看和调整。';$script:Ui.Overview=Text-Line '正在载入…' 9 $false 84;$script:Ui.Overview.ForeColor=$C.Muted;Stack-Add $overview.Body $script:Ui.Overview 0;Stack-Add $homeStack $overview.Panel 12
 $note=Text-Line '启停在后台完成。关闭控制台窗口会保留机器人当前的运行状态。' 9 $false 42;$note.ForeColor=$C.Muted;Stack-Add $homeStack $note
 
-# Reader: local import, durable progress and grounded reflection.
-$readingPage=Page 'reading';$readingStack=Stack-Panel;$readingPage.Controls.Add($readingStack)
-$bookCard=Card '书架与阅读进度' '每次最多2400字符的新原文，默认每45分钟续读一段。只有笔记和出处核对、保存后才推进书签。'
-$script:Ui.ReadingBooks=New-Object Windows.Forms.ListBox;$script:Ui.ReadingBooks.Height=85;$script:Ui.ReadingBooks.BackColor=$C.Input;$script:Ui.ReadingBooks.ForeColor=$C.Text;$script:Ui.ReadingBooks.BorderStyle='None';Stack-Add $bookCard.Body $script:Ui.ReadingBooks 8
-$script:Ui.ReadingSummary=Text-Line '正在载入书架…' 9 $false 88;Stack-Add $bookCard.Body $script:Ui.ReadingSummary 6
-$flow=Flow-Actions
-$readNext=Action-Button '继续读下一段' 'primary' 140;$readNext.Add_Click({$id='';if($script:Ui.ReadingBooks.SelectedIndex -ge 0){$id=$script:Ui.ReadingRows[$script:Ui.ReadingBooks.SelectedIndex].book};Begin-Job 'ReadingNext' @{book=$id}});$flow.Controls.Add($readNext)
-$pauseReading=Action-Button '暂停自动阅读' 'normal' 140;$pauseReading.Add_Click({Begin-Job 'ReadingAuto' @{enabled=$false}});$flow.Controls.Add($pauseReading)
-$resumeReading=Action-Button '恢复自动阅读' 'normal' 140;$resumeReading.Add_Click({Begin-Job 'ReadingAuto' @{enabled=$true}});$flow.Controls.Add($resumeReading)
-$refreshReading=Action-Button '刷新书架' 'normal' 108;$refreshReading.Add_Click({Begin-Job 'ReadingStatus' $null $true});$flow.Controls.Add($refreshReading);Stack-Add $bookCard.Body $flow 0;Stack-Add $readingStack $bookCard.Panel
-$importCard=Card '添加一本书' '支持文字型PDF、TXT、Markdown。扫描正文需要OCR，提取失败不会跳过或假装读完。书籍仅加入已配对私聊的书架。'
-$script:Ui.ReadingFile=Input-Field;$script:Ui.ReadingFile.ReadOnly=$true;Field-Row $importCard.Body '本机书籍文件' $script:Ui.ReadingFile
-$script:Ui.ReadingTitle=Input-Field;Field-Row $importCard.Body '书名' $script:Ui.ReadingTitle
-$script:Ui.ReadingAuthor=Input-Field;Field-Row $importCard.Body '作者（可留空）' $script:Ui.ReadingAuthor
-$script:Ui.ReadingCover=Check-Field '我已查看，PDF第1页仅是无文字层的封面';Stack-Add $importCard.Body $script:Ui.ReadingCover 4
-$flow=Flow-Actions
-$chooseBook=Action-Button '选择文件' 'normal' 120;$chooseBook.Add_Click({$dialog=New-Object Windows.Forms.OpenFileDialog;$dialog.Filter='书籍|*.pdf;*.txt;*.md';if($dialog.ShowDialog() -eq 'OK'){$script:Ui.ReadingFile.Text=$dialog.FileName;if(-not $script:Ui.ReadingTitle.Text){$script:Ui.ReadingTitle.Text=([IO.Path]::GetFileNameWithoutExtension($dialog.FileName) -replace '\s*[（(].*$','')}};$dialog.Dispose()});$flow.Controls.Add($chooseBook)
-$importBook=Action-Button '导入书架' 'primary' 120;$importBook.Add_Click({Begin-Job 'ReadingImport' @{file=$script:Ui.ReadingFile.Text;title=$script:Ui.ReadingTitle.Text;author=$script:Ui.ReadingAuthor.Text;coverReviewed=$script:Ui.ReadingCover.Checked}});$flow.Controls.Add($importBook)
-$openReading=Action-Button '打开阅读文件夹' 'normal' 150;$openReading.Add_Click({Start-Process explorer.exe -ArgumentList ('"'+(Join-Path $Project 'data\reading-workspace')+'"')});$flow.Controls.Add($openReading);Stack-Add $importCard.Body $flow 0;Stack-Add $readingStack $importCard.Panel
-$notesCard=Card '最近感悟与前文理解' '全部逐段笔记永久保留；读到后文可修正早先理解，旧感悟不会被覆盖。分享仍遵守主动消息开关、安静时段和等待回复规则。'
-$script:Ui.ReadingNotes=New-Object Windows.Forms.TextBox;$script:Ui.ReadingNotes.Multiline=$true;$script:Ui.ReadingNotes.ReadOnly=$true;$script:Ui.ReadingNotes.ScrollBars='Vertical';$script:Ui.ReadingNotes.Height=300;$script:Ui.ReadingNotes.BackColor=$C.Input;$script:Ui.ReadingNotes.ForeColor=$C.Text;Stack-Add $notesCard.Body $script:Ui.ReadingNotes 8
-$exportReading=Action-Button '导出全部阅读笔记' 'normal' 175;$exportReading.Add_Click({Begin-Job 'ReadingExport'});Stack-Add $notesCard.Body $exportReading 0;Stack-Add $readingStack $notesCard.Panel
-
-# Native Codex and original DeepSeek share the same memory service.
 $modelsPage=Page 'models';$modelsStack=Stack-Panel;$modelsPage.Controls.Add($modelsStack)
 $accountCard=Card 'Codex 原生连接' '使用本机Codex已登录的账号，聊天会保存到Codex软件的历史列表。仍适用账号本身的额度。'
 $script:Ui.ModelAccount=Text-Line '正在载入…' 10 $false 60;Stack-Add $accountCard.Body $script:Ui.ModelAccount 6
@@ -368,7 +325,7 @@ $script:Ui.ModelProvider.Add_SelectedIndexChanged({if(-not $script:Ui.Loading){U
 # Proactive messages
 $compPage=Page 'companion';$compStack=Stack-Panel;$compPage.Controls.Add($compStack)
 $compCard=Card '主动分享' '只向已经配对的私聊发送。频率是考虑分享的节奏，并非固定推送。'
-$script:Ui.CompEnabled=Check-Field '允许柚柚主动分享日常';Stack-Add $compCard.Body $script:Ui.CompEnabled 10
+$script:Ui.CompEnabled=Check-Field '允许柚柚主动主动问候';Stack-Add $compCard.Body $script:Ui.CompEnabled 10
 $script:Ui.FrequencyKeys=@('high','normal','light','custom');$script:Ui.CompFrequency=Choice-Field @('高频 · 20–30分钟考虑，最多3条/小时','正常 · 60–120分钟考虑，最多1条/小时','轻量 · 3–6小时考虑，最多1条/小时','自定义 · 保留目前的间隔与小时上限');Field-Row $compCard.Body '分享节奏' $script:Ui.CompFrequency
 $script:Ui.DailyMax=New-Object Windows.Forms.NumericUpDown;$script:Ui.DailyMax.Minimum=1;$script:Ui.DailyMax.Maximum=72;$script:Ui.DailyMax.Value=42;$script:Ui.DailyMax.BackColor=$C.Input;$script:Ui.DailyMax.ForeColor=$C.Text;$script:Ui.DailyMax.Width=110;$script:Ui.EditControls+=,$script:Ui.DailyMax;Field-Row $compCard.Body '每天最多分享多少条' $script:Ui.DailyMax
 $script:Ui.NightAllowed=Check-Field '允许夜间主动分享';Stack-Add $compCard.Body $script:Ui.NightAllowed 2
@@ -411,13 +368,12 @@ $imagesPage=Page 'images' $false;$imageGrid=New-Object Windows.Forms.TableLayout
 $imageLeft=New-Object Windows.Forms.Panel;$imageLeft.Dock='Fill';$imageLeft.AutoScroll=$true;$imageLeft.Margin=New-Object Windows.Forms.Padding(0,0,12,0);$imageGrid.Controls.Add($imageLeft,0,0);$imageSettings=Stack-Panel;$imageLeft.Controls.Add($imageSettings)
 $imageCard=Card '配图节奏' '只向已配对私聊发送。暂停主动消息与免打扰继续生效。'
 $script:Ui.ImageEnabled=Check-Field '开启 Codex 内置生图';Stack-Add $imageCard.Body $script:Ui.ImageEnabled 0
-$script:Ui.ImageAuto=Check-Field '允许柚柚自行决定日常配图';Stack-Add $imageCard.Body $script:Ui.ImageAuto 0
 $script:Ui.ImageCharacter=Check-Field '使用固定形象参考图';Stack-Add $imageCard.Body $script:Ui.ImageCharacter 6
-foreach($entry in @(@('ImageInterval','日常配图最短间隔 / 分钟',20,1440),@('ImageDaily','日常配图每天上限 / 张',1,24),@('ImageManual','手动画图每天上限 / 张',1,100),@('ImageTimeout','等待生成超时 / 分钟',5,120))){$number=New-Object Windows.Forms.NumericUpDown;$number.Minimum=$entry[2];$number.Maximum=$entry[3];$number.Dock='Top';$number.BackColor=$C.Input;$number.ForeColor=$C.Text;$script:Ui[$entry[0]]=$number;$script:Ui.EditControls+=,$number;Field-Row $imageCard.Body $entry[1] $number;$number.Add_ValueChanged({Mark-Dirty 'images'})}
-$flow=Flow-Actions;$imageSave=Save-Button '保存生图设置';$imageSave.Add_Click({Save-Images});$flow.Controls.Add($imageSave);$probe=Action-Button '分享一条日常配图' 'normal' 156;$probe.Add_Click({Begin-Job 'ImageProbe'});$flow.Controls.Add($probe);Stack-Add $imageCard.Body $flow 0
+foreach($entry in @(@('ImageManual','手动画图每天上限 / 张',1,100),@('ImageTimeout','等待生成超时 / 分钟',5,120))){$number=New-Object Windows.Forms.NumericUpDown;$number.Minimum=$entry[2];$number.Maximum=$entry[3];$number.Dock='Top';$number.BackColor=$C.Input;$number.ForeColor=$C.Text;$script:Ui[$entry[0]]=$number;$script:Ui.EditControls+=,$number;Field-Row $imageCard.Body $entry[1] $number;$number.Add_ValueChanged({Mark-Dirty 'images'})}
+$flow=Flow-Actions;$imageSave=Save-Button '保存生图设置';$imageSave.Add_Click({Save-Images});$flow.Controls.Add($imageSave);Stack-Add $imageCard.Body $flow 0
 $script:Ui.ImageInfo=Text-Line '正在载入…' 8 $false 62;$script:Ui.ImageInfo.ForeColor=$C.Muted;Stack-Add $imageCard.Body $script:Ui.ImageInfo 0;Stack-Add $imageSettings $imageCard.Panel
 $script:Ui.CharacterInfo=Text-Line '' 9 $false 84;$script:Ui.CharacterInfo.ForeColor=$C.Muted;Stack-Add $imageSettings $script:Ui.CharacterInfo 0
-foreach($control in @($script:Ui.ImageEnabled,$script:Ui.ImageAuto,$script:Ui.ImageCharacter)){$control.Add_CheckedChanged({Mark-Dirty 'images'})}
+foreach($control in @($script:Ui.ImageEnabled,$script:Ui.ImageCharacter)){$control.Add_CheckedChanged({Mark-Dirty 'images'})}
 $imageRight=New-Object Windows.Forms.Panel;$imageRight.Dock='Fill';$imageRight.AutoScroll=$true;$imageGrid.Controls.Add($imageRight,1,0);$imageStack=Stack-Panel;$imageRight.Controls.Add($imageStack)
 $taskCard=Card '最近生图任务' '状态与QQ接口回执每7秒刷新；不表示对方设备已读。'
 $script:Ui.ImageList=New-Object Windows.Forms.ListBox;$script:Ui.ImageList.Height=134;$script:Ui.ImageList.Dock='Top';$script:Ui.ImageList.BackColor=$C.Input;$script:Ui.ImageList.ForeColor=$C.Text;$script:Ui.ImageList.BorderStyle='None';$script:Ui.ImageList.IntegralHeight=$false;Stack-Add $taskCard.Body $script:Ui.ImageList 8

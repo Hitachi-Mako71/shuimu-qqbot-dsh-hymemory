@@ -18,8 +18,8 @@ importers:
         specifier: file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-chatgpt-plan-0.4.3.tgz
         version: file:../../../qqbot-hymemory/packages/dsh-chatgpt-plan-0.4.3.tgz
       dsh-hymemory-qq:
-        specifier: file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-hymemory-qq-0.7.1.tgz
-        version: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.7.1.tgz
+        specifier: file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz
+        version: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz
 
 packages:
 
@@ -94,9 +94,9 @@ packages:
     bundledDependencies:
       - jose
 
-  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.7.1.tgz:
-    resolution: {integrity: sha512-RR0y6xYPXBZEnCDKOdC0/2xt/Fpfq+6J+mi19+VemshJEs6zwopGsfHSnwwljwlgYtO2eI+uYL8ePpWHGS3Pyw==, tarball: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.7.1.tgz}
-    version: 0.7.1
+  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz:
+    resolution: {integrity: sha512-mUULcsKA8Uv1iLYykaXNmlIp+U3pHpVlSqE4p1yBqn9B6JVX813v77jRQ+3b8HP/lO5AhP8FW/I74gGw6iqJ5g==, tarball: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz}
+    version: 0.8.0
     peerDependencies:
       '@deepseek-ai/cordis': '>=4.0.1'
       '@deepseek-ai/dsh-llm': 0.2.1-rc.2
@@ -254,7 +254,7 @@ snapshots:
 
   dsh-chatgpt-plan@file:../../../qqbot-hymemory/packages/dsh-chatgpt-plan-0.4.3.tgz: {}
 
-  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.7.1.tgz: {}
+  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz: {}
 
   emoji-regex@8.0.0: {}
 

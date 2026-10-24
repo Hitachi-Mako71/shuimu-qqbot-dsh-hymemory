@@ -1,3 +1,5 @@
+> 当前版本0.8.0已移除读书、虚构记忆生成和自动日常配图；下方涉及旧资料的说明仅用于历史数据保管。
+
 # 配置和依赖说明
 
 当前双路由实现和配置以 [原生Codex / DeepSeek](NATIVE_CODEX.md) 为准：控制台2.5.1，模型插件0.4.3，记忆插件0.6.6。旧账号API和网页记录为历史。
@@ -19,7 +21,7 @@
 | `data/sessions` | 持久 DSH 会话 |
 | `data/memory-audit.jsonl` | 检索来源、分数和删除审计，不记记忆正文 |
 | `data/codex-relay` | 私聊配对、聊天绑定、游标、待发送正文 |
-| `data/companion` | 虚构日常、按日期日记、共同片段、剧情与主动分享设置 |
+| `data/companion` | 主人配对、群绑定、轻问候与互动限流状态；旧日记数据不再加载 |
 | `exports` | 用户手动导出的私有 JSON |
 | `.run/services.json` | 受管启动器 PID 与脚本路径 |
 | `logs` | 当前进程日志，启动时会重建输出 |
@@ -73,7 +75,7 @@ DeepSeek模型登录由DSH官方账号功能写入Harness Home；ChatGPT账号�
 
 端口8765当前也出现在 Python 服务、启动预热、导出/诊断脚本；8766也出现在模型代理默认值和模板。变更端口应检查源码所有引用，再改客户端/健康检查，不能只修改上表一个键。
 
-Windows的HTTPX可在没有HTTP_PROXY环境变量时发现系统代理。memory_network.py为Hy Memory真实库与虚构库生成配置；当LLM和Embedding地址都为loopback时，仅这两个SDK客户端使用显式直连传输，避免本机请求被送入代理。远程端点保留SDK默认代理行为，不更改系统设置或凭证。`MEMORY_LLM_MODEL`在本机兼容代理中只是请求名，实际模型依据data/model-routing.json路由。
+Windows的HTTPX可在没有HTTP_PROXY环境变量时发现系统代理。memory_network.py为Hy Memory真实聊天库生成配置；当LLM和Embedding地址都为loopback时，仅SDK客户端使用显式直连传输，避免本机请求被送入代理。远程端点保留SDK默认代理行为，不更改系统设置或凭证。`MEMORY_LLM_MODEL`在本机兼容代理中只是请求名，实际模型依据data/model-routing.json路由。
 
 ## 固定版本与锁
 

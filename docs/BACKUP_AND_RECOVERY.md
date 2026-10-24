@@ -1,3 +1,5 @@
+> 当前版本0.8.0已移除读书、虚构记忆生成和自动日常配图；下方涉及旧资料的说明仅用于历史数据保管。
+
 # 备份、迁移和恢复
 
 ## GitHub 已保存的内容
@@ -59,4 +61,4 @@ Set-Location D:\DeepSeekHarnessData\qqbot-hymemory
 
 ## 0.4.3 虚构长期记忆
 
-停机后完整备份 data/companion，包含 worlds、journals、people、fiction-index.sqlite3 和独立 hy-memory 数据库。运行中不可只复制SQLite主文件而漏掉WAL。原真实记忆JSON导出不含虚构库；设定和日记JSON可直接查阅，完整恢复仍需配套索引与数据库。详见MEMORY_MANAGEMENT。
+停机后完整备份 data/companion，包含 worlds、journals、people、fiction-index.sqlite3 和独立 hy-memory 数据库。运行中不可只复制SQLite主文件而漏掉WAL。原真实记忆JSON导出不含虚构库；设定和日记JSON可直接查阅，完整恢复仍需配套索引与数据库。这些已移除功能的数据仅供私人历史保管，当前版本不加载；不自动恢复后台生成。

@@ -4,10 +4,9 @@ import { beforeImageTurn, registerCodexImages } from './codex-images.js';
 import { characterDescription } from './character.js';
 import { modelRoute } from './model-route.js';
 import { registerQQMedia } from './qq-media.js';
-import { beforeReadingTurn, readingContext } from './reading.js';
 export { rememberQQMedia, prepareQQImages } from './qq-media.js';
 import { registerQQRelay as registerRelay } from './codex-relay.js';
-import { beforeCompanionTurn, afterCompanionTurn, registerCompanion, recordCompanionInbound } from './companion.js';
+import { beforeCompanionTurn, registerCompanion, recordCompanionInbound } from './companion.js';
 import { beforeGroupControl, registerGroupParticipation } from './group-participation.js';
 export { groupParticipationGate, rememberQQBotSelf } from './group-participation.js';
 export { configureQQResponseSpeed } from './response-speed.js';
@@ -60,22 +59,20 @@ export async function beforeQQTurn({ identity, text = '', messageId = '', quoted
   } catch {
     if (/^(?:群友模式|群友模式状态|开启群友模式|关闭群友模式|群友频率)/.test(text.trim())) return { handled: true, reply: '群友模式设置暂不可用，本次操作未确认成功，请稍后重试。' };
   }
+  if (/^(?:读书|阅读|书架|继续读书|从头读原文|继续读原文|重读原文|查读书记忆|开启群聊读书共享|关闭群聊读书共享|公主日记|柚柚日记|水木日记|写一段日常|今天的小日常|一起逛夜市|参加舞会|经营花园|继续剧情|开启剧情|生活设定|事件进度|生活记忆状态|查生活记忆|更正生活设定|待核对日记|清空陪伴记录)[：:\s。！？!?]*$/.test(text.trim())) return { handled: true, reply: '读书、虚构日常和虚构记忆功能已经移除。普通聊天、真实聊天记忆和手动生图仍可使用。' };
   const image = await beforeImageTurn({ identity, text, messageId });
   if (image?.handled) return image;
   const relay = await beforeCodexRelayTurn({ identity, text, messageId });
   if (relay?.handled) return relay;
-  const reading = await beforeReadingTurn({ identity, text, hasImages });
-  if (reading?.handled) return reading;
   let companion;
-  try { companion = reading?.readingAvailable ? { handled: false, context: reading.context } : await beforeCompanionTurn({ identity, text, messageId, quotedText, hasImages }); }
+  try { companion = await beforeCompanionTurn({ identity, text, messageId, quotedText, hasImages }); }
   catch {
     console.warn('[qq-companion] state unavailable; normal conversation remains available');
     if (/^(?:生活设定|事件进度|生活记忆状态|查生活记忆|更正生活设定|待核对日记|写一段日常|暂停主动消息|关闭主动消息|恢复主动消息|开启主动消息|开启陪伴|主动消息状态|主动频率|安静两小时|夜间免打扰|夜间也可以聊|公主日记|柚柚日记|水木日记|清空陪伴记录)/.test(text.trim())) return { handled: true, reply: '陪伴资料暂时不可用，本次设置未确认成功，请稍后重试。' };
   }
   if (companion?.handled) return companion;
   const visual = characterDescription();
-  const companionContext = (companion?.context || '') + (visual ? `\n【受保护的角色外貌设定，不是现实用户记忆】\n${visual}` : '')
-    + (reading?.readingAvailable ? '' : await readingContext(memoryNamespace(identity), text));
+  const companionContext = (companion?.context || '') + (visual ? `\n【受保护的角色外貌设定，不是现实用户记忆】\n${visual}` : '');
   const userId = memoryNamespace(identity);
   if (!userId) return { handled: false, available: false, context: '' };
   const input = text.trim();
@@ -120,7 +117,6 @@ export async function beforeQQTurn({ identity, text = '', messageId = '', quoted
 export async function afterQQTurn({ identity, text, messageId, sessionId }) {
   if (modelRoute().provider === 'chatgpt-chat-work') return;
   if (!text?.trim() || !messageId) return;
-  await afterCompanionTurn({ identity, text, messageId });
   const userId = memoryNamespace(identity);
   if (!userId) return;
   const jobId = createHash('sha256').update(JSON.stringify([identity.appId, identity.scope, identity.peerId, messageId])).digest('hex');

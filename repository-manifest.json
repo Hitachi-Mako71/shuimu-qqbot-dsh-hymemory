@@ -1,5 +1,5 @@
 {
-  "snapshot_date": "2026-10-23",
+  "snapshot_date": "2026-10-24",
   "hash_basis": "Exact staged Git blob bytes; excludes this manifest itself",
   "files": [
     {
@@ -22,21 +22,21 @@
     },
     {
       "path": "AGENTS.md",
-      "bytes": 6374,
-      "git_blob_sha1": "139dbc8c5b3285e78f9e26f21b9a8eb2a5600fb7",
-      "sha256": "8dd04667327fc6a694037945e254f8cd842cc792a992ef2542351e7240bb6cad"
+      "bytes": 2692,
+      "git_blob_sha1": "1896248b7248fc162c788e8f7efbf40185c1cd3a",
+      "sha256": "238fb27a38613305bc75a851e55fb81e2e250fbd4e210fde047a9a1775ca3a78"
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 9770,
-      "git_blob_sha1": "4ae2bb6405bd36acfdcde2b223a65fa52aba5222",
-      "sha256": "f37c3715e36310140cf38ffbabfe011a71a8bb6246dd5e86e2c9d7bc438b0944"
+      "bytes": 10672,
+      "git_blob_sha1": "c904e727f0bda9b6b65f26b6dfcbe6342c358447",
+      "sha256": "d18fdc2e6dc036210080eacc793587f6c17cbeb68396e9d3eeee72b709d205c3"
     },
     {
       "path": "README.md",
-      "bytes": 20798,
-      "git_blob_sha1": "dd537e3538bd8573cb5bf158ccb13342c4192488",
-      "sha256": "bbb48db979bf5ff8742e631e0218c513aec8995615830a3701fbc3afc4fc1b6c"
+      "bytes": 2868,
+      "git_blob_sha1": "84670e05c5314bb3ad0894ff8c8f4b818a0eb6ac",
+      "sha256": "d679ffed44fb3a0597d0a1946b5ccc0f3b2ee6989cfbce2c6cf8b80ba4d603ca"
     },
     {
       "path": "THIRD_PARTY.md",
@@ -184,9 +184,9 @@
     },
     {
       "path": "configure-companion.ps1",
-      "bytes": 2780,
-      "git_blob_sha1": "0ae83bbc5286f552270f9cb8552b3f70a3386899",
-      "sha256": "146d4c715f7f506e6f1b6eed6011f6749cc0f7f54dcdc2cca8ae0a7d01458229"
+      "bytes": 2821,
+      "git_blob_sha1": "610344bec1767e2b6df49db159789f81a7844f4b",
+      "sha256": "f194acaba61928565c22fe0a82e31dd1a17297c15e78ee792a71646d032c072d"
     },
     {
       "path": "configure-native-codex.py",
@@ -232,15 +232,15 @@
     },
     {
       "path": "control-worker.ps1",
-      "bytes": 14668,
-      "git_blob_sha1": "c03f721392dd1aee38b42c3b86270997a8e63a4b",
-      "sha256": "5a63d03066dc4bf267eb68fa5f0b4ea648f9920fbc1d83b3253da8346affe5ae"
+      "bytes": 14033,
+      "git_blob_sha1": "efc4c0066612a4a4fe0b6608e1aea0b95e32edb1",
+      "sha256": "f9798702251925bb48c968a5b39b62ee26edd8c3137b7e93af5076e02ac49927"
     },
     {
       "path": "control_images.py",
-      "bytes": 7160,
-      "git_blob_sha1": "ac8778c64cd0e33e9bdbcf9efce60b2c2fb2c41d",
-      "sha256": "ae3d5dc28340834cbc3e9d6053b2654325bd905f0207971c70580c5d745cb9ee"
+      "bytes": 7265,
+      "git_blob_sha1": "48273a2198a01e580649f1f41387b450529bc61a",
+      "sha256": "a97cc76b0a4a4e94d3efce157d781c0335d37f0cc1f763614e761c0c1038d81c"
     },
     {
       "path": "control_models.py",
@@ -249,16 +249,10 @@
       "sha256": "e8845b8d9f72e61e96d1ed3d7bc35a0daeb13da5ee0493e3ab440295437900c9"
     },
     {
-      "path": "control_reading.py",
-      "bytes": 2166,
-      "git_blob_sha1": "aaea505faeecc65e2ff10cb69f3bc6d72632e20c",
-      "sha256": "76f59df4cda66943f7fc5004c986f25d4aaf14acde37046e35ccff6dc16adc56"
-    },
-    {
       "path": "control_settings.py",
-      "bytes": 16825,
-      "git_blob_sha1": "d84ae45a9211f13711e761fbecfb0261ecd5e75c",
-      "sha256": "a3355323d9ffbe1f21a6d9365bae8e364c43f32b75b4ac090e455e8a40556e4a"
+      "bytes": 16461,
+      "git_blob_sha1": "58c50403df3a3cde2ce3c9e50d0dc92a6d540eb2",
+      "sha256": "a9d7faeac94c942d2cf47a4ef1d69564d3c954cb1e91af30322ac86d2216f218"
     },
     {
       "path": "create-control-shortcut.ps1",
@@ -275,14 +269,14 @@
     {
       "path": "dependency-locks/qqbot-profile/package.json",
       "bytes": 521,
-      "git_blob_sha1": "3f30f116511959eb32fdca52a1b2daef18fbd3c0",
-      "sha256": "ee414a42bb540510cea3dd30b954fca63f9fafdb77a9e14bc1b6e718cec3020e"
+      "git_blob_sha1": "a8176bdc6b1e487de2782425dd651e6626c43160",
+      "sha256": "b72533b3ac3efa6e9dbac3152e2621308c6043d1d7f180c5b2f6a04cab7ed310"
     },
     {
       "path": "dependency-locks/qqbot-profile/pnpm-lock.yaml",
       "bytes": 11218,
-      "git_blob_sha1": "4f0172e80a346cc4cdc6423c68f28b05aea3754a",
-      "sha256": "d61d09c4f951f7c03b673529eb153909b661f17b6f737f49659b8443bfa9cbbc"
+      "git_blob_sha1": "f907ab556d98e2d61675cebc12084c2905719cf7",
+      "sha256": "b1bd4366464ff5acb85ea6bc85e0b497854c640ae0683afea93068530a704a61"
     },
     {
       "path": "dependency-locks/qqbot-profile/pnpm-workspace.yaml",
@@ -316,21 +310,21 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "bytes": 7333,
-      "git_blob_sha1": "ded11b1f3ff8f6fa2ca82b47df723fb8d26f1dac",
-      "sha256": "cfcddfd0254b847897764314384a76d8247d30ece97b90b83c568666c63d6508"
+      "bytes": 5152,
+      "git_blob_sha1": "3431cea2d23866d5640ad45a3726ef9a792c381f",
+      "sha256": "1847f88384b956452bcf70b639acfd089b35e1500e9afcef75ec23002814d531"
     },
     {
       "path": "docs/ARCHIVE_VERIFICATION.json",
-      "bytes": 1097,
-      "git_blob_sha1": "333e6e7deed7883d74540c2b69ee998767492bba",
-      "sha256": "17518db71c496ce906dc3fc0a4684473edcfff2dc1cef675c65e357b68530e0b"
+      "bytes": 1113,
+      "git_blob_sha1": "e8ad2159370c25b8629db0a1c2763e2514acb611",
+      "sha256": "c7f703c538edd01335f53b31a2c61c1a08950abfe141af0522a6193d778c00d8"
     },
     {
       "path": "docs/BACKUP_AND_RECOVERY.md",
-      "bytes": 4415,
-      "git_blob_sha1": "40a91b4707ef88cd0f5c952b7ff6fe54fb0b291d",
-      "sha256": "158f36ee57c15bcc120316f6bbe7475a0071a3d18ea5db9483c6c87f8c56a9cc"
+      "bytes": 4641,
+      "git_blob_sha1": "828aeb04474eceb98bdd2ba4af2e6f88acf9600d",
+      "sha256": "78100dc407a0beab35768e579ca6a2b5f85e5ff1b6ad783e7223b43fb0222f53"
     },
     {
       "path": "docs/CHARACTER.md",
@@ -358,45 +352,45 @@
     },
     {
       "path": "docs/CODEX_IMAGES.md",
-      "bytes": 3181,
-      "git_blob_sha1": "d95e3635524851acbe45c8032fa4404f506de3cf",
-      "sha256": "5ab4becd0e91a70e4d64761db1aaf7d2e6926cc6d0cfc97942f5c5b7f75a2bf3"
+      "bytes": 997,
+      "git_blob_sha1": "550d506a09ed12f567676a8dd873c28d3d1df2e4",
+      "sha256": "cdb714260430a27003182255837256e1c009c94fd0e9bdca79de14e29af9a6ef"
     },
     {
       "path": "docs/COMPANION.md",
-      "bytes": 6161,
-      "git_blob_sha1": "300d6c501dec5202ae08e541ecae53c4b17e1909",
-      "sha256": "8aee3c2147cdf601471f72a716001e3dfafcff1eb6328cc68d77339e36092512"
+      "bytes": 855,
+      "git_blob_sha1": "9c686dbdd97157cd8522161fb39d1070275ef6e9",
+      "sha256": "e9c17b09efe3ce75b1876fd37a7cfc2a2e9e4fc24a4624b5b56f1c2584898f4c"
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "bytes": 7341,
-      "git_blob_sha1": "53657b9f35c9d45d8c688ec554ccbd2971b608db",
-      "sha256": "1f9e266ab66f043e8851de24fdffd39634a6d9a6d26aecb6204477d5bee66b27"
+      "bytes": 7479,
+      "git_blob_sha1": "39754a8eb9315b07c535867cb18d716ddb7830c8",
+      "sha256": "d7eff8e8074a604aa06d53fd478baa3eefa3f281d01d25feb4ba96dc3be8ec4a"
     },
     {
       "path": "docs/CONTROL_CONSOLE.md",
-      "bytes": 6024,
-      "git_blob_sha1": "beda6765473166e6761013c3c226e1c73b727868",
-      "sha256": "fe98c1a407a2c3c387cd1403f0269a7ef5254286f967d09b145ac8f0fee411e9"
+      "bytes": 1051,
+      "git_blob_sha1": "484f8e34a5449294b0c436b17e0a81e4b9174537",
+      "sha256": "e7b52d6adb3d4597b46db11017b030b7939e4707a7a5ff10070fbc4d4c5aa9dc"
     },
     {
       "path": "docs/DEBUG_HISTORY.md",
-      "bytes": 22787,
-      "git_blob_sha1": "bf0089bcefe3fcb0ca58ba9c05bdc9cd69f61c84",
-      "sha256": "3f45c28b6126be94b9b2d77fcde033b629f3d689fbe72814bb6754a1b1dc41c5"
+      "bytes": 24349,
+      "git_blob_sha1": "9e979c7f89ae1b8ef22788fa22a5dc2fd78c2366",
+      "sha256": "cbbf6bdbe6c2312c8f083866771b4420a88bcbdd7cd1e86275887d4c6967710c"
     },
     {
       "path": "docs/FILE_INDEX.md",
-      "bytes": 19350,
-      "git_blob_sha1": "cc552ee0e8e4052b487076c37c7dae5ccb61f9b1",
-      "sha256": "3afa753514e858667500f02d8e63b49692a52bb050021c341e5deeac1f451b74"
+      "bytes": 14312,
+      "git_blob_sha1": "4a071e1ac917a71cfaa3527c7ab19e1bb7fecb25",
+      "sha256": "aff421afd4ec75a9fbe23880d99813fb3205f2f684cd6b7534ffd53d7812529a"
     },
     {
       "path": "docs/FROM_ZERO.md",
-      "bytes": 11731,
-      "git_blob_sha1": "02b66cd86fb7d819c06f3fbb71a4c27bfd488213",
-      "sha256": "a2e9e49a4a7514076c82daadda7327f6719129ec7652f61596b9f36d7e816567"
+      "bytes": 11853,
+      "git_blob_sha1": "01df730c3e0d4964f2a8f4a5d83fb11cae8c537a",
+      "sha256": "2367d3da833187a1b779e06dcdd65e43e401c6de2bc7004aa800ee91036171f0"
     },
     {
       "path": "docs/GROUP_PARTICIPATION.md",
@@ -412,27 +406,15 @@
     },
     {
       "path": "docs/HANDOFF.md",
-      "bytes": 15313,
-      "git_blob_sha1": "86872df2743e472f4a39f2fe4287f51a77bf3461",
-      "sha256": "46f89e12bb3f3c76143a81cb310a280e72c40589408a1ca84fd2dac424c013a9"
-    },
-    {
-      "path": "docs/MEMORY_MANAGEMENT.md",
-      "bytes": 8268,
-      "git_blob_sha1": "acfb8b9917d103e02f0f452ca9011778c5a36dd7",
-      "sha256": "c5b3b303584b20cf617c912fa78698392bb91b91132376d2f4bc0bbd6173c89d"
+      "bytes": 1167,
+      "git_blob_sha1": "551c6d7569725facaae7768695722a22ea10537b",
+      "sha256": "09cf42def592aca0ef58f4fb7ad6502a619eb19d9f8aa925e4ac0faac8568ea5"
     },
     {
       "path": "docs/NATIVE_CODEX.md",
       "bytes": 5811,
       "git_blob_sha1": "b07c2bd28b26a446768aa4807cb079f311e0713d",
       "sha256": "fd270e562eb213fa4ca7874f5a5fc1dd61fb6428acb980f4e610dde902932021"
-    },
-    {
-      "path": "docs/READING.md",
-      "bytes": 5519,
-      "git_blob_sha1": "bd7311fa6ef97011e286a140a3c52d51f570010f",
-      "sha256": "3e51dc50b6c2a26cdd2045ad3ad73b47cc0450dd9bd770606ee20bc954f1fab0"
     },
     {
       "path": "docs/RESPONSE_SPEED.md",
@@ -550,21 +532,21 @@
     },
     {
       "path": "dsh-hymemory-plugin/bridge.js",
-      "bytes": 9115,
-      "git_blob_sha1": "f6e529647bb48bdb4fa7e0f01f82d199f9ce783c",
-      "sha256": "ca2fd6ad49c48102a569ac76e187bd473bc1b4ed932dd9140c25e32d243441f6"
+      "bytes": 9298,
+      "git_blob_sha1": "df8dbdaf168d44e36b5bb416aa0927017f041087",
+      "sha256": "745f146878b34e3b6d680d98ad17b6d4a23d0ca6b43ca21638040a2cb1a1e44f"
     },
     {
       "path": "dsh-hymemory-plugin/character.js",
-      "bytes": 1795,
-      "git_blob_sha1": "197eee8d74dfdb2b6560680f21f0f60138245e32",
-      "sha256": "e9fba38d21c3653840c3dfbced5e3dce023823c7d822118bc3064742e423d811"
+      "bytes": 1880,
+      "git_blob_sha1": "b3d00e61aa5c30c229354bd54090aa6fbf7945b7",
+      "sha256": "fdf0086fd60e909a8ef56d76f438b5cf6214e5ca219a7c93c589f1a5e3d3018f"
     },
     {
       "path": "dsh-hymemory-plugin/codex-images.js",
-      "bytes": 19661,
-      "git_blob_sha1": "2c4fe47b4f259fc358b29b3df53a3cfc207b248e",
-      "sha256": "f06603f9cfe3cc585dd62c0bb9d0fce4ab61930839d16fcc8d7b25b77c0ce800"
+      "bytes": 15679,
+      "git_blob_sha1": "0c1a18ab7428d4cb38747935ebba3056d6554c18",
+      "sha256": "88f83c7834742e3c25e7a8c1e4e097ecd53db09cdab00275701d70d2672fb0ef"
     },
     {
       "path": "dsh-hymemory-plugin/codex-relay.js",
@@ -574,9 +556,9 @@
     },
     {
       "path": "dsh-hymemory-plugin/companion-attention.js",
-      "bytes": 4407,
-      "git_blob_sha1": "b9304037a7092daf00b694bf6b067abddc94f9a4",
-      "sha256": "22e9042ae0ddeaf5b2894e9f347d0ab074cefbc930558812657f3fdea79fd3cf"
+      "bytes": 2664,
+      "git_blob_sha1": "d4fc1c18f6a25e64e93f63ba2158c42db5aa5596",
+      "sha256": "392bcb07fd922bbd86e7327d61fe32ad98d20cd65833c514b2eef01f44c8ad61"
     },
     {
       "path": "dsh-hymemory-plugin/companion-state.js",
@@ -586,9 +568,9 @@
     },
     {
       "path": "dsh-hymemory-plugin/companion.js",
-      "bytes": 28627,
-      "git_blob_sha1": "9e3bc9689d8d5bb24ce70eb7cc6109bc3ad6b124",
-      "sha256": "583fb0c97287165a4217fdb0831b70ad51b11077972a410a50680ef4db674feb"
+      "bytes": 7369,
+      "git_blob_sha1": "4ad8ea1f9054db3424079873875010a70017b0ff",
+      "sha256": "056ceb1b123bab788646ab12bf73020cfb7d2d04b781c9bf6e991dc55ce77d70"
     },
     {
       "path": "dsh-hymemory-plugin/cordis.patch.yml",
@@ -597,40 +579,22 @@
       "sha256": "ce9720371e8d41267a7e272729acb20cb17fd9aaa8cfec62d36f80a091deb358"
     },
     {
-      "path": "dsh-hymemory-plugin/fiction-engine.js",
-      "bytes": 12443,
-      "git_blob_sha1": "a47d1ecafc3f5152acebc107646faef275f330d7",
-      "sha256": "728960cd3c55093253f2f055b16a7a8818fb8d51f803af66c2c6713800b8272c"
-    },
-    {
-      "path": "dsh-hymemory-plugin/fiction-ledger.js",
-      "bytes": 13477,
-      "git_blob_sha1": "b41eeec9217faa8cad81e33a864b56a7344b6208",
-      "sha256": "40c157b6f824ac044758c030e0b4c844aca257fa2ac2e0699314f29832ad54a6"
-    },
-    {
-      "path": "dsh-hymemory-plugin/fiction-ui.js",
-      "bytes": 6321,
-      "git_blob_sha1": "724cd2d5973a4ad1fda5a59487fda8bc13c3902a",
-      "sha256": "4377961527a2f3d9134ae62ab8ff84fa6fff89e6d5278c1fdcc308a9b2f91804"
-    },
-    {
       "path": "dsh-hymemory-plugin/group-participation.js",
-      "bytes": 21572,
-      "git_blob_sha1": "7653d8e8b03bbd18ca83db0384a126d9488895c7",
-      "sha256": "45509c66fe0c203758b7ceca550221aafeb49f0d03049023eee8235c72e8b431"
+      "bytes": 20971,
+      "git_blob_sha1": "4a206cbb1c897958aaa4e0a43ca3afe64a539660",
+      "sha256": "bd9e93e2226b946a15a8b82bd549b3b5fd8812d23f370ea5059fd4fa630db244"
     },
     {
       "path": "dsh-hymemory-plugin/image-settings.js",
-      "bytes": 1495,
-      "git_blob_sha1": "ce1d7e8bacfcce0bf3dfb26dd6624c1ab9ad13a2",
-      "sha256": "5ea63654b118b268aa62b160b5ade0e24159a10c120d31d4c9dd854d9a84bce3"
+      "bytes": 1582,
+      "git_blob_sha1": "69aa8aa61791bb2fb6cf6c2f2bb2c21d4e2b7025",
+      "sha256": "77eaffe8428605781a1f6813281c29b327bef541f3080c4a5a9298b653f94acc"
     },
     {
       "path": "dsh-hymemory-plugin/index.js",
-      "bytes": 1648,
-      "git_blob_sha1": "7b7f057e5cfa0c509950a37ca7744a12d3d50a2f",
-      "sha256": "17c4ffec939709588315f951fffb230927be107aad885a61218cee17aee7086b"
+      "bytes": 1861,
+      "git_blob_sha1": "13c8d2b8cce88cf8931c5cc6d20066a32e2be0ca",
+      "sha256": "eb3d24e53e57310a58979efbd6a2658129944157b791fb90c5569c6d5085bcdf"
     },
     {
       "path": "dsh-hymemory-plugin/model-proxy.js",
@@ -647,20 +611,14 @@
     {
       "path": "dsh-hymemory-plugin/package.json",
       "bytes": 372,
-      "git_blob_sha1": "753d6689bd4ff5251b476504fdfe859e103dcb3b",
-      "sha256": "f8333e9cefcc984ab7704fb1ffdc8551d434cd412eaa73c33c522a29c81f7ca6"
+      "git_blob_sha1": "ef2a0bc457ee2a7a8afbd802b9273246c6629352",
+      "sha256": "6a7624cbb8ef10716c0d3f181eb9e9ead7f072ddc82019f5b8c8517da1f81ee4"
     },
     {
       "path": "dsh-hymemory-plugin/qq-media.js",
       "bytes": 6297,
       "git_blob_sha1": "536398ac50a458870928c8f502f0cc5ade5ccd25",
       "sha256": "d701a6f88521df2a93b87fcfadfaee2b4c9084602210cd2cd37cf1dca7ece10c"
-    },
-    {
-      "path": "dsh-hymemory-plugin/reading.js",
-      "bytes": 7710,
-      "git_blob_sha1": "d9d22ae7c44f9ade225a7716858d7dd703f6a954",
-      "sha256": "c2fb8b3516fae07c72f114e74dfe25fc664871d8511bb98b0ca6ad30a685ed25"
     },
     {
       "path": "dsh-hymemory-plugin/response-speed.js",
@@ -682,33 +640,15 @@
     },
     {
       "path": "export_memories.py",
-      "bytes": 8037,
-      "git_blob_sha1": "b0e1a98d874d96e2109dc5303b65200133ab32a4",
-      "sha256": "f5c775326f18e53eca24c9381fbf91e64cee8f565d735d65641f05a8699bc7c7"
+      "bytes": 6929,
+      "git_blob_sha1": "f28b4264ff42ed14f7409f499cfaf8a78ebed57a",
+      "sha256": "d432e4b485416d00ea3397d0bfb1fce28653998ee88abf32546c39ba13569b11"
     },
     {
-      "path": "fiction-canon.json",
-      "bytes": 1220,
-      "git_blob_sha1": "2ecca7ce5ad0e88ce2b37c107aab6b9d3552db52",
-      "sha256": "c93db9da5301487048ba1db0fbe610213cea8f5d308d87ddecaf5b88d413a91b"
-    },
-    {
-      "path": "fiction-memory-verification.json",
-      "bytes": 670,
-      "git_blob_sha1": "7e43b405f26b9c0e88ebc8f72cc3b1844a42d9eb",
-      "sha256": "60d274e8a4f6c18d11023f39afb2a94ad8f930ff4d4cdc50c9d04dce4cd29d8c"
-    },
-    {
-      "path": "fiction_memory.py",
-      "bytes": 10208,
-      "git_blob_sha1": "54dc84053405227a5c1fe0a2a8dca789f29a70c8",
-      "sha256": "85c15298a59bf6cd154e67407c66d078e7b929e0f85ce597cad116e8713ce7e5"
-    },
-    {
-      "path": "fiction_sdk.py",
-      "bytes": 3685,
-      "git_blob_sha1": "c27e5666532b772bb32acb354c49dff7e9b3c0a7",
-      "sha256": "a998e3f463eb6e3695125ddc9de10f1225005553e99598eaa85844a07ce7f7b3"
+      "path": "feature-removal-verification.json",
+      "bytes": 851,
+      "git_blob_sha1": "d9c864a94ed31deba929451136a00835d08018e1",
+      "sha256": "13658c3d84278d680c12b92aba039d733acd898892a0d8e1af39f75a0926cf05"
     },
     {
       "path": "group-image-verification.json",
@@ -730,9 +670,9 @@
     },
     {
       "path": "hymemory_service.py",
-      "bytes": 16622,
-      "git_blob_sha1": "1bda9dde6410ed0f23770fc5955977e0b2065f84",
-      "sha256": "50835686f6da49c19be83d3649db138b9598dcf5e42b6356b14c6a4da653f797"
+      "bytes": 11632,
+      "git_blob_sha1": "2ab510ddf7a4be7cc14ec074019c0713aaa59433",
+      "sha256": "800c02451831624ce1123c11767e123eb04ea8d17421b38ba09a85315198d9c6"
     },
     {
       "path": "image-studio-verification.json",
@@ -855,130 +795,10 @@
       "sha256": "3f87e5f4b1c6c95a8451874bb21e709ce0c2f1fb68c345f3fb795516c03d5bb7"
     },
     {
-      "path": "packages/dsh-hymemory-qq-0.2.0.tgz",
-      "bytes": 9137,
-      "git_blob_sha1": "a3aa0348f3d4ad08a26dfb18e58be3feb59e527b",
-      "sha256": "d86e7ba57d84e5bdcdf71cfbd5b3dc17e5139b29ee3400879674d2d2371d6165"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.3.1.tgz",
-      "bytes": 17255,
-      "git_blob_sha1": "4234ce56c0d42404f81a824f6792e502a08a55d8",
-      "sha256": "c8af58435c0e573e12aa65cb8e42fa400881256e82400f515fecadd456534f23"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.4.1.tgz",
-      "bytes": 28187,
-      "git_blob_sha1": "88773f6ac69e7c01e2c0d1c354588541d3b6ccf3",
-      "sha256": "4e34bb2a89e6314cf9f1573dc008f3cf8c4cf217629b8dc647edff33d9a93b5a"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.4.2.tgz",
-      "bytes": 28308,
-      "git_blob_sha1": "afc44748cef46b153a33f9380f71698f4c895e60",
-      "sha256": "5158857a030bd5d1b81a7f063583464a535bcfd3fcc2772f7f8a01a4d7d676b8"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.4.3.tgz",
-      "bytes": 28331,
-      "git_blob_sha1": "db84eefd7feaf7b4d3ab206ec214b5ae577b35b8",
-      "sha256": "ddd70950f979c186069cdd0b25941d82131ac683846774edcc7f142cca63df16"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.5.0.tgz",
-      "bytes": 32762,
-      "git_blob_sha1": "df737fe6ed6345291834eb611fde9e5871597922",
-      "sha256": "2e59e8e6a30b899b7ad9a93c9bfa756dab04a8e26dd2d0970d2bc49a1cf32204"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.5.1.tgz",
-      "bytes": 33594,
-      "git_blob_sha1": "739fd57137e5af5838a40f0ab10b27240bb6d59f",
-      "sha256": "8aea3ac18d83ebb6aa968b52b132e1155a9578ed2bad3cf04dd3ad352f48a74f"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.5.2.tgz",
-      "bytes": 33763,
-      "git_blob_sha1": "c6f82025e7bc1638a6768ead3315fa9f9ee02e93",
-      "sha256": "d8184b7f64a068db15757866d796f26f2ea518d02e10ed4282ffdea48bb6e97a"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.5.3.tgz",
-      "bytes": 33877,
-      "git_blob_sha1": "91d946b2b1c89ccfd6b0870a6b99c15ed96a394f",
-      "sha256": "9b1c3df2cbef8a59d5b7d9c6b0117c78a36d11f6f7e1d3ec5cc3e56b664370b8"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.5.4.tgz",
-      "bytes": 35462,
-      "git_blob_sha1": "fece541fe72946dcc9aa9f4b161dddd3a5b9a6bb",
-      "sha256": "2d408671b282a8628252db194ab1a02b92f77b419471d70faba2143b3ac72118"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.5.5.tgz",
-      "bytes": 40915,
-      "git_blob_sha1": "b0d76ed670549e9d7bde3eb5dadf96a7d5724eab",
-      "sha256": "ae28cbd3ab2f07f4b927d671d59e4624375ccc8e2e376274ed2b0b5bae9bf019"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.5.6.tgz",
-      "bytes": 43291,
-      "git_blob_sha1": "73a424ad6f5b47953dfd22111ffbdbcbac558925",
-      "sha256": "5da7deab85dc488d129f4d73957462e443c6c1d9646a6d34ea036f37b12546b5"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.6.0.tgz",
-      "bytes": 43671,
-      "git_blob_sha1": "9c343c9ceb503777edc1342a9f0bcded801f4f02",
-      "sha256": "67182a2e2f4d75872e1d714712c2bebe0042f1d8938fe7ee080163db8a0c69bc"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.6.1.tgz",
-      "bytes": 43681,
-      "git_blob_sha1": "681ab4565c52af52e27cdf396d8c549e2ded8ebb",
-      "sha256": "9046cdde697f818ce5db3dedcf5da06b981de10c8067b86ed53799f209249003"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.6.2.tgz",
-      "bytes": 43751,
-      "git_blob_sha1": "3cc3d43387457462579e01da1a5ddf88330524d3",
-      "sha256": "360188e2b244609a8000177bad33864ad20f7d5695f6ffc8b6b35990320c7769"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.6.3.tgz",
-      "bytes": 43806,
-      "git_blob_sha1": "5aa1656d7dd02f6fb158d35c2e75cbb401ea6977",
-      "sha256": "3513f02d8dac68a5f4a4fa912a1e7e91737c9c20170e170203cf6d5d07669574"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.6.4.tgz",
-      "bytes": 45024,
-      "git_blob_sha1": "fb967e9e9b596ae7c28966478c0ba7800f16feef",
-      "sha256": "d77fc84df77b0c7d17deba6929c1114236439dfa5116ef602e662ea7d10ce011"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.6.5.tgz",
-      "bytes": 45095,
-      "git_blob_sha1": "ea5c555bcb1f271b70e56f297286e1afeb33c8ed",
-      "sha256": "68a061f8ef453a4f8f08dd369b0ba641ae54f48a17ef52f2cec514ba78288a97"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.6.6.tgz",
-      "bytes": 49176,
-      "git_blob_sha1": "20ee9a89a99d843da4b029a0bc79333409e18fd9",
-      "sha256": "cdb8238106adf8d9a5772da8c1ab05fe6ce6ccd6dd06f62c7a250e507c864a09"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.7.0.tgz",
-      "bytes": 52661,
-      "git_blob_sha1": "03f2dbab1b61537ae55e46c4093aa5c312303529",
-      "sha256": "6ecc61b2ca5975fdb5ba1d39ea31d92845baab4bd12e25ba119fa425e3e2c67f"
-    },
-    {
-      "path": "packages/dsh-hymemory-qq-0.7.1.tgz",
-      "bytes": 53066,
-      "git_blob_sha1": "0327e23505a083c93196c702db829cf52d6d0a46",
-      "sha256": "c2cb236508e7345e2281495027595e50c7fd984a58ca12c2317273ddc41a13f7"
+      "path": "packages/dsh-hymemory-qq-0.8.0.tgz",
+      "bytes": 30926,
+      "git_blob_sha1": "ddc69829e028e4bcbb1848982f728f49e52b9867",
+      "sha256": "0f78a3c346e864776e266ff342b5c93e93900bb345713c73b2ef53b309a2779a"
     },
     {
       "path": "patch-qq-plugin.py",
@@ -1006,9 +826,9 @@
     },
     {
       "path": "personality.md",
-      "bytes": 8195,
-      "git_blob_sha1": "527b0f7a13340e82956fe2a7a817a6d44832aefd",
-      "sha256": "b0eb0e6205009c3bfdef410af9be8404950d85ff340ae987457e968f9a1b69af"
+      "bytes": 6384,
+      "git_blob_sha1": "9daa62ef927d9ecede330372c25cf8700da5c42a",
+      "sha256": "5bf7959f3463ad374d18846f3be5018bf0a3edeb4ffc3eeb453e6fc2e979ae6f"
     },
     {
       "path": "personality_config.py",
@@ -1023,40 +843,16 @@
       "sha256": "6a15347b4c87ab685ab69ad3bf9bfacfabca813a993993924819deae1a2209e1"
     },
     {
-      "path": "reading-verification.json",
-      "bytes": 858,
-      "git_blob_sha1": "38fe3bdfb5e0e3dd20070674bb0b3f56298e1641",
-      "sha256": "66ea6a78c43689cbeda28b2e3085382b41fd8b1f97514bc3fdc0ebded849a406"
-    },
-    {
-      "path": "reading-workspace-template/AGENTS.md",
-      "bytes": 1141,
-      "git_blob_sha1": "1af5cbeeebb00b1f772e7f4ab0c410b01ee3082f",
-      "sha256": "ebac5e3e0de6e2f2ce55bccfd05f3490138fa474a9dde1a6c9764c521c01821b"
-    },
-    {
-      "path": "reading-workspace-template/README.md",
-      "bytes": 1033,
-      "git_blob_sha1": "42852166fb6377b353eda0158ba4092cbde1237e",
-      "sha256": "ccb3d2b4404618c790781c844f660c51c9e954ef0b063a13266c180bd6b61a7e"
-    },
-    {
-      "path": "reading_library.py",
-      "bytes": 30489,
-      "git_blob_sha1": "6aa325f6c2dcc391f9d372c824404b56218e6353",
-      "sha256": "8dc3926bf0222ebf20900c866312101622d25b33846f0a5d145726813285255c"
-    },
-    {
       "path": "requirements-lock.txt",
-      "bytes": 2065,
-      "git_blob_sha1": "49978b12573c0ec02e44cd476972e2d05a5f44eb",
-      "sha256": "e065acb21457ecd9a5ebceb7c15b297799b2e1817fee920262f7ae9c61f6a820"
+      "bytes": 2052,
+      "git_blob_sha1": "acf2cd62f90a54d723dbc92fbaee87d561b07710",
+      "sha256": "eb80f5753303e47b01c1820a681b6915bda2e9dd975536b30bcc8cf319be2f3c"
     },
     {
       "path": "requirements.txt",
-      "bytes": 47,
-      "git_blob_sha1": "65b2adfc4a58abb13c90105b045b88162b64b499",
-      "sha256": "1ccada6d5f9672fadc7feabfbe213366cc3a0dcea7307b0485be6817cf714a2d"
+      "bytes": 34,
+      "git_blob_sha1": "ddd1b1f9edfd39a8ee398f43869c31ad310678e4",
+      "sha256": "ea183ff925b87e62e31e8df5eedb7c940d3b8e6e75276d226c870a3154bd8998"
     },
     {
       "path": "response-speed-verification.json",
@@ -1066,9 +862,9 @@
     },
     {
       "path": "robot-control.ps1",
-      "bytes": 62563,
-      "git_blob_sha1": "eb599fe223cba284771844bf5bedad759e7810e4",
-      "sha256": "549a3fc7b538acfdc969212cbd1214bd96136ed8e74a60244582f18b0691370c"
+      "bytes": 55405,
+      "git_blob_sha1": "d2429bc6b6e9250b0454ba98437f76ee7f33dc69",
+      "sha256": "68982a4f10bef49dd67e99340707f25034b47e74e087594e73207c13cf63cae2"
     },
     {
       "path": "start-all.ps1",
@@ -1143,16 +939,10 @@
       "sha256": "b373ac35cde271f404c9578378207ae39feedb0087793bae8d1b3f8f1fb289f3"
     },
     {
-      "path": "tests/fiction-continuity.mjs",
-      "bytes": 4281,
-      "git_blob_sha1": "3217a6d584e4ae2099952be34e1ce1ff5cfa4926",
-      "sha256": "ead91cf1b093a9d4f02fda4ca5f0eaa47a2a7f37ee51f5b3bfa0309fe0672ea7"
-    },
-    {
       "path": "tests/group-images.mjs",
-      "bytes": 14110,
-      "git_blob_sha1": "3552e5c31054b52b67013754894fc06762227253",
-      "sha256": "0e5bc3a89badca55f8477ffc0020bb63d331d89b9be92fdf54945c67e70811fc"
+      "bytes": 11591,
+      "git_blob_sha1": "91db5eecb646601ada6c60392487423b50147f7f",
+      "sha256": "b6afbf700df3e4e3db5581546807bf8b08e60583128480400b2a84e85fdca4bb"
     },
     {
       "path": "tests/identity.test.mjs",
@@ -1179,12 +969,6 @@
       "sha256": "4a4595f53b2996baf3f3e65f4e3d790386006eb63ba4a25edc943e4c4119fbc0"
     },
     {
-      "path": "tests/reading-route.test.mjs",
-      "bytes": 2031,
-      "git_blob_sha1": "6b0709bc902636f0aca6122813573c6693e90aa2",
-      "sha256": "c0cbe9a5e134eed5ce3bdfa83b6bc8b5bbead53730fe78603a746b08be3c5433"
-    },
-    {
       "path": "tests/test_bridge.py",
       "bytes": 6405,
       "git_blob_sha1": "7586b90317f8763db6e4d4db804d9b5f7db8fee1",
@@ -1207,12 +991,6 @@
       "bytes": 1827,
       "git_blob_sha1": "7f0f40dc2098d2100460e45f78a8d24149bc1f45",
       "sha256": "7a8adfdb26009f4eaf1dcf8009a1ad6e0b70ee89b7ab813aac4cfc983207c576"
-    },
-    {
-      "path": "tests/test_reading.py",
-      "bytes": 7864,
-      "git_blob_sha1": "e4dfd49e711b8c4a0583815a06905b430db48541",
-      "sha256": "a7d7771b0d83cb2fec44adb1acbf3748c713da97f096016de6c6f462029d4010"
     },
     {
       "path": "tools/complete-codex-image.py",
@@ -1264,9 +1042,9 @@
     },
     {
       "path": "versions.json",
-      "bytes": 599,
-      "git_blob_sha1": "dc2103aeaad769ce4d3d731aaec32964d4eb5941",
-      "sha256": "89233a73bcc56595838f128c191ae9adab623c724adbbff9dd042909af5b7d2f"
+      "bytes": 556,
+      "git_blob_sha1": "671d10e26ae0b43c0a83d78ab0627ce482a30691",
+      "sha256": "208b5e6eb08ae352d19837421686a79be8fc443cb7a202f93bef0cb810ec8544"
     },
     {
       "path": "work-luna-verification.json",

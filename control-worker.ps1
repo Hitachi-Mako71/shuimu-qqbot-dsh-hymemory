@@ -1,5 +1,5 @@
 ﻿param(
-    [Parameter(Mandatory=$true)][ValidateSet('Status','Snapshot','Start','Stop','Restart','SaveCompanion','SaveGroup','SavePersona','SaveStreaming','SaveModel','ConnectChatGPT','RefreshChatGPT','ProbeChatGPT','ConnectChatUI','ProbeChatUI','RefreshCodex','ProbeCodex','OpenCodex','SaveImages','ImageTasks','ImagePreview','ImageProbe','CancelImage','RetryImage','Logs','Backup','ExportMemory','ReadingStatus','ReadingImport','ReadingNext','ReadingAuto','ReadingExport')][string]$Action,
+    [Parameter(Mandatory=$true)][ValidateSet('Status','Snapshot','Start','Stop','Restart','SaveCompanion','SaveGroup','SavePersona','SaveStreaming','SaveModel','ConnectChatGPT','RefreshChatGPT','ProbeChatGPT','ConnectChatUI','ProbeChatUI','RefreshCodex','ProbeCodex','OpenCodex','SaveImages','ImageTasks','ImagePreview','CancelImage','RetryImage','Logs','Backup','ExportMemory')][string]$Action,
     [string]$ProjectDir = $PSScriptRoot,
     [string]$QqProfileDir = $(if($env:DSH_HOME){Join-Path $env:DSH_HOME 'profiles\qqbot'}else{'D:\DeepSeekHarnessData\home\profiles\qqbot'}),
     [string]$RequestPath,
@@ -148,11 +148,6 @@ try{
         if(-not $reply.success){Write-ControllerJson $ResultPath $reply;exit 1}
         $data=$reply.data
         $message=switch($Action){'SaveCompanion'{'主动消息设置已保存，后续调度使用新设置。'}'SaveGroup'{'群聊设置和本机备注已保存。'}'SavePersona'{'人设已保存到私聊和群聊配置，重启机器人后完全生效。'}'SaveStreaming'{'回复方式已保存，重启机器人后生效。'}'Backup'{'配置备份已保存到本机导出目录。'}default{'已载入最新配置。'}}
-        if($Action -eq 'ReadingImport'){$message='书籍已导入，后续按书签逐段阅读；导入不代表已经读过。'}
-        if($Action -eq 'ReadingNext'){$message='已请求阅读下一段；完成并核对前，书签保持不动。'}
-        if($Action -eq 'ReadingAuto'){$message='自动阅读设置已更新；正在读取的一段会先保存。'}
-        if($Action -eq 'ReadingStatus'){$message='阅读进度和笔记已刷新。'}
-        if($Action -eq 'ReadingExport'){$message='全部阅读笔记已导出到本机。'}
         if($Action -eq 'SaveImages'){$message='生图设置已保存，下次任务检查时生效；已在发送中的图片可能无法撤回。'}
         if($Action -eq 'SaveModel'){$message='对话模型已更新；重启后图片识别等入口会完全切换。'}
         if($Action -in @('CancelImage','RetryImage')){$message='已提交生图任务操作，等待机器人处理。'}

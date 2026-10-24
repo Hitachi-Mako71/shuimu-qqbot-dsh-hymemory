@@ -16,6 +16,7 @@ export function imageSettings() {
     if (!Number.isInteger(result[key]) || result[key] < low || result[key] > high) result[key] = imageDefaults[key];
   }
   for (const key of ['enabled', 'auto', 'characterEnabled']) if (typeof result[key] !== 'boolean') result[key] = imageDefaults[key];
+  result.auto = false; // Virtual daily life and automatic illustrations were removed.
   return result;
 }
 export function saveImageSwitch(key, value) {

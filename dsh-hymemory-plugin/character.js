@@ -25,3 +25,5 @@ export function characterReferences() {
   });
   return { revision: value.revision, description: value.description.slice(0, 3000), references };
 }
+
+export const botNames = Object.freeze(['柚柚', '水木', '公主', '大肥鱼']);

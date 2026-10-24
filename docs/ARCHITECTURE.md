@@ -1,3 +1,5 @@
+> 当前版本0.8.0已移除读书、虚构记忆生成和自动日常配图；下方涉及旧资料的说明仅用于历史数据保管。
+
 # 架构、事件顺序和接口
 
 当前主链路：QQ → 腾讯DSH插件 → 共享身份/Hy Memory钩子 → DeepSeek 或 Codex原生App Server。Codex以DSH sessionId映射持久线程、当前消息增量追加，使用同一个桌面Codex Home。辅助提炼采用ephemeral线程；详见[NATIVE_CODEX.md](NATIVE_CODEX.md)。
@@ -69,23 +71,4 @@ DSH JSONL 保存现有会话历史，Hy Memory 保存跨会话事实。记忆命
 
 ## 公主生活与主动分享
 
-`companion.js`在QQ原生sender注册后台调度，与QQ进程生命周期一致。`companion-state.js`使用相同身份哈希管理私有JSON，串行维护同一身份的日记、互动片段和故事。普通对话将生活连续性资料加到已有required prompt上下文；互动剧情直接生成回复并持久保存，不进入Hy Memory提炼队列。
-
-每20–30分钟推进一个虚构生活片段，模型判断是否值得分享；读取当前私聊相关记忆作为资料，生成时无工具权限。主动发送直接调用SDK且不传msgId/eventId，不使用被动回复缓存。设置、静默、限额和近期对话先检查，发送前再检查暂停。QQ拒绝后保留日记并退避，普通对话可继续。独立配对支持未安装Codex的用户。详细状态和边界见COMPANION文档。
-
-## 图片链路
-
-QQ 下载媒体并向 Agent 提供本机路径；官方 `qqbot_describe_image` 调用 `deepseek-flash`。固定补丁令视觉辅助请求 `reasoningEffort: off`，避免 1200 token 的预算被默认高强度思考占满。图像工具限制 10MB，官方下载器限制 20MB/保留24小时。图片文件和视觉事实没有自动写进 Hy Memory。
-
-## Codex 同步
-
-官方 bootstrap 的 sender 通过 `registerQQRelay` 注册到本地插件，沿用官方回复限额和目标解析。启动器设置私有状态目录，轮询器与 QQ/DSH 共用进程及生命周期。
-
-- 只有 QQ 私聊可用限时随机码首次绑定；保存身份哈希与实际发送目标，不接受群聊控制。
-- `codex queue --thread UUID --message TEXT` 使用 child_process 参数数组且 `shell:false`，QQ 文本不会拼接成 Shell 命令。以 CLI 回执确认入队，不冒充已经完成。
-- 只扫描明确绑定的 jsonl 文件的新字节，识别 `response_item/message/assistant` 且 phase 为 `commentary` 或 `final` 的 `output_text`。
-- 不转发 reasoning、工具调用和返回、用户输入及历史聊天。超大工具记录跳过；消息读取与待发内容/字节游标一起落盘。
-- 通常每20秒最多一次自动推送，长文本分段。发送失败保留内容，支持用新 QQ 消息刷新回复窗口。游标和待发内容保存在本机 JSON 私有状态。
-- 关闭时清空待发内容；重新开启从当时末尾开始。已提交给 Codex 的用户请求不撤回。进程突然中断可能重复一次推送，不保证严格一次投递。
-
-没有云端常驻服务、自动越权审批或任意聊天广播。Codex 的权限确认仍由 Codex 处理。
+当前companion.js只注册群模型调用上下文、轻问候和等待/免打扰状态；不生成或注入虚构经历。Python服务只启动真实聊天队列与SDK预热，不注册reading/fiction接口或线程。

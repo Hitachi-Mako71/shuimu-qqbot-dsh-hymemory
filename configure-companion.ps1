@@ -48,5 +48,5 @@ if($ProbeNow){
  [IO.File]::WriteAllText((Join-Path $Directory ('control\'+$ActionId+'.json')),($Action|ConvertTo-Json),$Utf8)
  Write-Host ('PROACTIVE_RECEIPT_FILE='+$ActionId+'.json')
 }
-Write-Host 'Companion configured for the paired private owner. Fictional daily life, diary and stories are stored locally.'
+Write-Host 'Companion configured for the paired private owner. Only lightweight greetings remain; reading, fictional daily life and generated memories are removed.'
 Write-Host 'High frequency considers sharing every 20-30 minutes, at most 3 successful pushes per hour; 23:00-09:00 is quiet.'

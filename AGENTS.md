@@ -1,13 +1,18 @@
-# QQ Bot project maintenance
+# Project maintenance
 
-Read `README.md`, `docs/FROM_ZERO.md`, `docs/CONFIGURATION.md`, and `docs/HANDOFF.md` before changing runtime behavior.
+Read `README.md`, `docs/deployment/windows.md`, `docs/deployment/configuration.md`, and `docs/development/handoff.md` before changing runtime behavior.
 
-- Windows deployment targets the dedicated `qqbot` profile. Version pins live in `versions.json` and `dsh-hymemory-plugin/package.json`.
-- The supported QQ transports are Tencent official QQ Bot and local QQ + NapCat/OneBot 11. Preserve both paths and document their differences in `docs/QQ_TRANSPORTS.md`.
-- Do not publish `.env`, QQ/DSH/Codex credentials, `data/`, QQ login state, chat, memories, local mappings, screenshots, logs, model caches, or NapCat/QQ binaries. Review the final commit tree before publishing.
-- Keep OneBot bound to loopback and `allowedGroups` explicit. Never infer user/group identity from a display name or merge private and group memories.
-- User-requested image generation uses the separate Codex image workflow. Do not route ordinary QQ text conversations to Codex.
-- When changing plugin source, increment its package version, produce a versioned `.tgz`, update the dedicated profile lock, and verify installed hashes when deploying.
-- Use the project's managed start/stop scripts and stop only processes recorded for this project.
-- Do not add or run application tests unless the user asks. Installation and health checks are not proof of real QQ message acceptance.
+- `app/` is the deployable project root. Run installation and service commands there. Keep its deployed relative paths intact unless an implementation change explicitly requires otherwise.
+- Supported QQ transports are Tencent official QQ Bot and local QQ + NapCat/OneBot 11. Preserve both and maintain their guides under `docs/deployment/`.
+- Version pins live in `app/versions.json` and `app/dsh-hymemory-plugin/package.json`. `archive/` is historical and is not loaded by the current installer.
+- Never publish credentials, QQ login state, private account/group mappings, chat, memories, local data, attachments, logs, model caches, or NapCat/QQ binaries. Inspect the final commit tree and package contents.
+- Keep OneBot bound to loopback and allowed groups explicit. Identity comes from the gateway, never a display name. Do not merge private and group memories.
+- Codex handles explicitly requested image generation through the separate image workflow. Ordinary QQ text conversations use DeepSeek.
+- Plugin source changes require a version increment, a versioned package, profile-lock updates, and installed hash checks when deploying. Documentation and source-preserving directory moves do not require a plugin rebuild.
+- Use managed start/stop scripts and stop only the project's recorded processes. PowerShell 5 scripts retain UTF-8 BOM where required.
+- Do not add or run application tests unless requested. Installation and health checks do not prove real QQ delivery.
 
+## 调试兜底规则
+
+- 处理程序故障、测试失败或异常行为时，记录已执行的修复尝试。
+- 两次不同修复在相关验证后仍未解决问题时，第三次尝试前必须调用并严格遵循 `superpowers:systematic-debugging`；该 skill 的触发规则更早适用时立即调用。

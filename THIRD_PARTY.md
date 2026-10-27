@@ -1,15 +1,16 @@
 # 上游依赖与许可说明
 
-本仓库保存本项目集成代码、版本配置和固定 QQ 插件补丁。第三方运行时和 SDK 在安装时通过各自包源获取；不上传 `node_modules`、Python 虚拟环境、模型权重或登录数据。
+本仓库保存项目集成源码、版本配置和固定 QQ 插件补丁。第三方运行时、SDK、QQ / NapCat 程序和模型权重由部署者从各自上游获取，登录数据不随源码发布。
 
-| 组件 | 版本/来源 | 用途 |
+| 组件 | 固定版本或来源 | 用途 |
 |---|---|---|
-| DeepSeek Harness | `@deepseek-ai/dsh@0.2.1-rc.2` | Agent、Cordis 服务和会话持久化 |
-| 腾讯官方 QQ 插件 | `@tencent-connect/dsh-qqbot@0.5.2` | QQ Bot 接入 |
-| 腾讯 Hy Memory | `Tencent-Hunyuan/Hy-Memory@2.0.4` | 长期记忆 |
-| FastEmbed | `0.9.0` | 本机 CPU 向量计算 |
-| BAAI/bge-small-zh-v1.5 | 首次部署下载权重 | 中文 512 维向量模型 |
-| Chroma / Kuzu | `1.5.9` / `0.11.3` | 本机存储依赖 |
-| Codex 桌面版 | 用户本机安装和登录 | 用户明确请求时调用内置图片生成 |
+| DeepSeek Harness | `@deepseek-ai/dsh@0.2.1-rc.2` | Agent、Cordis 和会话 |
+| Tencent DSH QQ 插件 | `@tencent-connect/dsh-qqbot@0.5.2` | QQ 接入层与官方 Bot 传输 |
+| NapCat Shell | 当前部署 `4.18.41` | 可选的个人 QQ / OneBot 11 传输 |
+| Hindsight | `1.1.0` | 当前长期记忆引擎 |
+| pg0 / FlashRank | `0.15.2` / `0.2.10` | 本机数据库与重排依赖 |
+| Hy Memory SDK | `2.0.4` | 兼容接口与保留的历史库支持 |
+| FastEmbed / BAAI 中文向量模型 | `0.9.0` / `bge-small-zh-v1.5` | 本机向量计算 |
+| Codex 桌面版 | 用户本机安装和登录 | 明确请求的内置图片生成 |
 
-所有第三方组件和模型均遵守其上游许可与服务条款。完整间接依赖版本见 `requirements-lock.txt` 和 `dependency-locks`。
+所有第三方组件和模型适用其各自的上游许可与服务条款。完整固定信息见 [`app/versions.json`](app/versions.json)、[Python 依赖锁](app/requirements-lock.txt)、[Hindsight 依赖锁](app/requirements-hindsight-lock.txt)和[包管理锁](app/dependency-locks/)。

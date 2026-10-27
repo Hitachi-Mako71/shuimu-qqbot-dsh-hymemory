@@ -1,5 +1,5 @@
 ﻿param(
-    [Parameter(Mandatory=$true)][ValidateSet('Status','Snapshot','Start','Stop','Restart','SaveCompanion','SaveGroup','SavePersona','SaveStreaming','SaveModel','ConnectChatGPT','RefreshChatGPT','ProbeChatGPT','ConnectChatUI','ProbeChatUI','RefreshCodex','ProbeCodex','OpenCodex','SaveImages','ImageTasks','ImagePreview','CancelImage','RetryImage','Logs','Backup','ExportMemory')][string]$Action,
+    [Parameter(Mandatory=$true)][ValidateSet('Status','Snapshot','Start','Stop','Restart','SaveCompanion','SaveGroup','SavePersona','SaveStreaming','SaveImages','ImageTasks','ImagePreview','CancelImage','RetryImage','Logs','Backup','FullBaseline','ExportMemory')][string]$Action,
     [string]$ProjectDir = $PSScriptRoot,
     [string]$QqProfileDir = $(if($env:DSH_HOME){Join-Path $env:DSH_HOME 'profiles\qqbot'}else{'D:\DeepSeekHarnessData\home\profiles\qqbot'}),
     [string]$RequestPath,
@@ -39,12 +39,9 @@ function Get-ControllerStatus{
     $ready=$false;$readable=$true
     if($pids.qqbot){try{$ready=(Read-SharedLogPrefix (Join-Path $ProjectDir 'logs\qqbot.out.log')).Contains('Bot ready!')}catch{$readable=$false}}
     $qqState=if($ready){'ready'}elseif($unknown.qqbot){'unknown'}elseif($pids.qqbot){'starting'}else{'stopped'}
-    $memoryState=if($health -and $health.sdk_ready -and $health.embedding_ready){'ready'}elseif($health -or $pids.memory){'starting'}elseif($unknown.memory){'unknown'}else{'stopped'}
-    $modelRoute=$null;$nativeRuntime=$null
-    try{$modelRoute=Get-Content (Join-Path $ProjectDir 'data\model-routing.json') -Raw -Encoding UTF8|ConvertFrom-Json}catch{}
-    try{$nativeRuntime=Get-Content (Join-Path $ProjectDir 'data\codex-work\runtime.json') -Raw -Encoding UTF8|ConvertFrom-Json}catch{}
+    $memoryState=if($health -and $health.sdk_ready -and $health.embedding_ready){'ready'}elseif($health -and $health.ok -and -not $health.sdk_ready){'idle'}elseif($health -or $pids.memory){'starting'}elseif($unknown.memory){'unknown'}else{'stopped'}
     $zone=[TimeZoneInfo]::FindSystemTimeZoneById('China Standard Time')
-    return @{qq=$qqState;memory=$memoryState;qqPid=$pids.qqbot;memoryPid=$pids.memory;logReadable=$readable;modelProvider=$modelRoute.provider;nativeRuntime=$nativeRuntime;restartRequired=(Test-Path (Join-Path $ProjectDir '.run\control-console\restart-required.json'));checkedAt=[TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow,$zone).ToString('HH:mm:ss')}
+    return @{qq=$qqState;memory=$memoryState;qqPid=$pids.qqbot;memoryPid=$pids.memory;logReadable=$readable;modelProvider='deepseek-account';restartRequired=(Test-Path (Join-Path $ProjectDir '.run\control-console\restart-required.json'));checkedAt=[TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow,$zone).ToString('HH:mm:ss')}
 }
 $operationMutex=$null;$acquired=$false
 try{
@@ -71,60 +68,14 @@ try{
             $message='机器人与记忆服务已关闭，历史会话和记忆已保留。'
         }
     }
-    elseif($Action -eq 'OpenCodex'){
-        $native=Get-Content (Join-Path $ProjectDir 'data\codex-work\config.json') -Raw -Encoding UTF8|ConvertFrom-Json
-        $env:CODEX_HOME=[string]$native.codexHome
-        & ([string]$native.codexPath) app ([string]$native.cwd)|Out-Null
-        if($LASTEXITCODE -ne 0){throw 'Codex未能打开，请手动在Codex中查找“柚柚QQ”。'}
-        $data=@{};$message='已打开Codex记忆工作目录；在历史列表查找“柚柚QQ”，可查看对应QQ会话。'
-    }
-    elseif($Action -in @('RefreshCodex','ProbeCodex')){
-        $probe=[Uri]'https://api.openai.com';$proxy=[Net.WebRequest]::DefaultWebProxy.GetProxy($probe)
-        if($proxy -and $proxy -ne $probe){$env:HTTPS_PROXY=$proxy.AbsoluteUri;$env:HTTP_PROXY=$proxy.AbsoluteUri;$env:NODE_USE_ENV_PROXY='1'}
-        $env:NO_PROXY='localhost,127.0.0.1,::1'
-        & (Join-Path $ProjectDir '.venv\Scripts\python.exe') (Join-Path $ProjectDir 'configure-native-codex.py') --project $ProjectDir|Out-Null
-        if($LASTEXITCODE -ne 0){throw '未能定位Codex，请检查本机Codex安装。'}
-        $operation=if($Action -eq 'ProbeCodex'){'probe'}else{'models'}
-        $arguments=@((Join-Path $QqProfileDir 'node_modules\dsh-chatgpt-plan\native-cli.js'),$operation,'--directory',(Join-Path $ProjectDir 'data\codex-work'))
-        if($Action -eq 'ProbeCodex'){$request=Get-Content -LiteralPath $RequestPath -Raw -Encoding UTF8|ConvertFrom-Json;if([string]$request.model -notmatch '^gpt-[A-Za-z0-9._-]{1,100}$'){throw '请选择Codex提供的模型。'};$arguments+=@('--model',[string]$request.model)}
-        Progress-Stage '正在连接本机Codex原生服务…'
-        $output=& node @arguments
-        if($LASTEXITCODE -ne 0){throw 'Codex连接未完成，请确认本机Codex已登录、网络正常。原有路由保持。'}
-        $data=@{};$message=if($Action -eq 'ProbeCodex'){'Codex模型已实际完成回复，可以切换。'}else{'已刷新本机Codex连接与Luna模型。'}
-    }
-    elseif($Action -eq 'ConnectChatUI'){
-        $helper=Join-Path $ProjectDir 'connect-chat-ui.ps1'
-        Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-STA','-File',('"'+$helper+'"'),'-ProjectDir',('"'+$ProjectDir+'"')) -WindowStyle Hidden|Out-Null
-        $data=@{};$message='普通Chat连接向导已打开，请在常用Edge中加载本地扩展并配对。'
-    }
-    elseif($Action -eq 'ProbeChatUI'){
-        $cli=Join-Path $QqProfileDir 'node_modules\dsh-chatgpt-plan\chat-ui-cli.js'
-        Progress-Stage '正在通过专用Chat工作页验证回复，不读取QQ记忆…'
-        $output=& node $cli probe --directory (Join-Path $ProjectDir 'data\chatgpt-chat')
-        if($LASTEXITCODE -ne 0){throw 'Chat工作页验证未完成。请重新加载本地扩展、打开专用工作对话并保持在Chat模式。'}
-        $data=@{};$message='Chat工作页已完成一次真实回复，可以选择此工作路由。'
-    }
-    elseif($Action -eq 'ConnectChatGPT'){
-        & (Join-Path $ProjectDir 'connect-chatgpt.ps1') -ProjectDir $ProjectDir|Out-Null
-        $data=@{};$message='已打开OpenAI官方授权页，请在浏览器完成登录与套餐授权。'
-    }
-    elseif($Action -in @('RefreshChatGPT','ProbeChatGPT')){
-        $probe=[Uri]'https://api.openai.com';$proxy=[Net.WebRequest]::DefaultWebProxy.GetProxy($probe)
-        if($proxy -and $proxy -ne $probe){if(-not $env:HTTPS_PROXY){$env:HTTPS_PROXY=$proxy.AbsoluteUri};if(-not $env:HTTP_PROXY){$env:HTTP_PROXY=$proxy.AbsoluteUri}}
-        if($env:HTTPS_PROXY -or $env:HTTP_PROXY){$env:NODE_USE_ENV_PROXY='1';$env:NO_PROXY='localhost,127.0.0.1,::1'}
-        $operation=if($Action -eq 'RefreshChatGPT'){'models'}else{'probe'}
-        $chatCli=Join-Path $QqProfileDir 'node_modules\dsh-chatgpt-plan\cli.js'
-        if(-not(Test-Path -LiteralPath $chatCli)){throw 'ChatGPT provider is not installed in the qqbot profile.'}
-        $chatArguments=@($chatCli,$operation,'--directory',(Join-Path $ProjectDir 'data\chatgpt-plan'))
-        if($Action -eq 'ProbeChatGPT'){
-            $request=Get-Content -LiteralPath $RequestPath -Raw -Encoding UTF8|ConvertFrom-Json
-            if([string]$request.model -notmatch '^[A-Za-z0-9._:-]{1,150}$'){throw '请选择账号提供的模型。'}
-            $chatArguments+=@('--model',[string]$request.model)
-        }
-        Progress-Stage '正在连接ChatGPT账号，界面仍可操作…'
-        $output=& node @chatArguments
-        if($LASTEXITCODE -ne 0){throw 'ChatGPT请求尚未完成，请检查网络或重新授权；现有模型设置保持。'}
-        $data=@{};$message=if($Action -eq 'RefreshChatGPT'){'已刷新账号可用模型。'}else{'所选模型已实际完成回复，可以切换。'}
+    elseif($Action -eq 'FullBaseline'){
+        Progress-Stage '正在停机保存完整基线并核对隔离副本，完成后恢复原服务…'
+        $summaryPath=$ResultPath+'.baseline.private.json'
+        & (Join-Path $ProjectDir 'baseline-snapshot.ps1') -ProjectDir $ProjectDir -QqProfileDir $QqProfileDir -ResultPath $summaryPath -RestoreCheck|Out-Null
+        if(-not(Test-Path -LiteralPath $summaryPath)){throw '完整基线未完成，请保留已有数据并查看本机记录。'}
+        $data=Get-Content -LiteralPath $summaryPath -Raw -Encoding UTF8|ConvertFrom-Json
+        Remove-Item -LiteralPath $summaryPath -Force
+        $message='完整基线和隔离文件/数据库核对已完成；不代表QQ真人收发验收。'
     }
     elseif($Action -eq 'ExportMemory'){
         Progress-Stage '正在导出记忆，服务会短暂停止并在完成后恢复…'
@@ -149,7 +100,6 @@ try{
         $data=$reply.data
         $message=switch($Action){'SaveCompanion'{'主动消息设置已保存，后续调度使用新设置。'}'SaveGroup'{'群聊设置和本机备注已保存。'}'SavePersona'{'人设已保存到私聊和群聊配置，重启机器人后完全生效。'}'SaveStreaming'{'回复方式已保存，重启机器人后生效。'}'Backup'{'配置备份已保存到本机导出目录。'}default{'已载入最新配置。'}}
         if($Action -eq 'SaveImages'){$message='生图设置已保存，下次任务检查时生效；已在发送中的图片可能无法撤回。'}
-        if($Action -eq 'SaveModel'){$message='对话模型已更新；重启后图片识别等入口会完全切换。'}
         if($Action -in @('CancelImage','RetryImage')){$message='已提交生图任务操作，等待机器人处理。'}
         if($Action -eq 'Backup' -and $data.path){$account=[Security.Principal.WindowsIdentity]::GetCurrent().Name;& icacls.exe $data.path /inheritance:r /grant:r ($account+':F') 'SYSTEM:F'|Out-Null;if($LASTEXITCODE -ne 0){throw '备份已生成，但文件权限设置未完成，请查看本机导出目录。'}}
     }

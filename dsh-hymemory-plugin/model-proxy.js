@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { createHash, timingSafeEqual, randomUUID } from 'node:crypto';
-import { modelRoute } from './model-route.js';
+import { memoryModelRoute } from './model-route.js';
 
 export async function startModelProxy(ctx) {
   const { BlockAssembler, createUserMessage, createAssistantMessage, createSystemMessage, createToolResultMessage } = await import('@deepseek-ai/dsh-llm');
@@ -9,7 +9,7 @@ export async function startModelProxy(ctx) {
   const digest = (s) => createHash('sha256').update(s).digest();
   const expected = digest(`Bearer ${token}`);
   const server = createServer(async (req, res) => {
-    const { provider, model } = modelRoute();
+    const { provider, model } = memoryModelRoute();
     const send = (status, body) => {
       if (res.destroyed) return;
       res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
@@ -61,7 +61,7 @@ export async function startModelProxy(ctx) {
       server.once('error', reject);
       server.listen(Number(process.env.MEMORY_DSH_PORT || 8766), '127.0.0.1', resolve);
     });
-    const { provider, model } = modelRoute();
+    const { provider, model } = memoryModelRoute();
     console.log(`[qq-hymemory-model] loopback proxy ready (${provider}/${model})`);
     return () => { server.closeAllConnections(); server.close(); };
   }, 'qq-hymemory.model-proxy');

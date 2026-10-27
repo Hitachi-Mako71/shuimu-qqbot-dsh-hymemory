@@ -1,181 +1,22 @@
-# 当前文件索引
+# 仓库目录索引
 
-0.8.0移除读书和虚构记忆生成后的源码快照。私人数据不在仓库。
+当前发布：V3.5.0 / 插件 0.22.6。该索引描述当前支持的源码与部署入口；历史验证记录不代替当前部署说明。
 
-| 文件 | 用途 |
+| 路径 | 用途 |
 |---|---|
-| `.env.example` | 当前集成源码、部署或维护工具 |
-| `.gitattributes` | 当前集成源码、部署或维护工具 |
-| `.gitignore` | 当前集成源码、部署或维护工具 |
-| `AGENTS.md` | 维护约定与删除功能的防回退规则 |
-| `CHANGELOG.md` | 当前集成源码、部署或维护工具 |
-| `README.md` | 当前功能与部署导航 |
-| `THIRD_PARTY.md` | 当前集成源码、部署或维护工具 |
-| `acceptance-checklist.md` | 当前集成源码、部署或维护工具 |
-| `acceptance-command-results.json` | 公开配置模板或脱敏历史元数据 |
-| `acceptance-local-results.json` | 公开配置模板或脱敏历史元数据 |
-| `acceptance-local.py` | 当前集成源码、部署或维护工具 |
-| `acceptance-outage-results.json` | 公开配置模板或脱敏历史元数据 |
-| `acceptance-restart-results.json` | 公开配置模板或脱敏历史元数据 |
-| `acceptance-session-storage-results.json` | 公开配置模板或脱敏历史元数据 |
-| `character-appearance.md` | 当前集成源码、部署或维护工具 |
-| `chat-ui-extension/background.js` | 当前集成源码、部署或维护工具 |
-| `chat-ui-extension/content.js` | 当前集成源码、部署或维护工具 |
-| `chat-ui-extension/dom.js` | 当前集成源码、部署或维护工具 |
-| `chat-ui-extension/manifest.json` | 公开配置模板或脱敏历史元数据 |
-| `chat-ui-extension/popup.html` | 当前集成源码、部署或维护工具 |
-| `chat-ui-extension/popup.js` | 当前集成源码、部署或维护工具 |
-| `chat-ui-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `chat-work-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `chatgpt-plan-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `codex-images-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `codex-relay-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `companion-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `configure-character.py` | 当前集成源码、部署或维护工具 |
-| `configure-codex-images.py` | 当前集成源码、部署或维护工具 |
-| `configure-codex-relay.ps1` | 当前集成源码、部署或维护工具 |
-| `configure-companion.ps1` | 当前集成源码、部署或维护工具 |
-| `configure-native-codex.py` | 当前集成源码、部署或维护工具 |
-| `configure-profile.py` | 当前集成源码、部署或维护工具 |
-| `configure-qq-local.ps1` | 当前集成源码、部署或维护工具 |
-| `configure-response-speed.py` | 当前集成源码、部署或维护工具 |
-| `connect-chat-ui.ps1` | 当前集成源码、部署或维护工具 |
-| `connect-chatgpt.ps1` | 当前集成源码、部署或维护工具 |
-| `control-console-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `control-worker.ps1` | 当前集成源码、部署或维护工具 |
-| `control_images.py` | 当前集成源码、部署或维护工具 |
-| `control_models.py` | 当前集成源码、部署或维护工具 |
-| `control_settings.py` | 当前集成源码、部署或维护工具 |
-| `create-control-shortcut.ps1` | 当前集成源码、部署或维护工具 |
-| `create-desktop-shortcuts.ps1` | 当前集成源码、部署或维护工具 |
-| `dependency-locks/qqbot-profile/package.json` | 依赖锁与安装快照 |
-| `dependency-locks/qqbot-profile/pnpm-lock.yaml` | 依赖锁与安装快照 |
-| `dependency-locks/qqbot-profile/pnpm-workspace.yaml` | 依赖锁与安装快照 |
-| `dependency-locks/runtime/package-lock.json` | 依赖锁与安装快照 |
-| `dependency-locks/runtime/package.json` | 依赖锁与安装快照 |
-| `desktop-control.ps1` | 当前集成源码、部署或维护工具 |
-| `desktop-shortcuts.json` | 公开配置模板或脱敏历史元数据 |
-| `docs/ARCHITECTURE.md` | 专项说明或已标注的历史维护记录 |
-| `docs/ARCHIVE_VERIFICATION.json` | 专项说明或已标注的历史维护记录 |
-| `docs/BACKUP_AND_RECOVERY.md` | 专项说明或已标注的历史维护记录 |
-| `docs/CHARACTER.md` | 专项说明或已标注的历史维护记录 |
-| `docs/CHATGPT_CHAT.md` | 专项说明或已标注的历史维护记录 |
-| `docs/CHATGPT_CHAT_WORK.md` | 专项说明或已标注的历史维护记录 |
-| `docs/CHATGPT_PLAN.md` | 专项说明或已标注的历史维护记录 |
-| `docs/CODEX_IMAGES.md` | 专项说明或已标注的历史维护记录 |
-| `docs/COMPANION.md` | 专项说明或已标注的历史维护记录 |
-| `docs/CONFIGURATION.md` | 专项说明或已标注的历史维护记录 |
-| `docs/CONTROL_CONSOLE.md` | 专项说明或已标注的历史维护记录 |
-| `docs/DEBUG_HISTORY.md` | 专项说明或已标注的历史维护记录 |
-| `docs/FROM_ZERO.md` | 专项说明或已标注的历史维护记录 |
-| `docs/GROUP_PARTICIPATION.md` | 专项说明或已标注的历史维护记录 |
-| `docs/GROUP_RELIABILITY.md` | 专项说明或已标注的历史维护记录 |
-| `docs/HANDOFF.md` | 专项说明或已标注的历史维护记录 |
-| `docs/NATIVE_CODEX.md` | 专项说明或已标注的历史维护记录 |
-| `docs/RESPONSE_SPEED.md` | 专项说明或已标注的历史维护记录 |
-| `docs/WORK_LUNA.md` | 专项说明或已标注的历史维护记录 |
-| `dsh-chatgpt-plugin/auth.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/chat-ui-adapter.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/chat-ui-bridge.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/chat-ui-cli.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/chat-ui-prompt.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/cli.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/cordis.patch.yml` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/index.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/native-adapter.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/native-cli.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/native-engine.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/native-protocol.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/native-rpc.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/native-runtime.js` | 当前集成源码、部署或维护工具 |
-| `dsh-chatgpt-plugin/package-lock.json` | 公开配置模板或脱敏历史元数据 |
-| `dsh-chatgpt-plugin/package.json` | 公开配置模板或脱敏历史元数据 |
-| `dsh-chatgpt-plugin/protocol.js` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/bridge.js` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/character.js` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/codex-images.js` | 手动Codex内置生图及原会话交付 |
-| `dsh-hymemory-plugin/codex-relay.js` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/companion-attention.js` | 当前互动与等待/免打扰状态 |
-| `dsh-hymemory-plugin/companion-state.js` | 身份哈希与私有互动配置 |
-| `dsh-hymemory-plugin/companion.js` | 群模型调用、轻问候、配对与限流，无日记/虚构记忆生成 |
-| `dsh-hymemory-plugin/cordis.patch.yml` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/group-participation.js` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/image-settings.js` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/index.js` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/model-proxy.js` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/model-route.js` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/package.json` | 公开配置模板或脱敏历史元数据 |
-| `dsh-hymemory-plugin/qq-media.js` | 当前集成源码、部署或维护工具 |
-| `dsh-hymemory-plugin/response-speed.js` | 当前集成源码、部署或维护工具 |
-| `dsh-qqbot.patch.yml` | 当前集成源码、部署或维护工具 |
-| `export-memory.ps1` | 当前集成源码、部署或维护工具 |
-| `export_memories.py` | 当前集成源码、部署或维护工具 |
-| `feature-removal-verification.json` | 本次安装、删减范围和运行状态的脱敏记录 |
-| `group-image-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `group-participation-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `group-reliability-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `hymemory_service.py` | 真实用户聊天Hy Memory服务、写入队列和本地向量接口 |
-| `image-studio-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `import-local-config.ps1` | 当前集成源码、部署或维护工具 |
-| `install-qqbot.ps1` | 当前集成源码、部署或维护工具 |
-| `launcher-icons/start.ico` | 当前集成源码、部署或维护工具 |
-| `launcher-icons/stop.ico` | 当前集成源码、部署或维护工具 |
-| `memory-export-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `memory_network.py` | 当前集成源码、部署或维护工具 |
-| `memory_outbox.py` | 真实用户消息的持久提炼队列与幂等提交 |
-| `memory_workspace.py` | 当前集成源码、部署或维护工具 |
-| `native-codex-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `native-writer-recovery-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `packages/dsh-chatgpt-plan-0.1.0.tgz` | 插件分发包；当前记忆插件仅保留0.8.0 |
-| `packages/dsh-chatgpt-plan-0.2.0.tgz` | 插件分发包；当前记忆插件仅保留0.8.0 |
-| `packages/dsh-chatgpt-plan-0.2.1.tgz` | 插件分发包；当前记忆插件仅保留0.8.0 |
-| `packages/dsh-chatgpt-plan-0.2.2.tgz` | 插件分发包；当前记忆插件仅保留0.8.0 |
-| `packages/dsh-chatgpt-plan-0.3.0.tgz` | 插件分发包；当前记忆插件仅保留0.8.0 |
-| `packages/dsh-chatgpt-plan-0.4.0.tgz` | 插件分发包；当前记忆插件仅保留0.8.0 |
-| `packages/dsh-chatgpt-plan-0.4.1.tgz` | 插件分发包；当前记忆插件仅保留0.8.0 |
-| `packages/dsh-chatgpt-plan-0.4.2.tgz` | 插件分发包；当前记忆插件仅保留0.8.0 |
-| `packages/dsh-chatgpt-plan-0.4.3.tgz` | 插件分发包；当前记忆插件仅保留0.8.0 |
-| `packages/dsh-hymemory-qq-0.8.0.tgz` | 插件分发包；当前记忆插件仅保留0.8.0 |
-| `patch-qq-plugin.py` | 当前集成源码、部署或维护工具 |
-| `patches/@tencent-connect__dsh-qqbot@0.5.2.patch` | 当前集成源码、部署或维护工具 |
-| `persona-rename-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `personality-application.json` | 公开配置模板或脱敏历史元数据 |
-| `personality.md` | 温柔端庄的交流风格，不生成虚构生活 |
-| `personality_config.py` | 当前集成源码、部署或维护工具 |
-| `qq-image-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `repository-manifest.json` | 本提交Git文件内容哈希，不含清单自身 |
-| `requirements-lock.txt` | 当前集成源码、部署或维护工具 |
-| `requirements.txt` | 当前集成源码、部署或维护工具 |
-| `response-speed-verification.json` | 公开配置模板或脱敏历史元数据 |
-| `robot-control.ps1` | 控制台界面，不含阅读与日常自动配图入口 |
-| `start-all.ps1` | 当前集成源码、部署或维护工具 |
-| `start-chat-ui.ps1` | 当前集成源码、部署或维护工具 |
-| `start-memory.ps1` | 当前集成源码、部署或维护工具 |
-| `start-qqbot.ps1` | 当前集成源码、部署或维护工具 |
-| `stop-all.ps1` | 当前集成源码、部署或维护工具 |
-| `stop-chat-ui.ps1` | 当前集成源码、部署或维护工具 |
-| `stop-memory.ps1` | 当前集成源码、部署或维护工具 |
-| `tests/chat-ui-context.test.mjs` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/chat-ui-dom-mode.test.mjs` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/chat-ui-model-status.test.mjs` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/chat-ui-work-bridge.test.mjs` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/chat-work-route.test.mjs` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/group-images.mjs` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/identity.test.mjs` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/native-codex.test.mjs` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/qq-media.mjs` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/qq-memory.test.mjs` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/test_bridge.py` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/test_memory_workspace.py` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/test_native_routes.py` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tests/test_outbox.py` | 保留功能的检查源码，本次没有运行应用测试 |
-| `tools/complete-codex-image.py` | 当前集成源码、部署或维护工具 |
-| `tools/create-launcher-icons.py` | 当前集成源码、部署或维护工具 |
-| `tools/diagnose-qq-start.mjs` | 当前集成源码、部署或维护工具 |
-| `tools/inspect-account-models.py` | 当前集成源码、部署或维护工具 |
-| `tools/inspect-image-tool-events.mjs` | 当前集成源码、部署或维护工具 |
-| `tools/materialize-dependency-locks.py` | 当前集成源码、部署或维护工具 |
-| `verification-results.json` | 公开配置模板或脱敏历史元数据 |
-| `verify-session-storage.mjs` | 当前集成源码、部署或维护工具 |
-| `versions.json` | 公开配置模板或脱敏历史元数据 |
-| `work-luna-verification.json` | 公开配置模板或脱敏历史元数据 |
+| `dsh-hymemory-plugin/` | DSH QQ 中间件、记忆、工具、群控制、生图与双传输适配 |
+| `install-qqbot.ps1` | 安装锁定的 DSH、Tencent QQ 插件与项目业务插件 |
+| `start-all.ps1` / `stop-all.ps1` | 启停本项目受管服务 |
+| `start-qqbot.ps1` | 按本机 `data/transport/onebot.json` 选择官方或 OneBot 传输 |
+| `start-napcat.ps1` / `stop-napcat.ps1` | 仅在 OneBot 模式启停本项目 NapCat 进程 |
+| `install-hindsight.ps1` / `start-memory.ps1` | 安装及运行 Hindsight 记忆服务 |
+| `versions.json` | 固定依赖、产品和传输协议版本 |
+| `dependency-locks/` | DSH runtime 和 qqbot profile 的锁文件 |
+| `packages/dsh-hymemory-qq-0.22.6.tgz` | 当前本地 QQ 业务插件归档 |
+| `docs/QQ_TRANSPORTS.md` | 腾讯官方 QQ Bot 与个人 QQ/OneBot 两种部署方案 |
+| `docs/FROM_ZERO.md` | Windows 从零部署步骤 |
+| `docs/CONFIGURATION.md` | 本机配置和数据边界 |
+| `examples/onebot.json.example` | 不含真实账号信息的 OneBot 配置模板 |
+
+本机凭证、OneBot 映射、QQ 登录态、记忆、会话、附件、模型缓存、日志和 NapCat/QQ 二进制不属于公开仓库。
+

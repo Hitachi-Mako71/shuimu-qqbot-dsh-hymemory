@@ -31,5 +31,5 @@ if target.exists() and not backup.exists():
 template = (project / 'dsh-qqbot.patch.yml').read_text(encoding='utf-8')
 target.write_text(template.replace('__PROJECT_DIR__', project.as_posix().replace("'", "''")), encoding='utf-8')
 apply_personality(project, profile, backup=False)
-(project / 'agent-work').mkdir(exist_ok=True)
+(project / 'data/workspaces').mkdir(parents=True, exist_ok=True)
 print('Configured dedicated qqbot profile; previous profile patch backed up once.')

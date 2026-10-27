@@ -13,7 +13,6 @@ foreach($pair in @(@('Bg','#111923'),@('Side','#172230'),@('Card','#1E2B3B'),@('
 $script:Ui=@{Jobs=@{};Pages=@{};Nav=@{};Dirty=@{companion=$false;group=$false;persona=$false;stream=$false};Loading=$false;Loaded=$false;Busy=$null;Snapshot=$null;Status=$null;SelectedGroup=-1;LastStatus=[DateTime]::MinValue;LastLogs=[DateTime]::MinValue;Page='home';SaveButtons=@();EditControls=@();ServiceButtons=@();RestartRequired=$false}
 $script:Tip=New-Object Windows.Forms.ToolTip
 $script:Ui.Dirty.images=$false;$script:Ui.LastImages=[DateTime]::MinValue;$script:Ui.ImageRows=@()
-$script:Ui.Dirty.chatModel=$false;$script:Ui.ChatCatalog=@();$script:Ui.LastModels=[DateTime]::MinValue
 function Text-Line([string]$Text,[int]$Size=10,[bool]$Bold=$false,[int]$Height=28){
     $x=New-Object Windows.Forms.Label;$x.Text=$Text;$x.AutoSize=$false;$x.Height=$Height;$x.Dock='Top';$x.ForeColor=$C.Text
     $style=if($Bold){[Drawing.FontStyle]::Bold}else{[Drawing.FontStyle]::Regular};$x.Font=New-Object Drawing.Font('Microsoft YaHei UI',$Size,$style);return $x
@@ -64,7 +63,7 @@ function Mark-Dirty([string]$Key){
     if($script:Ui.Loading){return};$script:Ui.Dirty[$Key]=$true;Update-DirtyLabels
 }
 function Update-DirtyLabels{
-    foreach($entry in @(@('companion','主动消息'),@('group','群聊设置'),@('persona','人设与回复'),@('images','生图与形象'),@('models','对话模型'))){$key=if($entry[0] -eq 'models'){'chatModel'}else{$entry[0]};$dirty=$script:Ui.Dirty[$key];if($entry[0] -eq 'persona'){$dirty=$dirty -or $script:Ui.Dirty.stream};$script:Ui.Nav[$entry[0]].Text=$entry[1]+$(if($dirty){'  •'}else{''})}
+    foreach($entry in @(@('companion','主动消息'),@('group','群聊设置'),@('persona','人设与回复'),@('images','生图与形象'),@('models','DeepSeek路由'))){$dirty=$script:Ui.Dirty[$entry[0]];if($entry[0] -eq 'persona'){$dirty=$dirty -or $script:Ui.Dirty.stream};$script:Ui.Nav[$entry[0]].Text=$entry[1]+$(if($dirty){'  •'}else{''})}
 }
 function Refresh-Enabled{
     $available=$script:Ui.Loaded -and -not $script:Ui.Busy
@@ -72,9 +71,12 @@ function Refresh-Enabled{
     foreach($item in $script:Ui.SaveButtons){$item.Enabled=$available}
     if($script:Ui.GroupRows -and $script:Ui.SelectedGroup -ge 0){$g=$script:Ui.GroupRows[$script:Ui.SelectedGroup];$script:Ui.GroupEnabled.Enabled=$available -and $g.bound}
     else{foreach($item in @($script:Ui.GroupEnabled,$script:Ui.GroupAlias,$script:Ui.GroupFrequency,$script:Ui.GroupSave)){$item.Enabled=$false}}
+    $hasGroup=$script:Ui.GroupRows -and $script:Ui.SelectedGroup -ge 0
+    if($script:Ui.GroupCustom){$script:Ui.GroupCustom.Enabled=$available -and $hasGroup}
+    foreach($key in @('GroupMinute','GroupHour','GroupInterval','GroupJudge','GroupMinMessages','GroupDirected')){if($script:Ui[$key]){$script:Ui[$key].Enabled=$available -and $hasGroup -and $script:Ui.GroupCustom.Checked}}
     $running=$script:Ui.Status -and ($script:Ui.Status.qqPid -gt 0 -or $script:Ui.Status.memoryPid -gt 0)
     foreach($button in $script:Ui.ServiceButtons){$button.Enabled=-not $script:Ui.Busy;if($button.Tag -in @('Stop','Restart')){$button.Enabled=$button.Enabled -and $running}}
-    foreach($button in @($script:Ui.BackupButton,$script:Ui.ExportButton)){$button.Enabled=$available}
+    foreach($button in @($script:Ui.BackupButton,$script:Ui.ExportButton,$script:Ui.FullBaselineButton)){$button.Enabled=$available}
     $script:Ui.PendingButton.Enabled=-not $script:Ui.Busy
     Update-ImageSelection
 }
@@ -83,7 +85,7 @@ function Show-Page([string]$Key){
     $script:Ui.Page=$Key;$script:Ui.Pages[$Key].BringToFront()
     $titles=@{home=@('概览','查看柚柚的运行情况与常用操作');companion=@('主动消息','调整轻问候和免打扰');group=@('群聊设置','为不同群聊设置独立的参与方式');persona=@('人设与回复','编辑交流风格，调整回复显示方式');logs=@('运行日志','查看最近200行，凭证会自动遮蔽');tools=@('备份与导出','把配置和记忆安全保存到本机')}
     $titles.images=@('生图与形象','管理手动生图任务与柚柚的固定形象')
-    $titles.models=@('对话模型','切换DeepSeek、Codex，或无记忆上下文的Chat工作模式')
+    $titles.models=@('DeepSeek路由','当前仅使用 DeepSeek')
     $script:Ui.Title.Text=$titles[$Key][0];$script:Ui.Subtitle.Text=$titles[$Key][1]
     if($Key -eq 'logs'){Begin-Job 'Logs' @{channel=$script:Ui.LogChannels[$script:Ui.LogChoice.SelectedIndex]} $true}
     if($Key -eq 'images'){Begin-Job 'ImageTasks' $null $true;if(-not $script:Ui.ImagePicture.Image){Begin-Job 'ImagePreview' @{id='character'} $true}}
@@ -104,15 +106,15 @@ function Begin-Job([string]$Action,$Payload=$null,[bool]$Quiet=$false){
 }
 function Apply-Status($Status){
     $script:Ui.Status=$Status
-    $labels=@{ready='已就绪';starting='连接中';stopped='未运行';unknown='待确认'}
+    $labels=@{ready='已就绪';idle='按需空闲';starting='连接中';stopped='未运行';unknown='待确认'}
+    $memoryAvailable=$Status.memory -in @('ready','idle')
     $script:Ui.QqValue.Text=$labels[[string]$Status.qq];$script:Ui.MemoryValue.Text=$labels[[string]$Status.memory]
     $script:Ui.QqValue.ForeColor=if($Status.qq -eq 'ready'){$C.Green}else{$C.Amber}
-    $script:Ui.MemoryValue.ForeColor=if($Status.memory -eq 'ready'){$C.Green}else{$C.Amber}
+    $script:Ui.MemoryValue.ForeColor=if($memoryAvailable){$C.Green}else{$C.Amber}
     $script:Ui.QqHint.Text=if($Status.qq -eq 'ready'){'进程运行，已检测到QQ上线记录'}elseif($Status.qq -eq 'starting'){'正在等待QQ网关连接'}else{'可以使用下方按钮启动机器人'}
-    $script:Ui.MemoryHint.Text=if($Status.memory -eq 'ready'){'记忆提炼与向量检索已就绪'}elseif($Status.memory -eq 'starting'){'正在启动或预热记忆模型'}else{'启动机器人时会一同启动'}
-    $modelError=$Status.modelProvider -eq 'codex' -and $Status.nativeRuntime.phase -eq 'error'
-    $script:Ui.StatusPill.Text=if($modelError){'●  Codex对话异常'}elseif($Status.qq -eq 'ready' -and $Status.memory -eq 'ready'){'●  服务已就绪'}elseif($Status.qq -eq 'stopped' -and $Status.memory -eq 'stopped'){'○  服务未运行'}else{'●  部分服务待就绪'}
-    $script:Ui.StatusPill.ForeColor=if(-not $modelError -and $Status.qq -eq 'ready' -and $Status.memory -eq 'ready'){$C.Green}else{$C.Amber}
+    $script:Ui.MemoryHint.Text=if($Status.memory -eq 'ready'){'记忆提炼与向量检索已就绪'}elseif($Status.memory -eq 'idle'){'记忆引擎空闲；需要召回或提炼时启动，闲置5分钟后释放'}elseif($Status.memory -eq 'starting'){'正在按需启动记忆引擎'}else{'启动机器人时会一同启动'}
+    $script:Ui.StatusPill.Text=if($Status.qq -eq 'ready' -and $memoryAvailable){'●  服务已就绪'}elseif($Status.qq -eq 'stopped' -and $Status.memory -eq 'stopped'){'○  服务未运行'}else{'●  部分服务待就绪'}
+    $script:Ui.StatusPill.ForeColor=if($Status.qq -eq 'ready' -and $memoryAvailable){$C.Green}else{$C.Amber}
     $script:Ui.LastCheck.Text='最近检查 '+$Status.checkedAt
     $script:Ui.RestartRequired=[bool]$Status.restartRequired;$script:Ui.PendingButton.Visible=$script:Ui.RestartRequired
     Refresh-Enabled
@@ -122,7 +124,12 @@ function Load-SelectedGroup{
     if($index -lt 0){$script:Ui.SelectedGroup=-1;return}
     $script:Ui.SelectedGroup=$index;$g=$script:Ui.GroupRows[$index]
     $script:Ui.Loading=$true
-    try{$script:Ui.GroupEnabled.Checked=[bool]$g.enabled;$script:Ui.GroupAlias.Text=[string]$g.alias;$script:Ui.GroupFrequency.SelectedItem=[string]$g.frequency;$script:Ui.GroupStats.Text="$($g.code)  ·  收到 $($g.messages) 条普通群消息  ·  已接话 $($g.sent) 次`r`n"+$(if($g.bound){[string]$g.status}else{'尚未绑定，请先在QQ完成群友模式绑定。'})}finally{$script:Ui.Loading=$false}
+    try{
+        $script:Ui.GroupEnabled.Checked=[bool]$g.enabled;$script:Ui.GroupAlias.Text=[string]$g.alias;$script:Ui.GroupFrequency.SelectedItem=[string]$g.frequency
+        $a=$g.activity;$script:Ui.GroupCustom.Checked=[bool]$a.enabled;$script:Ui.GroupDirected.Checked=[bool]$a.includeDirected
+        foreach($pair in @(@('GroupMinute','perMinute'),@('GroupHour','perHour'),@('GroupInterval','minIntervalSeconds'),@('GroupJudge','judgeIntervalSeconds'),@('GroupMinMessages','minMessages'))){$n=$script:Ui[$pair[0]];$n.Value=[Math]::Max($n.Minimum,[Math]::Min($n.Maximum,[decimal]$a.($pair[1])))}
+        $script:Ui.GroupStats.Text="$($g.code)  ·  收到 $($g.messages) 条普通群消息`r`n普通对话路由 $($g.normalTurnsRouted) 次（不等于发送回执） ·  旁听接话 $($g.sent) 次`r`n"+$(if($g.bound){[string]$g.status}else{'尚未绑定，请先在QQ完成群友模式绑定。'})
+    }finally{$script:Ui.Loading=$false}
     $script:Ui.Dirty.group=$false;Update-DirtyLabels;Refresh-Enabled
 }
 function Apply-Snapshot($Snapshot){
@@ -130,7 +137,7 @@ function Apply-Snapshot($Snapshot){
     try{
         $previous=$script:Ui.Snapshot;$script:Ui.Snapshot=$Snapshot
         Apply-Images $Snapshot.images
-        Apply-ChatModel $Snapshot.chatModel
+        Apply-DeepSeekStatus $Snapshot.deepseek
         if(-not $script:Ui.Dirty.companion){$s=$Snapshot.companion;$script:Ui.CompEnabled.Checked=[bool]$s.enabled;$script:Ui.NightAllowed.Checked=[bool]$s.quietDisabled;$script:Ui.DailyMax.Value=[Math]::Max(1,[Math]::Min(72,[int]$s.dailyMax));$script:Ui.CompFrequency.SelectedIndex=[Array]::IndexOf($script:Ui.FrequencyKeys,[string]$s.frequency);$script:Ui.CompVersion=$s.version;$script:Ui.QuietHint.Text="夜间免打扰：$($s.quietStart):00 至次日 $($s.quietEnd):00。未收到回复时，她会逐渐降低主动打扰频率。"}
         if(-not $script:Ui.Dirty.persona){$script:Ui.Persona.Text=[string]$Snapshot.persona;$script:Ui.PersonaVersion=$Snapshot.personaVersion}
         if(-not $script:Ui.Dirty.stream){$script:Ui.Stream.Checked=[bool]$Snapshot.streaming;$script:Ui.StreamPrevious=[bool]$Snapshot.streaming}
@@ -156,17 +163,17 @@ function Handle-Result($Job,$Reply){
         'Snapshot'{$first=-not $script:Ui.Loaded;Apply-Snapshot $Reply.data;if($first -or -not $Job.Quiet){Notify '已载入本机最新配置。' 'success'}}
         'Logs'{if($Reply.data.channel -eq $script:Ui.LogChannels[$script:Ui.LogChoice.SelectedIndex]){$text=([string]$Reply.data.text) -replace "`r?`n","`r`n";$script:Ui.LogText.Text=$text;$lastBreak=$text.LastIndexOf("`r`n");$script:Ui.LogText.SelectionStart=if($lastBreak -ge 0){$lastBreak+2}else{0};$script:Ui.LogText.ScrollToCaret()}}
         {$_ -in @('Start','Stop','Restart')}{Apply-Status $Reply.data;Notify $Reply.message 'success'}
-        {$_ -in @('SaveCompanion','SaveGroup','SavePersona','SaveStreaming','SaveImages','SaveModel')}{
-            $key=@{SaveCompanion='companion';SaveGroup='group';SavePersona='persona';SaveStreaming='stream';SaveImages='images';SaveModel='chatModel'}[$action];$script:Ui.Dirty[$key]=$false
+        {$_ -in @('SaveCompanion','SaveGroup','SavePersona','SaveStreaming','SaveImages')}{
+            $key=@{SaveCompanion='companion';SaveGroup='group';SavePersona='persona';SaveStreaming='stream';SaveImages='images'}[$action];$script:Ui.Dirty[$key]=$false
             if($Reply.data.snapshot){Apply-Snapshot $Reply.data.snapshot}else{Begin-Job 'Snapshot' $null $true};Notify $Reply.message 'success'
         }
         'Backup'{$script:Ui.LastExport.Text='最近保存：'+$Reply.data.path;Notify '配置备份已保存，可点击“打开导出目录”查看。' 'success'}
         'ImageTasks'{Apply-Images $Reply.data}
-        {$_ -in @('ConnectChatGPT','RefreshChatGPT','ProbeChatGPT','ConnectChatUI','ProbeChatUI','RefreshCodex','ProbeCodex','OpenCodex')}{Notify $Reply.message 'success';Begin-Job 'Snapshot' $null $true}
         {$_ -in @('CancelImage','RetryImage')}{Notify '已提交任务操作，机器人将在下一次检查时处理；已在发送中的消息可能无法撤回。' 'success';Begin-Job 'ImageTasks' $null $true}
         'ImagePreview'{
             try{$stream=[IO.File]::OpenRead([string]$Reply.data.path);try{$loaded=[Drawing.Image]::FromStream($stream);try{$picture=New-Object Drawing.Bitmap($loaded)}finally{$loaded.Dispose()}}finally{$stream.Dispose()};$old=$script:Ui.ImagePicture.Image;$script:Ui.ImagePicture.Image=$picture;if($old){$old.Dispose()};Notify '图片已在右侧预览。' 'success'}catch{Notify '此图片暂不能预览，文件仍保存在本机。' 'warning'}
         }
+        'FullBaseline'{$script:Ui.LastExport.Text='完整基线：'+$Reply.data.path;Notify $Reply.message 'success';Begin-Job 'Status' $null $true}
         'ExportMemory'{$script:Ui.LastExport.Text='最近保存：'+$Reply.data.path;Notify ("已导出 $($Reply.data.memoryCount) 条记忆，按 $($Reply.data.partitionCount) 个身份分区。") 'success';Begin-Job 'Status' $null $true}
     }
 }
@@ -194,53 +201,12 @@ function Save-Companion{
 }
 function Save-Group{
     if($script:Ui.SelectedGroup -lt 0){return};$g=$script:Ui.GroupRows[$script:Ui.SelectedGroup]
-    Begin-Job 'SaveGroup' @{key=$g.key;version=$g.version;enabled=$script:Ui.GroupEnabled.Checked;frequency=[string]$script:Ui.GroupFrequency.SelectedItem;alias=$script:Ui.GroupAlias.Text}
+    Begin-Job 'SaveGroup' @{key=$g.key;version=$g.version;enabled=$script:Ui.GroupEnabled.Checked;frequency=[string]$script:Ui.GroupFrequency.SelectedItem;alias=$script:Ui.GroupAlias.Text;activity=@{enabled=$script:Ui.GroupCustom.Checked;perMinute=[int]$script:Ui.GroupMinute.Value;perHour=[int]$script:Ui.GroupHour.Value;minIntervalSeconds=[int]$script:Ui.GroupInterval.Value;judgeIntervalSeconds=[int]$script:Ui.GroupJudge.Value;minMessages=[int]$script:Ui.GroupMinMessages.Value;includeDirected=$script:Ui.GroupDirected.Checked}}
 }
 function Save-Persona{Begin-Job 'SavePersona' @{version=$script:Ui.PersonaVersion;text=$script:Ui.Persona.Text}}
-function Save-ChatModel{
-    $provider=switch($script:Ui.ModelProvider.SelectedIndex){1{'codex'}2{'chatgpt-chat-work'}default{'deepseek-account'}}
-    $i=$script:Ui.ModelChoice.SelectedIndex;$model=if($i -ge 0 -and $i -lt $script:Ui.ChatCatalog.Count){$script:Ui.ChatCatalog[$i].id}else{''}
-    Begin-Job 'SaveModel' @{provider=$provider;model=$model;version=$script:Ui.ModelVersion}
-}
-function Update-ChatChoices([string]$Selected=''){
-    $old=$script:Ui.Loading;$script:Ui.Loading=$true
-    try{
-        $script:Ui.ChatCatalog=switch($script:Ui.ModelProvider.SelectedIndex){1{@($script:Ui.PlanCatalog)}2{@([pscustomobject]@{id='browser-chat';name='Chat网页 · 当前选择的模型'})}default{@([pscustomobject]@{id=$script:Ui.DeepSeekModel;name='DeepSeek · 原有模型'})}}
-        $script:Ui.ModelChoice.Items.Clear();$index=0;$i=0
-        foreach($model in $script:Ui.ChatCatalog){[void]$script:Ui.ModelChoice.Items.Add($model.name+'  ·  '+$model.id);if($model.id -eq $Selected){$index=$i};$i++}
-        if($script:Ui.ChatCatalog.Count){$script:Ui.ModelChoice.SelectedIndex=$index}
-    }finally{$script:Ui.Loading=$old}
-}
-function Format-NativeTime($Milliseconds){
-    if(-not $Milliseconds){return '尚无记录'}
-    try{$at=[DateTimeOffset]::FromUnixTimeMilliseconds([long]$Milliseconds);return [TimeZoneInfo]::ConvertTime($at,[TimeZoneInfo]::FindSystemTimeZoneById('China Standard Time')).ToString('MM-dd HH:mm:ss')}catch{return '时间待确认'}
-}
-function Apply-ChatModel($Data){
-    if(-not $Data){return};$old=$script:Ui.Loading;$script:Ui.Loading=$true
-    try{
-        $selected=if($script:Ui.ModelChoice.SelectedIndex -ge 0 -and $script:Ui.ChatCatalog.Count){$script:Ui.ChatCatalog[$script:Ui.ModelChoice.SelectedIndex].id}else{$Data.model}
-        if(-not $script:Ui.Dirty.chatModel){$script:Ui.ModelProvider.SelectedIndex=switch($Data.provider){'deepseek-account'{0}'codex'{1}'chatgpt-chat-work'{2}default{0}};$script:Ui.ModelVersion=$Data.version;$selected=$Data.model}
-        $script:Ui.DeepSeekModel=$Data.deepseekModel;$script:Ui.PlanCatalog=@($Data.native.models);Update-ChatChoices $selected
-        $script:Ui.ModelAccount.Text=if($Data.provider -eq 'chatgpt-chat-work'){"Chat工作桥接：$(if($Data.chatUI.connected -and $Data.chatUI.work){'在线'}else{'等待专用工作标签页'})`r`n连接状态：$($Data.chatUI.status)；扩展版本：$($Data.chatUI.extensionVersion)"}elseif($Data.native.connected){"Codex账号检查通过  $(Format-NativeTime $Data.native.checkedAt)`r`n模型探针：$($Data.native.testedModel)  $(Format-NativeTime $Data.native.probeAt)"}else{'请确认Codex已登录，然后点击“刷新Codex连接”。'}
-        $runtime=$Data.native.runtime
-        $script:Ui.ModelRuntime.ForeColor=$C.Muted
-        if($runtime.phase -eq 'error'){
-            $failure=$runtime.lastFailure
-            $hint=if($failure.code -eq 'CODEX_THREAD_BUSY'){'该会话正在另一窗口执行任务，请等待任务结束再发送。'}else{'本轮调用失败，可把下面的错误码和环节用于排查。'}
-            $script:Ui.ModelRuntime.Text="最近QQ对话失败  $(Format-NativeTime $failure.at)`r`n$($failure.code)  ·  $($failure.method)  ·  RPC $($failure.rpcCode)`r`n$hint"
-            $script:Ui.ModelRuntime.ForeColor=$C.Amber
-        }elseif($runtime.lastSuccessAt){
-            $script:Ui.ModelRuntime.Text="最近QQ对话完成  $(Format-NativeTime $runtime.lastSuccessAt)"+$(if($runtime.lastRecovery.at){"`r`n已保留原历史并续接会话  $(Format-NativeTime $runtime.lastRecovery.at)"}else{''})
-            $script:Ui.ModelRuntime.ForeColor=$C.Green
-        }elseif($runtime.phase -eq 'recovering'){$script:Ui.ModelRuntime.Text='已从被占用的会话保留历史并续接，正在等待本轮完成。'}
-        else{$script:Ui.ModelRuntime.Text='尚无本次QQ对话结果。上方模型探针仅验证账号与模型，实际会话状态会显示在这里。'}
-        $label=if($Data.provider -eq 'codex'){'Codex · 原生会话'}elseif($Data.provider -eq 'chatgpt-chat-work'){'Chat网页 · 无QQ上下文工作'}elseif($Data.provider -eq 'deepseek-account'){'DeepSeek'}else{'旧账号接口（可切换至原生Codex）'}
-        $memoryStatus=if($Data.provider -eq 'chatgpt-chat-work'){'Chat工作路由不读取、不写入长期记忆'}else{"共享记忆：$($Data.native.memory)`r`n记忆工作目录：$($Data.native.workspace)"}
-        $script:Ui.ModelCurrent.Text="当前路由：$label  ·  $($Data.model)`r`n$memoryStatus"
-        $script:Ui.CodexHistory.Text="已创建 $($Data.native.threadCount) 个机器人Codex会话。`r`n"+(@($Data.native.titles) -join ' / ')
-    }finally{$script:Ui.Loading=$old}
-}
-function Save-Images{
+function Apply-DeepSeekStatus($Data){
+    if($Data){$script:Ui.ModelCurrent.Text=("当前对话路由：DeepSeek"+[Environment]::NewLine+"模型：$($Data.model)"+[Environment]::NewLine+"长期记忆：$($Data.memory)")}
+}function Save-Images{
     Begin-Job 'SaveImages' @{version=$script:Ui.ImageVersion;enabled=$script:Ui.ImageEnabled.Checked;auto=$false;characterEnabled=$script:Ui.ImageCharacter.Checked;dailyMax=6;minMinutes=60;manualDailyMax=[int]$script:Ui.ImageManual.Value;timeoutMinutes=[int]$script:Ui.ImageTimeout.Value}
 }
 function Update-ImageSelection{
@@ -256,7 +222,7 @@ function Apply-Images($Data){
         if(-not $script:Ui.Dirty.images){$s=$Data.settings;$script:Ui.ImageEnabled.Checked=[bool]$s.enabled;$script:Ui.ImageCharacter.Checked=[bool]$s.characterEnabled;$script:Ui.ImageVersion=$Data.version
             foreach($pair in @(@('ImageManual','manualDailyMax'),@('ImageTimeout','timeoutMinutes'))){$control=$script:Ui[$pair[0]];$control.Value=[Math]::Max($control.Minimum,[Math]::Min($control.Maximum,[decimal]$s.($pair[1])))}
         }
-        $script:Ui.ImageInfo.Text=if(-not $Data.configured){'尚未配置生图通道。请先完成本机QQ与Codex配对。'}else{"已配对私聊  ·  待处理 $($Data.active) 个任务`r`nCodex桌面版需保持打开，文字同步开关独立。"}
+        $script:Ui.ImageInfo.Text=if(-not $Data.configured){'尚未配置生图通道。请先完成本机QQ与Codex生图绑定。'}else{"已配对私聊  ·  待处理 $($Data.active) 个任务`r`nCodex桌面版需保持打开。"}
         $script:Ui.CharacterInfo.Text=if($Data.characterReady){'固定形象已就绪：冬日针织装 + 蓝发圆脸。只用于柚柚自己的画面，不会套用到普通画图。'}else{'尚未配置固定形象参考图。'}
         $selected=if($script:Ui.ImageList.SelectedIndex -ge 0 -and $script:Ui.ImageRows.Count){$script:Ui.ImageRows[$script:Ui.ImageList.SelectedIndex].id}else{''}
         $script:Ui.ImageRows=@($Data.jobs);$script:Ui.ImageList.Items.Clear();$index=0;$n=0
@@ -273,9 +239,9 @@ foreach($style in @((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]:
 $side=New-Object Windows.Forms.Panel;$side.Dock='Fill';$side.Margin=New-Object Windows.Forms.Padding(0);$side.BackColor=$C.Side;$side.Padding=New-Object Windows.Forms.Padding(14,24,14,16);$root.Controls.Add($side,0,0);$root.SetRowSpan($side,3)
 $sideStack=Stack-Panel;$side.Controls.Add($sideStack)
 $brand=Text-Line '柚柚' 23 $true 46;$brand.ForeColor=$C.Green;Stack-Add $sideStack $brand 0
-$brandHint=Text-Line '机器人控制台  2.7.0' 9 $false 38;$brandHint.ForeColor=$C.Muted;Stack-Add $sideStack $brandHint 20
-foreach($entry in @(@('home','概览'),@('models','对话模型'),@('companion','主动消息'),@('group','群聊设置'),@('persona','人设与回复'),@('images','生图与形象'),@('logs','运行日志'),@('tools','备份与导出'))){$button=Action-Button $entry[1];$button.Tag=$entry[0];$button.TextAlign='MiddleLeft';$button.Padding=New-Object Windows.Forms.Padding(12,0,0,0);$button.Height=45;$button.Add_Click({param($sender,$eventArgs) Show-Page ([string]$sender.Tag)});Stack-Add $sideStack $button 6;$script:Ui.Nav[$entry[0]]=$button}
-$sideFoot=Text-Line "本机配置 · 独立记忆`r`nQQ / DSH / Hy Memory" 8 $false 48;$sideFoot.Dock='Bottom';$sideFoot.ForeColor=$C.Muted;$side.Controls.Add($sideFoot)
+$brandHint=Text-Line '机器人控制台  2.9.0' 9 $false 38;$brandHint.ForeColor=$C.Muted;Stack-Add $sideStack $brandHint 20
+foreach($entry in @(@('home','概览'),@('models','DeepSeek路由'),@('companion','主动消息'),@('group','群聊设置'),@('persona','人设与回复'),@('images','生图与形象'),@('logs','运行日志'),@('tools','备份与导出'))){$button=Action-Button $entry[1];$button.Tag=$entry[0];$button.TextAlign='MiddleLeft';$button.Padding=New-Object Windows.Forms.Padding(12,0,0,0);$button.Height=45;$button.Add_Click({param($sender,$eventArgs) Show-Page ([string]$sender.Tag)});Stack-Add $sideStack $button 6;$script:Ui.Nav[$entry[0]]=$button}
+$sideFoot=Text-Line "本机配置 · 独立记忆`r`nQQ / DSH / Hindsight" 8 $false 48;$sideFoot.Dock='Bottom';$sideFoot.ForeColor=$C.Muted;$side.Controls.Add($sideFoot)
 $top=New-Object Windows.Forms.TableLayoutPanel;$top.Dock='Fill';$top.ColumnCount=3;$top.RowCount=2;$top.Padding=New-Object Windows.Forms.Padding(24,16,20,8);$top.Margin=New-Object Windows.Forms.Padding(0)
 [void]$top.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Percent,100)));[void]$top.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Absolute,145)));[void]$top.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Absolute,145)))
 $script:Ui.Title=Text-Line '概览' 18 $true 34;$script:Ui.Subtitle=Text-Line '' 9 $false 26;$script:Ui.Subtitle.ForeColor=$C.Muted;$top.Controls.Add($script:Ui.Title,0,0);$top.Controls.Add($script:Ui.Subtitle,0,1)
@@ -302,26 +268,8 @@ $overview=Card '当前配置' '常用设置都可以在左侧页面查看和调�
 $note=Text-Line '启停在后台完成。关闭控制台窗口会保留机器人当前的运行状态。' 9 $false 42;$note.ForeColor=$C.Muted;Stack-Add $homeStack $note
 
 $modelsPage=Page 'models';$modelsStack=Stack-Panel;$modelsPage.Controls.Add($modelsStack)
-$accountCard=Card 'Codex 原生连接' '使用本机Codex已登录的账号，聊天会保存到Codex软件的历史列表。仍适用账号本身的额度。'
-$script:Ui.ModelAccount=Text-Line '正在载入…' 10 $false 60;Stack-Add $accountCard.Body $script:Ui.ModelAccount 6
-$script:Ui.ModelRuntime=Text-Line '' 9 $false 84;Stack-Add $accountCard.Body $script:Ui.ModelRuntime 6
-$flow=Flow-Actions
-$refreshModels=Action-Button '刷新Codex连接' 'normal' 168;$refreshModels.Add_Click({Begin-Job 'RefreshCodex'});$flow.Controls.Add($refreshModels)
-$openCodex=Action-Button '在Codex查看聊天' 'normal' 168;$openCodex.Add_Click({Begin-Job 'OpenCodex'});$flow.Controls.Add($openCodex);Stack-Add $accountCard.Body $flow 8
-$script:Ui.CodexHistory=Text-Line '' 9 $false 65;$script:Ui.CodexHistory.ForeColor=$C.Muted;Stack-Add $accountCard.Body $script:Ui.CodexHistory 0;Stack-Add $modelsStack $accountCard.Panel
-$modelCard=Card '对话路由与共享记忆' '同一QQ身份在两条路由中共享Hy Memory；私聊和各个群继续隔离。切换不会搬动、清空或复制记忆。'
-$script:Ui.ModelProvider=Choice-Field @('DeepSeek · 原本路由','Codex · 原生会话','Chat网页 · 无QQ上下文工作');Field-Row $modelCard.Body '对话路由' $script:Ui.ModelProvider
-$script:Ui.ModelChoice=Choice-Field @();Field-Row $modelCard.Body '模型' $script:Ui.ModelChoice 'Chat工作通道只提交当前QQ任务与附件，不读取柚柚记忆；文件可双向传递。它使用专用Chat工作标签页。'
-$flow=Flow-Actions;$testModel=Action-Button '验证所选模型' 'normal' 156;$testModel.Add_Click({
-    $i=$script:Ui.ModelChoice.SelectedIndex
-    if($script:Ui.ModelProvider.SelectedIndex -eq 1){
-        if($i -ge 0){Begin-Job 'ProbeCodex' @{model=$script:Ui.ChatCatalog[$i].id}}else{Notify '请先刷新Codex连接。' 'warning'}
-    }elseif($script:Ui.ModelProvider.SelectedIndex -eq 2){Begin-Job 'ProbeChatUI'}else{Notify 'DeepSeek沿用已有账号连接。'}
-});$flow.Controls.Add($testModel)
-$modelSave=Save-Button '切换对话路由';$modelSave.Add_Click({Save-ChatModel});$flow.Controls.Add($modelSave);Stack-Add $modelCard.Body $flow 6
-$script:Ui.ModelCurrent=Text-Line '' 9 $false 102;$script:Ui.ModelCurrent.ForeColor=$C.Muted;Stack-Add $modelCard.Body $script:Ui.ModelCurrent 0;Stack-Add $modelsStack $modelCard.Panel
-$script:Ui.ModelProvider.Add_SelectedIndexChanged({if(-not $script:Ui.Loading){Update-ChatChoices};Mark-Dirty 'chatModel'});$script:Ui.ModelChoice.Add_SelectedIndexChanged({Mark-Dirty 'chatModel'})
-
+$modelCard=Card '当前唯一文字模型' 'QQ 私聊与群聊统一使用 DeepSeek；聊天记忆由 Hindsight 按身份隔离保存，原话独立留存。'
+$script:Ui.ModelCurrent=Text-Line '正在读取…' 10 $false 68;$script:Ui.ModelCurrent.ForeColor=$C.Muted;Stack-Add $modelCard.Body $script:Ui.ModelCurrent 0;Stack-Add $modelsStack $modelCard.Panel
 # Proactive messages
 $compPage=Page 'companion';$compStack=Stack-Panel;$compPage.Controls.Add($compStack)
 $compCard=Card '主动分享' '只向已经配对的私聊发送。频率是考虑分享的节奏，并非固定推送。'
@@ -342,14 +290,21 @@ $groupRight=New-Object Windows.Forms.Panel;$groupRight.Dock='Fill';$groupRight.A
 $groupCard=Card '群里的柚柚' '备注仅在本机控制台显示。接收群消息仍需要QQ平台授权。'
 $script:Ui.GroupEnabled=Check-Field '开启群友模式，允许她参与普通群聊';Stack-Add $groupCard.Body $script:Ui.GroupEnabled 8
 $script:Ui.GroupAlias=Input-Field;$script:Ui.GroupAlias.MaxLength=40;Field-Row $groupCard.Body '本机群备注' $script:Ui.GroupAlias
-$script:Ui.GroupFrequency=Choice-Field @('安静','正常','活跃');Field-Row $groupCard.Body '普通插话频率' $script:Ui.GroupFrequency '安静：每小时最多4条；正常12条；活跃24条。成员直接叫她另行排队。'
-$script:Ui.GroupStats=Text-Line '请选择左侧群聊' 9 $false 76;$script:Ui.GroupStats.ForeColor=$C.Muted;Stack-Add $groupCard.Body $script:Ui.GroupStats 6
+$script:Ui.GroupFrequency=Choice-Field @('安静','正常','活跃');Field-Row $groupCard.Body '参与方式' $script:Ui.GroupFrequency '安静、正常会选择性接话；活跃直接参与普通对话。下方节奏可分别自定义。'
+$script:Ui.GroupCustom=Check-Field '使用本群自定义节奏';Stack-Add $groupCard.Body $script:Ui.GroupCustom 6
+foreach($entry in @(@('GroupMinute','每分钟最多发送 / 条',1,120,6),@('GroupHour','每小时最多发送 / 条',1,3600,120),@('GroupInterval','两条回复最短间隔 / 秒（0表示无额外间隔）',0,3600,10),@('GroupJudge','正常、安静档：接话判断间隔 / 秒',0,300,20),@('GroupMinMessages','正常、安静档：累计几条消息后考虑接话',1,30,3))){
+    $n=New-Object Windows.Forms.NumericUpDown;$n.Minimum=$entry[2];$n.Maximum=$entry[3];$n.Value=$entry[4];$n.Dock='Top';$n.BackColor=$C.Input;$n.ForeColor=$C.Text;$script:Ui[$entry[0]]=$n;$script:Ui.EditControls+=,$n;Field-Row $groupCard.Body $entry[1] $n;$n.Add_ValueChanged({Mark-Dirty 'group'})
+}
+$script:Ui.GroupDirected=Check-Field '自定义发送限制也适用于 @ 和叫名字的回复';Stack-Add $groupCard.Body $script:Ui.GroupDirected 4
+$hint=Text-Line '保存后立即生效。超出额度会等候；超过2分钟的旧回复会取消。管理命令不受限。' 9 $false 44;$hint.ForeColor=$C.Muted;Stack-Add $groupCard.Body $hint 8
+$script:Ui.GroupStats=Text-Line '请选择左侧群聊' 9 $false 92;$script:Ui.GroupStats.ForeColor=$C.Muted;Stack-Add $groupCard.Body $script:Ui.GroupStats 6
 $flow=Flow-Actions;$script:Ui.GroupSave=Save-Button '保存本群设置';$script:Ui.GroupSave.Add_Click({Save-Group});$flow.Controls.Add($script:Ui.GroupSave);$reload=Action-Button '重新载入' 'normal' 116;$reload.Add_Click({Reload-Configuration});$flow.Controls.Add($reload);Stack-Add $groupCard.Body $flow 0;Stack-Add $groupStack $groupCard.Panel
 $script:Ui.GroupRows=@();$script:Ui.GroupList.Add_SelectedIndexChanged({
     if($script:Ui.Loading){return};$new=$script:Ui.GroupList.SelectedIndex
     if($script:Ui.Dirty.group -and $new -ne $script:Ui.SelectedGroup){if([Windows.Forms.MessageBox]::Show('这个群的修改尚未保存，仍然切换群聊吗？','未保存的修改','YesNo','Question') -ne 'Yes'){$script:Ui.Loading=$true;$script:Ui.GroupList.SelectedIndex=$script:Ui.SelectedGroup;$script:Ui.Loading=$false;return}}
     Load-SelectedGroup
 });$script:Ui.GroupEnabled.Add_CheckedChanged({Mark-Dirty 'group'});$script:Ui.GroupAlias.Add_TextChanged({Mark-Dirty 'group'});$script:Ui.GroupFrequency.Add_SelectedIndexChanged({Mark-Dirty 'group'})
+$script:Ui.GroupCustom.Add_CheckedChanged({Mark-Dirty 'group';Refresh-Enabled});$script:Ui.GroupDirected.Add_CheckedChanged({Mark-Dirty 'group'})
 
 # Persona and reply display
 $personaPage=Page 'persona' $false;$personaGrid=New-Object Windows.Forms.TableLayoutPanel;$personaGrid.Dock='Fill';$personaGrid.ColumnCount=1;$personaGrid.RowCount=2
@@ -400,12 +355,15 @@ $script:Ui.LogChoice.Add_SelectedIndexChanged({Begin-Job 'Logs' @{channel=$scrip
 $toolsPage=Page 'tools';$toolsStack=Stack-Panel;$toolsPage.Controls.Add($toolsStack)
 $backupCard=Card '配置备份' '保存人设、主动消息、群设置与本机备注。备份不包含Secret、Token、DSH登录或记忆数据库。'
 $script:Ui.BackupButton=Action-Button '保存配置备份' 'primary' 160;$script:Ui.BackupButton.Add_Click({Begin-Job 'Backup'});Stack-Add $backupCard.Body $script:Ui.BackupButton 0;Stack-Add $toolsStack $backupCard.Panel 16
+$fullCard=Card '完整恢复基线' '短暂停机后保存记忆、向量、队列、会话和旧资料，核对隔离副本。包含本机敏感配置，仅保存在受限目录；不连接QQ或调用模型。'
+$script:Ui.FullBaselineButton=Action-Button '保存并核对完整基线…' 'primary' 225;$script:Ui.FullBaselineButton.Add_Click({if([Windows.Forms.MessageBox]::Show('将短暂停止机器人，保存含本机配置与私人数据的完整快照，并在隔离目录核对。完成后恢复原服务。继续吗？','完整恢复基线','YesNo','Question') -eq 'Yes'){Begin-Job 'FullBaseline'}});Stack-Add $fullCard.Body $script:Ui.FullBaselineButton 0;Stack-Add $toolsStack $fullCard.Panel 16
+$baselineFolder=Action-Button '打开完整基线目录' 'normal' 185;$baselineFolder.Add_Click({$path=Join-Path $Project '.run\baselines';New-Item -ItemType Directory -Force -Path $path|Out-Null;Start-Process explorer.exe ('"'+$path+'"')});Stack-Add $toolsStack $baselineFolder 12
 $exportCard=Card '长期记忆 JSON' '导出已保存的真实用户事实与偏好，按身份分区。导出会短暂停止服务，完成后恢复；角色生活记忆不在这个JSON里。'
 $script:Ui.ExportButton=Action-Button '导出记忆 JSON…' 'normal' 174;$script:Ui.ExportButton.Add_Click({if([Windows.Forms.MessageBox]::Show('导出需要短暂停止机器人与记忆服务，完成后恢复运行。现在导出吗？','导出长期记忆','YesNo','Question') -eq 'Yes'){Begin-Job 'ExportMemory'}});Stack-Add $exportCard.Body $script:Ui.ExportButton 0;Stack-Add $toolsStack $exportCard.Panel 16
 $folder=Action-Button '打开导出目录' 'normal' 160;$folder.Add_Click({$path=Join-Path $Project 'exports';New-Item -ItemType Directory -Force -Path $path|Out-Null;Start-Process explorer.exe ('"'+$path+'"')});Stack-Add $toolsStack $folder 12
 $script:Ui.LastExport=Text-Line '备份仅保存在本机。身份分区信息也属于私人资料，请自行保管。' 9 $false 64;$script:Ui.LastExport.ForeColor=$C.Muted;Stack-Add $toolsStack $script:Ui.LastExport
 
-$form.Add_KeyDown({param($sender,$eventArgs) if($eventArgs.Control -and $eventArgs.KeyCode -eq 'S' -and -not $script:Ui.Busy -and $script:Ui.Loaded){switch($script:Ui.Page){'persona'{Save-Persona}'companion'{Save-Companion}'group'{Save-Group}'images'{Save-Images}'models'{Save-ChatModel}};$eventArgs.SuppressKeyPress=$true}})
+$form.Add_KeyDown({param($sender,$eventArgs) if($eventArgs.Control -and $eventArgs.KeyCode -eq 'S' -and -not $script:Ui.Busy -and $script:Ui.Loaded){switch($script:Ui.Page){'persona'{Save-Persona}'companion'{Save-Companion}'group'{Save-Group}'images'{Save-Images}};$eventArgs.SuppressKeyPress=$true}})
 $timer=New-Object Windows.Forms.Timer;$timer.Interval=250
 $timer.Add_Tick({
     try{

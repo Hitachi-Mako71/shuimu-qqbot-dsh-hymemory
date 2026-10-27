@@ -1,12 +1,15 @@
 import fs from 'node:fs';
+import { withQQIdentity } from './evidence.js';
 import path from 'node:path';
 import { randomUUID, randomBytes, createHash } from 'node:crypto';
-import { enqueue } from './codex-relay.js';
+import { enqueueImageTask } from './codex-image-queue.js';
 import { imageSettings, saveImageSwitch } from './image-settings.js';
 import { characterReferences } from './character.js';
 import { read as readCompanion, namespace, clock } from './companion-state.js';
+import { deliveryAllowed } from './delivery-permission.js';
+import { hasGroupController } from './group-control.js';
 
-const dir = () => process.env.QQBOT_CODEX_RELAY_DIR || path.resolve('data/codex-relay');
+const dir = () => process.env.QQBOT_CODEX_IMAGES_DIR || path.resolve('data/codex-images');
 const digest = (v) => createHash('sha256').update(v).digest('hex');
 const ownerOf = (i) => digest(JSON.stringify([i.appId, i.scope, i.peerId]));
 const commands = /^(?:(?:Codex)?画图\s*[:：]|生图状态$|(?:开启|关闭)生图$)/i;
@@ -32,7 +35,7 @@ function save(state) {
 }
 const initial = () => ({ enabled: false, auto: false, jobs: [] });
 function binding(identity) {
-  const cfg = read('config.json', {}), paired = read('state.json', {});
+  const cfg = read('config.json', {}), paired = read('binding.json', {});
   if (!identity || !paired.owner || paired.threadId !== cfg.threadId
       || !/^[a-f0-9-]{36}$/i.test(cfg.threadId || '') || !path.isAbsolute(cfg.codexPath || '')
       || !path.isAbsolute(cfg.imageRoot || '') || !path.isAbsolute(cfg.imageHelper || '')) return null;
@@ -40,7 +43,7 @@ function binding(identity) {
   if (identity.scope === 'c2c') return paired.owner === ownerOf(identity) ? cfg : null;
   if (identity.scope !== 'group' || !identity.senderId) return null;
   const room = readCompanion('groups/registry.json', { rooms: {} }).rooms?.[namespace(identity)];
-  if (!room?.enabled || room.controller !== identity.senderId) return null;
+  if (!room?.enabled || !hasGroupController(room, identity.senderId)) return null;
   return cfg;
 }
 const active = (j) => ['submitting', 'queued'].includes(j.status);
@@ -89,7 +92,7 @@ async function submit(cfg, state, { identity, prompt, caption, kind, messageId }
     `助手会复制图片并原子写入ready.json，机器人随后自动把图片连同原正文发送到原请求会话（私聊或已授权群聊）。` +
     `如内置工具失败、拒绝或不可用，用同一助手 --job <路径> --error generation-unavailable；不要换API。` +
     `超时或取消的任务不再提交；如果ready.json已经存在，说明已经交付结果，不重复生图或提交。不要把nonce、文件内容、用户隐私或工具日志发到QQ。最终仅简短说明任务已交付或失败。`;
-  try { job.queueId = await enqueue({ ...cfg, threadId: job.workerThreadId }, instruction); job.status = 'queued'; save(state); return job.id; }
+  try { job.queueId = await enqueueImageTask({ ...cfg, threadId: job.workerThreadId }, instruction); job.status = 'queued'; save(state); return job.id; }
   catch { job.status = 'queue-unconfirmed'; save(state); return null; }
 }
 
@@ -111,7 +114,7 @@ export function beforeImageTurn({ identity, text = '', messageId = '' }) {
       const ownJobs = state.jobs.filter((j) => j.owner === ownerOf(identity));
       const last = ownJobs.at(-1);
       const labels = { queued: '等待Codex生成', submitting: '正在提交', delivered: 'QQ已接受图片与正文', failed: '生成失败，已转文字', expired: '等待超时', canceled: '已取消', uncertain: 'QQ发送未确认，不自动重发', 'queue-unconfirmed': '入队未确认，需检查Codex', 'fallback-delivered': '图片未完成，QQ已接受文字' };
-      return { handled: true, reply: `Codex内置生图：${options.enabled ? '开启' : '关闭'}\n固定形象：${options.characterEnabled ? '开启' : '关闭'}\n本会话待处理：${ownJobs.filter(active).length}\n最近任务：${last ? `${last.id.slice(0, 8)} · ${labels[last.status] || last.status}` : '无'}\nCodex桌面版需保持打开；不固定内置模型版本。文字同步开关独立。` };
+      return { handled: true, reply: `Codex内置生图：${options.enabled ? '开启' : '关闭'}\n固定形象：${options.characterEnabled ? '开启' : '关闭'}\n本会话待处理：${ownJobs.filter(active).length}\n最近任务：${last ? `${last.id.slice(0, 8)} · ${labels[last.status] || last.status}` : '无'}\nCodex桌面版需保持打开；不固定内置模型版本。` };
     }
     if (!options.enabled) return { handled: true, reply: '生图已关闭，可发送“开启生图”。' };
     const prompt = requestedPrompt;
@@ -145,7 +148,7 @@ async function poll() {
     if (job.status === 'sending') { job.status = 'uncertain'; save(state); continue; }
     if (!active(job)) continue;
     const cfg = binding(job.identity);
-    if (!cfg || job.target?.scope !== job.identity.scope || job.target?.targetId !== job.identity.peerId
+    if (!cfg || !deliveryAllowed({ identity: job.identity, target: job.target, purpose: 'image' })
         || !options.enabled || job.kind !== 'manual') { job.status = 'canceled'; job.reason = 'disabled-paused-quiet-or-waiting'; save(state); continue; }
     const folder = path.join(cfg.imageRoot, job.id), readyFile = path.join(folder, 'ready.json');
     let ready, image, failure = Date.now() > job.expiresAt;
@@ -172,8 +175,8 @@ async function poll() {
     try {
       const target = { scope: job.target.scope, targetId: job.target.targetId,
         ...(job.kind === 'manual' && Date.now() - job.createdAt < 180000 ? { msgId: job.target.msgId } : {}) };
-      const send = image ? runtime.sender.sendCodexImage(target, { localPath: image }, { content: job.caption })
-        : runtime.sender.sendMarkdown(target, '这次图片没有生成完成，请确认Codex桌面版在线后再试。');
+      const send = withQQIdentity(job.identity, () => image ? runtime.sender.sendCodexImage(target, { localPath: image }, { content: job.caption })
+        : runtime.sender.sendMarkdown(target, '这次图片没有生成完成，请确认Codex桌面版在线后再试。'), { messageId: job.target.msgId, kind: 'image' });
       let timer;
       try { receipt = await Promise.race([send, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('ImageSendTimeout')), 60000); timer.unref(); })]); }
       finally { clearTimeout(timer); }

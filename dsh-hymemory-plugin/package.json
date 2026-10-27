@@ -1,6 +1,6 @@
 {
   "name": "dsh-hymemory-qq",
-  "version": "0.8.0",
+  "version": "0.22.6",
   "private": true,
   "type": "module",
   "main": "./index.js",

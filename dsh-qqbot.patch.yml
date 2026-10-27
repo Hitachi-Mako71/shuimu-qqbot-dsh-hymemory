@@ -14,7 +14,7 @@
     appSecret: __FROM_ENV__
     provider: deepseek-account
     model: deepseek-flash
-    cwd: '__PROJECT_DIR__/agent-work'
+    cwd: '__PROJECT_DIR__/data/workspaces'
     requireMention: true
     streaming: true
     sessionIdleTimeout: 1800000

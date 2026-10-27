@@ -32,6 +32,14 @@ def export(project, output, namespace=None, include_test_data=False):
         raise ValueError('Invalid QQ namespace')
     load_dotenv(project / '.env', override=True)
     os.chdir(project)
+    from privacy_ledger import PrivacyLedger
+    authority_file=project/'.privacy/lifecycle.sqlite3'
+    if not authority_file.exists(): raise RuntimeError('Current deletion authority is required for export')
+    authority=PrivacyLedger(authority_file)
+    if authority.operations(pending=True): raise RuntimeError('Finish deletion cleanup before exporting')
+    engine_file=project/'data/memory-engine.json'
+    if engine_file.exists() and json.loads(engine_file.read_text(encoding='utf-8')).get('primary')=='hindsight':
+        return export_hindsight(project,output,namespace,include_test_data,authority)
     if os.environ.get('MEMORY_MODE', 'pro') not in ('pro', 'lite'):
         raise RuntimeError('This exporter supports the deployed pro/lite Chroma store; graph exports require a separate backup')
     from hy_memory.config import MemoryConfig
@@ -78,6 +86,9 @@ def export(project, output, namespace=None, include_test_data=False):
             continue
         if row.get('agent_id') != AGENT and row.get('layer') != 'l0_basic_info':
             continue
+        from memory_lifecycle import sources_from_meta
+        if authority.memory_blocked(owner,row.get('node_id') or '') or authority.source_blocked(owner,sources_from_meta(row)):
+            continue
         if owner in TEST_NAMESPACES and not include_test_data:
             skipped_test += 1
             continue
@@ -96,6 +107,7 @@ def export(project, output, namespace=None, include_test_data=False):
             pending = dict(db.execute("SELECT status,COUNT(*) FROM jobs WHERE status IN ('pending','running') GROUP BY status"))
     result = {
         'format': 'qqbot-hymemory-active-facts', 'format_version': 1,
+        'privacy_authority_id':authority.authority_id(),
         'exported_at': datetime.now(CHINA).isoformat(),
         'hy_memory_version': importlib.metadata.version('hy-memory'),
         'memory_count': sum(item['memory_count'] for item in partitions),
@@ -124,6 +136,43 @@ def export(project, output, namespace=None, include_test_data=False):
             temporary.unlink()
     print(json.dumps({'path': str(output), 'memory_count': result['memory_count'],
                       'partition_count': len(partitions), 'pending_extraction_jobs': pending}, ensure_ascii=False))
+
+
+def export_hindsight(project,output,namespace,include_test_data,authority):
+    from hindsight_adapter import HindsightAdapter
+    from memory_lifecycle import sources_from_meta
+    client=HindsightAdapter(os.environ['MEMORY_BRIDGE_TOKEN'])
+    banks=[];offset=0
+    while True:
+        page=client.request('GET',f'/v1/default/banks?limit=100&offset={offset}')
+        batch=page.get('banks',[]);banks.extend(batch);offset+=len(batch)
+        if offset>=page['total']:break
+        if not batch:raise RuntimeError('Incomplete Hindsight bank listing')
+    partitions=[]
+    for bank in banks:
+        owner=bank['bank_id']
+        if not re.fullmatch(r'qq-[a-f0-9]{64}',owner) or (namespace and owner!=namespace):continue
+        if owner in TEST_NAMESPACES and not include_test_data:continue
+        rows=[];offset=0
+        while True:
+            page=client.request('GET',client.bank(owner)+f'/memories/list?state=valid&limit=100&offset={offset}')
+            batch=page.get('items',[]);rows.extend(client.rows(owner,batch));offset+=len(batch)
+            if offset>=page['total']:break
+            if not batch:raise RuntimeError('Incomplete Hindsight memory listing')
+        rows=[r for r in rows if not authority.memory_blocked(owner,r['id']) and not authority.source_blocked(owner,sources_from_meta(r))]
+        partitions.append(dict(namespace=owner,memory_count=len(rows),memories=rows))
+    result=dict(format='qqbot-hindsight-active-facts',format_version=1,engine='hindsight',engine_version='1.1.0',
+                privacy_authority_id=authority.authority_id(),exported_at=datetime.now(CHINA).isoformat(),
+                memory_count=sum(p['memory_count'] for p in partitions),partition_count=len(partitions),partitions=partitions)
+    output.parent.mkdir(parents=True,exist_ok=True)
+    with tempfile.NamedTemporaryFile(mode='w',encoding='utf-8',dir=output.parent,prefix='.memory-export-',suffix='.tmp',delete=False) as stream:
+        temporary=Path(stream.name);json.dump(result,stream,ensure_ascii=False,indent=2,allow_nan=False)
+    try:
+        if output.exists():raise FileExistsError('Export destination already exists')
+        os.replace(temporary,output)
+    finally:
+        if temporary.exists():temporary.unlink()
+    print(json.dumps(dict(path=str(output),memory_count=result['memory_count'],partition_count=len(partitions),pending_extraction_jobs={})))
 
 
 if __name__ == '__main__':

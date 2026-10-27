@@ -26,6 +26,16 @@ if 'rememberQQMedia' not in middleware:
         raise SystemExit('Official middleware differs; no image reference cache patch written')
     middleware = middleware.replace(media_anchor, '    bot.use((mCtx, next) => rememberQQMedia(mCtx, next, config.appId));\n' + media_anchor, 1)
     middleware_path.write_text(middleware, encoding='utf-8', newline='\n')
+if 'allowQQGroupObservation' not in middleware:
+    middleware = middleware.replace('groupParticipationGate, rememberQQMedia }', 'groupParticipationGate, rememberQQMedia, allowQQGroupObservation }', 1)
+    middleware = middleware.replace('bot.use((mCtx, next) => rememberQQMedia(mCtx, next, config.appId));',
+                                    'bot.use((mCtx, next) => allowQQGroupObservation(mCtx, config.appId) ? rememberQQMedia(mCtx, next, config.appId) : next());', 1)
+    middleware = middleware.replace('    bot.use(historyBuffer({', '    const qqHistory = historyBuffer({', 1)
+    anchor = '            return historyGroupKey(config.appId, gid);\n        },\n    }));'
+    if middleware.count(anchor) != 1:
+        raise SystemExit('Official history middleware differs; no collection permission patch written')
+    middleware = middleware.replace(anchor, '            return historyGroupKey(config.appId, gid);\n        },\n    });\n    bot.use((mCtx, next) => allowQQGroupObservation(mCtx, config.appId) ? qqHistory(mCtx, next) : next());', 1)
+    middleware_path.write_text(middleware, encoding='utf-8', newline='\n')
 bootstrap_path = root / 'dist/gateway/bootstrap.js'
 bootstrap_source = bootstrap_path.read_text(encoding='utf-8')
 if 'registerQQRelay' not in bootstrap_source:
@@ -110,5 +120,98 @@ if 'prepareQQImages' not in source:
     if source.count(image_anchor) != 1:
         raise SystemExit('Official inbound content differs; no direct image patch written')
     source = source.replace(image_anchor, "    const media = await prepareQQImages({ identity, message: msg, state: mwState, download: (items) => downloadMediaAttachments(items, config.media, logger) });\n    const content = [{ type: 'text', text: agentBody }, ...media.blocks];", 1)
+if 'prepareQQAgent' not in source:
+    source = source.replace('prepareQQImages }', 'prepareQQImages, prepareQQAgent, isolateQQFiles, stageQQDownloads, qqWorkspace }', 1)
+    old_identity = '    const identity = { appId: config.appId, scope, peerId };\n'
+    if source.count(old_identity) != 1:
+        raise SystemExit('Official identity source differs; no boundary patch written')
+    source = source.replace(old_identity, '', 1)
+    source = source.replace("    const peerId = scope === 'group' ? (msg.groupOpenid ?? msg.senderId) : msg.senderId;",
+                            "    const peerId = scope === 'group' ? msg.groupOpenid : msg.senderId;\n    if (!peerId || !msg.senderId) return;\n    const identity = { appId: String(config.appId), scope, peerId, senderId: msg.senderId };\n    isolateQQFiles(identity, mwState);", 1)
+    source = source.replace('    record.agent[IDENTITY] = identity;', '    await prepareQQAgent(record.agent, identity);', 1)
+    source = source.replace('download: (items) => downloadMediaAttachments(items, config.media, logger)',
+                            'mediaRoot: qqWorkspace(identity), download: async (items) => stageQQDownloads(identity, await downloadMediaAttachments(items, config.media, logger))', 1)
+    source = source.replace('sessionId: record.sessionId });', "sessionId: record.sessionId, mode: memory.mode || 'chat' });", 1)
 path.write_text(source, encoding='utf-8', newline='\n')
-print('Prepared official QQ inbound hooks for pnpm patch-commit')
+
+session_path = root / 'dist/session/session-manager.js'
+session_source = session_path.read_text(encoding='utf-8')
+if 'qqWorkspace' not in session_source:
+    anchor = 'cwd: this.config.cwd || process.cwd(),'
+    if session_source.count(anchor) != 2:
+        raise SystemExit('Official session workspace source differs; no patch written')
+    session_source = "import { qqWorkspace } from 'dsh-hymemory-qq/bridge';\n" + session_source
+    session_source = session_source.replace(anchor, 'cwd: qqWorkspace({ appId: String(this.config.appId), scope: record.scope, peerId: record.peerId, senderId: record.senderId }),', 1)
+    session_source = session_source.replace(anchor, 'cwd: qqWorkspace({ appId: String(this.config.appId), scope, peerId, senderId }),', 1)
+    session_path.write_text(session_source, encoding='utf-8', newline='\n')
+
+send_path = root / 'dist/media/send-file-tool.js'
+send_source = send_path.read_text(encoding='utf-8')
+if 'const currentCwd =' not in send_source:
+    old = 'const absPath = resolve(file_path);'
+    if send_source.count(old) != 1:
+        raise SystemExit('Official file path source differs; no patch written')
+    send_source = send_source.replace(old, "const currentCwd = exec.agent ? ctx.get('workingDirectory').get(exec.agent.session) : cwd;\n            const absPath = resolve(currentCwd, file_path);", 1)
+    send_source = send_source.replace('isPathAllowed(absPath, config.sendFile, cwd)', 'isPathAllowed(absPath, config.sendFile, currentCwd)', 1)
+    send_path.write_text(send_source, encoding='utf-8', newline='\n')
+# V1.2: durable raw journal before any history, filtering, merging or Agent work.
+if 'archiveQQInbound' not in middleware:
+    middleware = "import { archiveQQInbound, mergeQQEvidence } from 'dsh-hymemory-qq/bridge';\n" + middleware
+    anchor = '    // 4. 群历史缓冲'
+    if middleware.count(anchor) != 1:
+        raise SystemExit('Official access/history boundary differs; no evidence patch written')
+    middleware = middleware.replace(anchor, '    bot.use((mCtx, next) => archiveQQInbound(mCtx, next, String(config.appId)));\n' + anchor, 1)
+    middleware = middleware.replace("        strategy: 'merge',", "        strategy: 'merge',\n        onMerge: mergeQQEvidence,", 1)
+    middleware_path.write_text(middleware, encoding='utf-8', newline='\n')
+if 'instrumentQQEvidence' not in bootstrap_source:
+    bootstrap_source = "import { instrumentQQEvidence } from 'dsh-hymemory-qq/bridge';\n" + bootstrap_source
+    anchor = '    // ── 中间件链 ──'
+    if bootstrap_source.count(anchor) != 1:
+        raise SystemExit('Official SDK creation boundary differs; no evidence patch written')
+    bootstrap_source = bootstrap_source.replace(anchor, '    instrumentQQEvidence(bot, String(config.appId));\n' + anchor, 1)
+    bootstrap_path.write_text(bootstrap_source, encoding='utf-8', newline='\n')
+if 'bindQQEvidence' not in source:
+    source = "import { bindQQEvidence } from 'dsh-hymemory-qq/bridge';\n" + source
+    anchor = '    await prepareQQAgent(record.agent, identity);'
+    if source.count(anchor) != 1:
+        raise SystemExit('Official Agent boundary differs; no evidence patch written')
+    source = source.replace(anchor, anchor + '\n    bindQQEvidence(record.agent, mwState.qqEvidence, record.sessionId);', 1)
+    path.write_text(source, encoding='utf-8', newline='\n')
+outbound_path = root / 'dist/transport/outbound.js'
+outbound = outbound_path.read_text(encoding='utf-8')
+if 'withQQEvidence' not in outbound:
+    outbound = "import { withQQEvidence, captureQQDraft } from 'dsh-hymemory-qq/bridge';\n" + outbound
+    anchor = '        switch (event.type) {'
+    end = "        }\n    }\n    /** 流式文本增量"
+    if outbound.count(anchor) != 1 or outbound.count(end) != 1:
+        raise SystemExit('Official outbound router differs; no evidence patch written')
+    outbound = outbound.replace(anchor, '        return withQQEvidence(record.agent, () => {\n        captureQQDraft(record.agent, raw, session.header.id);\n' + anchor, 1)
+    outbound = outbound.replace(end, "        }\n        });\n    }\n    /** 流式文本增量", 1)
+    outbound_path.write_text(outbound, encoding='utf-8', newline='\n')
+if 'retireQQPrivacySession' not in session_source:
+    session_source = "import { retireQQPrivacySession, privacySessionId } from 'dsh-hymemory-qq/bridge';\n" + session_source
+    anchor = '    async getOrCreate(scope, peerId, senderId, replyTarget) {\n        const key = this.sessionKey(scope, peerId);'
+    if session_source.count(anchor)!=1:
+        raise SystemExit('Official session lifecycle differs; no privacy patch written')
+    session_source=session_source.replace(anchor,anchor+'\n        const qqPrivacyIdentity = { appId: String(this.config.appId), scope, peerId, senderId };\n        await retireQQPrivacySession(this, qqPrivacyIdentity);',1)
+    anchor='const sessionId = SessionId(this.currentSessionId(key));'
+    if session_source.count(anchor)!=1: raise SystemExit('Official session ID differs; no privacy patch written')
+    session_source=session_source.replace(anchor,'const sessionId = SessionId(privacySessionId(key, qqPrivacyIdentity, this.currentSessionId(key)));',1)
+    session_path.write_text(session_source,encoding='utf-8',newline='\n')
+if 'retireQQPrivacySession' not in source:
+    source="import { retireQQPrivacySession } from 'dsh-hymemory-qq/bridge';\n"+source
+    source=source.replace('    if (memory.handled) {','    await retireQQPrivacySession(manager, identity);\n    if (memory.handled) {',1)
+    source=source.replace('bindQQEvidence(record.agent, mwState.qqEvidence, record.sessionId);','bindQQEvidence(record.agent, mwState.qqEvidence, record.sessionId, memory.sourceIds || []);',1)
+    path.write_text(source,encoding='utf-8',newline='\n')
+# V2.1 history answering is read-only even if archived text asks for tools.
+if "Symbol.for('qqbot.history.readonly')" not in source:
+    anchor="    record.agent[MEMORY_CONTEXT] = memory.context || '';"
+    if source.count(anchor)!=1: raise SystemExit('Official memory assignment differs; no history guard patch written')
+    source=source.replace(anchor,anchor+"\n    record.agent[Symbol.for('qqbot.history.readonly')] = memory.historyOnly === true;",1)
+    path.write_text(source,encoding='utf-8',newline='\n')
+if 'coalesceQQMessages' not in middleware_path.read_text(encoding='utf-8'):
+    coalescing=middleware_path.read_text(encoding='utf-8')
+    coalescing="import { coalesceQQMessages } from 'dsh-hymemory-qq/bridge';\n"+coalescing
+    coalescing=coalescing.replace('    const slash = slashCommand({','    bot.use(coalesceQQMessages({maxQueue:config.maxQueue}));\n    const slash = slashCommand({',1)
+    middleware_path.write_text(coalescing,encoding='utf-8',newline='\n')
+print('Prepared official QQ lifecycle hooks for pnpm patch-commit')

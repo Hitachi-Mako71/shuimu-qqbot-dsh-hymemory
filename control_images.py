@@ -21,9 +21,8 @@ def read(path, fallback):
 
 
 def configuration(project):
-    directory = project / 'data/codex-relay'
-    old = read(directory / 'images-state.json', {})
-    raw = read(directory / 'images-settings.json', {'enabled': bool(old.get('enabled')), 'auto': bool(old.get('auto'))})
+    directory = project / 'data/codex-images'
+    raw = read(directory / 'images-settings.json', {})
     return {**DEFAULTS, **raw, 'auto': False}
 
 
@@ -33,9 +32,9 @@ def revision(value):
 
 
 def snapshot(project):
-    directory = project / 'data/codex-relay'
+    directory = project / 'data/codex-images'
     cfg = read(directory / 'config.json', {})
-    relay = read(directory / 'state.json', {})
+    relay = read(directory / 'binding.json', {})
     state = read(directory / 'images-state.json', {'jobs': []})
     settings = configuration(project)
     character = read(project / 'data/character/profile.json', {})
@@ -56,8 +55,8 @@ def snapshot(project):
 
 
 def save(project, payload, commit, conflict_type):
-    directory = project / 'data/codex-relay'
-    cfg, relay = read(directory / 'config.json', {}), read(directory / 'state.json', {})
+    directory = project / 'data/codex-images'
+    cfg, relay = read(directory / 'config.json', {}), read(directory / 'binding.json', {})
     if not cfg.get('imageRoot') or not relay.get('owner') or cfg.get('threadId') != relay.get('threadId'):
         raise ValueError('生图尚未完成本机配对配置，不能从控制台开启。')
     path = directory / 'images-settings.json'
@@ -80,7 +79,7 @@ def control_job(project, payload, action, commit):
     job_id = str(payload.get('id', ''))
     if not re.fullmatch(r'[a-f0-9-]{36}', job_id):
         raise ValueError('请选择已有生图任务。')
-    state = read(project / 'data/codex-relay/images-state.json', {'jobs': []})
+    state = read(project / 'data/codex-images/images-state.json', {'jobs': []})
     job = next((j for j in state['jobs'] if j['id'] == job_id), None)
     if job is None:
         raise ValueError('这个任务已经不存在，请刷新。')
@@ -90,12 +89,12 @@ def control_job(project, payload, action, commit):
     if action == 'RetryImage' and not payload.get('confirmed') is True:
         raise ValueError('重发前请确认QQ是否已经收到，避免重复发送。')
     content = {'type': 'cancel' if action == 'CancelImage' else 'retry-send', 'jobId': job_id, 'createdAt': int(time.time() * 1000)}
-    commit(project / 'data/codex-relay/image-controls' / (str(uuid.uuid4()) + '.json'), json.dumps(content).encode())
+    commit(project / 'data/codex-images/image-controls' / (str(uuid.uuid4()) + '.json'), json.dumps(content).encode())
 
 
 def preview(project, payload):
-    directory = project / 'data/codex-relay'
-    cfg, relay = read(directory / 'config.json', {}), read(directory / 'state.json', {})
+    directory = project / 'data/codex-images'
+    cfg, relay = read(directory / 'config.json', {}), read(directory / 'binding.json', {})
     if payload.get('id') == 'character':
         character = read(project / 'data/character/profile.json', {})
         item = next((v for v in character.get('references', []) if v.get('role') == 'canonical'), {})

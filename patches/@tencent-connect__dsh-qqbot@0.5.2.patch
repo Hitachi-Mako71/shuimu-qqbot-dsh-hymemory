@@ -1,74 +1,23 @@
-diff --git a/dist/transport/inbound.js b/dist/transport/inbound.js
---- a/dist/transport/inbound.js
-+++ b/dist/transport/inbound.js
-@@ -1,5 +1,6 @@
-+import { beforeQQTurn, afterQQTurn, IDENTITY, MEMORY_CONTEXT, configureQQResponseSpeed, prepareQQImages } from 'dsh-hymemory-qq/bridge';
- import { createUserMessage } from '@deepseek-ai/dsh-llm';
--import { classifyContentType, isVoiceContentType, } from "./attachment.js";
-+import { classifyContentType, isVoiceContentType, downloadMediaAttachments, } from "./attachment.js";
- import { clearGroupHistory } from "../features/history-store.js";
- // ── 主处理函数 ──
- /**
-@@ -17,10 +18,16 @@
-         msgId: msg.messageId,
-     };
-     // ── 组装 agentBody（下载结果经 mwState.downloadedFiles 提供） ──
--    const agentBody = assembleAgentBody(msg, mwState, scope, logger);
-+    const agentBody = assembleAgentBody(msg, mwState, scope, logger) || ((mwState.qqMedia?.quoteAttachments?.length || mwState.quote?.attachments?.length) ? '请查看用户本轮引用的图片。' : null);
-     if (!agentBody)
-         return;
--    logger.info(`Processing: scope=${scope} peerId=${peerId} body="${agentBody.slice(0, 200)}"`);
-+    const identity = { appId: config.appId, scope, peerId };
-+    const memory = await beforeQQTurn({ identity, text: msg.content || '', messageId: msg.messageId, quotedText: mwState.quote?.text || '', hasImages: (msg.attachments || []).some(a => /^image(?:\/|$)/.test(a.content_type || '')) || Boolean(mwState.quote?.attachments?.length || mwState.qqMedia?.quoteAttachments?.length) });
-+    if (memory.handled) {
-+        await bot.sendMarkdown(replyTarget, memory.reply);
-+        return;
-+    }
-+    logger.info(`Processing: scope=${scope} (message content omitted)`);
-     // ── 获取或创建会话 ──
-     let record;
-     try {
-@@ -38,7 +45,11 @@
-         return;
-     }
-     // ── 构建 UserMessage → followup ──
--    const content = [{ type: 'text', text: agentBody }];
-+    record.agent[IDENTITY] = identity;
-+    record.agent[MEMORY_CONTEXT] = memory.context || '';
-+    configureQQResponseSpeed(record.agent);
-+    const media = await prepareQQImages({ identity, message: msg, state: mwState, download: (items) => downloadMediaAttachments(items, config.media, logger) });
-+    const content = [{ type: 'text', text: agentBody }, ...media.blocks];
-     const message = createUserMessage({
-         content,
-         source: { kind: 'user' },
-@@ -56,6 +67,7 @@
-     catch (err) {
-         logger.warn(`whenIdle rejected: ${err instanceof Error ? err.message : String(err)}`);
-     }
-+    await afterQQTurn({ identity, text: msg.content || '', messageId: msg.messageId, sessionId: record.sessionId });
- }
- // ══════════════════════════════════════════════════════════════
- // Body Assembly（5 层组装）
-diff --git a/dist/media/vision-tool.js b/dist/media/vision-tool.js
---- a/dist/media/vision-tool.js
-+++ b/dist/media/vision-tool.js
-@@ -88,6 +88,7 @@
-     const options = {
-         provider: vision.provider,
-         model: vision.model,
-+        reasoningEffort: 'off',
-         messages: [message],
-         maxTokens: vision.maxTokens,
-         signal,
 diff --git a/dist/gateway/bootstrap.js b/dist/gateway/bootstrap.js
+index 070f21eedda373679bea02b25369585a08cff13b..899d96904b7cde14f3b138f3addd0cbcdc97557d 100644
 --- a/dist/gateway/bootstrap.js
 +++ b/dist/gateway/bootstrap.js
-@@ -1,3 +1,4 @@
+@@ -1,3 +1,5 @@
++import { instrumentQQEvidence, configureQQTransport } from 'dsh-hymemory-qq/bridge';
 +import { registerQQRelay, rememberQQBotSelf } from 'dsh-hymemory-qq/bridge';
  import { QQBot } from '@tencent-connect/qqbot-nodejs';
  import { SessionManager } from "../session/index.js";
  import { handleInbound, createOutboundHandler } from "../transport/index.js";
-@@ -69,6 +70,8 @@
+@@ -44,6 +46,8 @@ export async function bootstrapGateway(ctx, agents, config, logger) {
+         logger,
+     });
+     logger.info(`QQBot SDK initialized (UA: ${userAgent})`);
++    configureQQTransport(bot, config);
++    instrumentQQEvidence(bot, String(config.appId));
+     // ── 中间件链 ──
+     setupMiddlewares(bot, config, manager, logger);
+     // ── 入站：经过中间件链后的消息交给 dsh agent ──
+@@ -69,6 +73,8 @@ export async function bootstrapGateway(ctx, agents, config, logger) {
      // sendMarkdown 统一做被动回复限额管控：同一 msgId 超限/过期时降级主动推送。
      const replyLimiter = new ReplyLimiter({ limit: 4 });
      const sender = {
@@ -77,7 +26,7 @@ diff --git a/dist/gateway/bootstrap.js b/dist/gateway/bootstrap.js
          sendMarkdown: (target, content, opts) => sendResolvedMarkdown(bot, resolveReplyTarget(target, replyLimiter, true), content, opts),
          openStream: (target) => bot.openStream({
              target: {
-@@ -78,6 +81,7 @@
+@@ -78,6 +84,7 @@ export async function bootstrapGateway(ctx, agents, config, logger) {
              },
          }),
      };
@@ -85,7 +34,7 @@ diff --git a/dist/gateway/bootstrap.js b/dist/gateway/bootstrap.js
      const outboundHandler = createOutboundHandler(manager, sender, config, logger, toolsRegistry);
      ctx
          .on('session/event', outboundHandler);
-@@ -119,7 +123,8 @@
+@@ -119,7 +126,8 @@ export async function bootstrapGateway(ctx, agents, config, logger) {
      catch (err) {
          logger.warn(`qqbot-nodejs SDK 不支持 disconnected 事件（请升级 @tencent-connect/qqbot-nodejs 至 1.0.5+）: ${err instanceof Error ? err.message : String(err)}`);
      }
@@ -96,14 +45,17 @@ diff --git a/dist/gateway/bootstrap.js b/dist/gateway/bootstrap.js
      });
      // ── 富媒体过期清理 ──
 diff --git a/dist/gateway/middleware-setup.js b/dist/gateway/middleware-setup.js
+index ca4b0020021c8c434f363c49daa8b265a0300fe7..52d0c09f4bac9bdcf239fbf9ff07965eb99d638d 100644
 --- a/dist/gateway/middleware-setup.js
 +++ b/dist/gateway/middleware-setup.js
-@@ -1,3 +1,4 @@
-+import { groupParticipationGate, rememberQQMedia } from 'dsh-hymemory-qq/bridge';
+@@ -1,3 +1,6 @@
++import { coalesceQQMessages } from 'dsh-hymemory-qq/bridge';
++import { archiveQQInbound, mergeQQEvidence } from 'dsh-hymemory-qq/bridge';
++import { groupParticipationGate, rememberQQMedia, allowQQGroupObservation } from 'dsh-hymemory-qq/bridge';
  import { errorHandler, messageFilter, accessPolicy, mentionGate, contentSanitizer, rateLimiter, slashCommand, concurrencyGuard, typingIndicator, quoteRef, historyBuffer, envelopeFormatter, } from '@tencent-connect/qqbot-nodejs';
  import { buildCommandList } from "../commands/index.js";
  import { attachmentProcessor } from "../middleware/attachment.js";
-@@ -7,7 +8,7 @@
+@@ -7,7 +10,7 @@ export function setupMiddlewares(bot, config, manager, logger) {
      // 1. 错误兜底（最外层洋葱皮）
      bot.use(errorHandler());
      // 2. 消息过滤：bot 回声 + 消息去重
@@ -112,17 +64,26 @@ diff --git a/dist/gateway/middleware-setup.js b/dist/gateway/middleware-setup.js
      // 3. 访问控制（白名单/开放/禁用）
      bot.use(accessPolicy({
          c2c: {
-@@ -26,6 +27,7 @@
-     }));
-     // 4. 群历史缓冲 — 放在门控之前，确保所有消息（含未 @bot）都计入上下文
-     //    store 走共享单例（getHistoryStore），groupKey 带 appId 前缀，供回复后清空
-+    bot.use((mCtx, next) => rememberQQMedia(mCtx, next, config.appId));
-     bot.use(historyBuffer({
-         limit: config.historyLimit,
-         store: getHistoryStore(),
-@@ -38,9 +40,8 @@
+@@ -24,9 +27,11 @@ export function setupMiddlewares(bot, config, manager, logger) {
+             }
          },
      }));
++    bot.use((mCtx, next) => archiveQQInbound(mCtx, next, String(config.appId)));
+     // 4. 群历史缓冲 — 放在门控之前，确保所有消息（含未 @bot）都计入上下文
+     //    store 走共享单例（getHistoryStore），groupKey 带 appId 前缀，供回复后清空
+-    bot.use(historyBuffer({
++    bot.use((mCtx, next) => allowQQGroupObservation(mCtx, config.appId) ? rememberQQMedia(mCtx, next, config.appId) : next());
++    const qqHistory = historyBuffer({
+         limit: config.historyLimit,
+         store: getHistoryStore(),
+         recordOnSkip: true,
+@@ -36,11 +41,11 @@ export function setupMiddlewares(bot, config, manager, logger) {
+                 return undefined;
+             return historyGroupKey(config.appId, gid);
+         },
+-    }));
++    });
++    bot.use((mCtx, next) => allowQQGroupObservation(mCtx, config.appId) ? qqHistory(mCtx, next) : next());
      // 5. 群聊 @bot 门控
 -    bot.use(mentionGate({
 -        requireMentionInGroup: config.requireMention,
@@ -132,3 +93,247 @@ diff --git a/dist/gateway/middleware-setup.js b/dist/gateway/middleware-setup.js
      // 6. 内容清洗（去 @marker、表情标签、多余空白）
      bot.use(contentSanitizer({
          parseFaceTags: true,
+@@ -48,6 +53,7 @@ export function setupMiddlewares(bot, config, manager, logger) {
+     // 7. 三层限流（sender / group / global）
+     bot.use(rateLimiter());
+     // 8. 斜杠命令（在 concurrencyGuard 之前，命令匹配后不排队直接响应）
++    bot.use(coalesceQQMessages({maxQueue:config.maxQueue}));
+     const slash = slashCommand({
+         // 关闭 autoHelp：help 命令由 qqbot 注册为 /bot-help，
+         // 避免 SDK 再自动注册一个无前缀的 /help 造成重复
+@@ -60,6 +66,7 @@ export function setupMiddlewares(bot, config, manager, logger) {
+     // 9. 并发串行 + 消息合并（同 peer 排队，避免 session 冲突）
+     bot.use(concurrencyGuard({
+         strategy: 'merge',
++        onMerge: mergeQQEvidence,
+         maxQueue: config.maxQueue,
+         maxProcessingMs: config.processingTimeoutMs,
+     }));
+diff --git a/dist/media/send-file-tool.js b/dist/media/send-file-tool.js
+index 553fd46024af35c3209dc0c81fcf1993d781479e..980338728b278c578e4b8ef3204f125f355974f4 100644
+--- a/dist/media/send-file-tool.js
++++ b/dist/media/send-file-tool.js
+@@ -78,7 +78,7 @@ export function registerSendFileTool(ctx, bot, manager, config, logger) {
+                     fileUuid: { type: 'string' },
+                     messageId: { type: 'string' },
+                 },
+-                required: ['fileName', 'fileSize', 'target', 'fileUuid'],
++                required: ['fileName', 'fileSize', 'target'],
+                 additionalProperties: false,
+             },
+             render: (_args, value) => {
+@@ -106,8 +106,9 @@ export function registerSendFileTool(ctx, bot, manager, config, logger) {
+                 throw new Error('qqbot_send_file: 无法确定发送目标，请显式传 target 参数');
+             }
+             // 2. 校验文件 + 路径白名单
+-            const absPath = resolve(file_path);
+-            if (!isPathAllowed(absPath, config.sendFile, cwd)) {
++            const currentCwd = exec.agent ? ctx.get('workingDirectory').get(exec.agent.session) : cwd;
++            const absPath = resolve(currentCwd, file_path);
++            if (!isPathAllowed(absPath, config.sendFile, currentCwd)) {
+                 throw new Error(`qqbot_send_file: file_path 不在允许的目录内: ${absPath}`);
+             }
+             if (!existsSync(absPath)) {
+@@ -139,7 +140,7 @@ export function registerSendFileTool(ctx, bot, manager, config, logger) {
+                 fileName,
+                 fileSize: info.size,
+                 target: `${replyTarget.scope}:${replyTarget.targetId}`,
+-                fileUuid: result.upload.file_uuid,
++                ...(typeof result.upload?.file_uuid === 'string' ? { fileUuid: result.upload.file_uuid } : {}),
+                 ...(result.message?.id !== undefined ? { messageId: result.message.id } : {}),
+             };
+         },
+diff --git a/dist/media/vision-tool.js b/dist/media/vision-tool.js
+index 2eaebc71762c189a32a3bf8b0809039359555399..0ad675694b98c6ae0c79ef1ff0ecfd40c8834bfe 100644
+--- a/dist/media/vision-tool.js
++++ b/dist/media/vision-tool.js
+@@ -88,6 +88,7 @@ async function callVision(llm, vision, prompt, imageRef, signal) {
+     const options = {
+         provider: vision.provider,
+         model: vision.model,
++        reasoningEffort: 'off',
+         messages: [message],
+         maxTokens: vision.maxTokens,
+         signal,
+diff --git a/dist/middleware/attachment.js b/dist/middleware/attachment.js
+index 3a3ad411b64ad3375251bcd30272676716a6f032..4f8cae7a3164c370410f08553b4b6e3b468ce8f1 100644
+--- a/dist/middleware/attachment.js
++++ b/dist/middleware/attachment.js
+@@ -1,3 +1,4 @@
++import { stageOneBotFiles } from 'dsh-hymemory-qq/bridge';
+ import { downloadMediaAttachments } from "../transport/attachment.js";
+ export function attachmentProcessor(config, logger) {
+     return async (ctx, next) => {
+@@ -24,6 +25,7 @@ export function attachmentProcessor(config, logger) {
+         catch (err) {
+             logger.warn(`im-qqbot: attachment download failed: ${err instanceof Error ? err.message : String(err)}`);
+         }
++        stageOneBotFiles(ctx);
+         await next();
+     };
+ }
+diff --git a/dist/session/session-manager.js b/dist/session/session-manager.js
+index 5eae070d953a0c197ee532209a094ae92b22aaa0..c8f86286725097ec8d3e81b8b246facc63bad10a 100644
+--- a/dist/session/session-manager.js
++++ b/dist/session/session-manager.js
+@@ -1,3 +1,5 @@
++import { retireQQPrivacySession, privacySessionId } from 'dsh-hymemory-qq/bridge';
++import { qqWorkspace } from 'dsh-hymemory-qq/bridge';
+ /**
+  * SessionManager — 管理 QQ peer → dsh Agent 的映射和生命周期
+  *
+@@ -26,6 +28,7 @@ const COMPACTION_ERROR_HINTS = {
+ };
+ export class SessionManager {
+     sessions = new Map();
++    sessionCreations = new Map();
+     evictor;
+     modelResolver;
+     ctx;
+@@ -237,7 +240,7 @@ export class SessionManager {
+             sessionId: childId,
+             seed,
+             meta: {
+-                cwd: this.config.cwd || process.cwd(),
++                cwd: qqWorkspace({ appId: String(this.config.appId), scope: record.scope, peerId: record.peerId, senderId: record.senderId }),
+                 parentSession: record.sessionId,
+                 seedLength: seed.length,
+                 ...(composed.agentPreset ? { agentPreset: composed.agentPreset } : {}),
+@@ -366,6 +369,26 @@ export class SessionManager {
+     /** 获取或恢复或创建会话（get → resume → create） */
+     async getOrCreate(scope, peerId, senderId, replyTarget) {
+         const key = this.sessionKey(scope, peerId);
++        const pending = this.sessionCreations.get(key);
++        if (pending) {
++            const record = await pending;
++            record.replyTarget = replyTarget;
++            record.lastActivity = Date.now();
++            return record;
++        }
++        const creation = this.createOrResumeSession(scope, peerId, senderId, replyTarget, key);
++        this.sessionCreations.set(key, creation);
++        try {
++            return await creation;
++        }
++        finally {
++            if (this.sessionCreations.get(key) === creation)
++                this.sessionCreations.delete(key);
++        }
++    }
++    async createOrResumeSession(scope, peerId, senderId, replyTarget, key) {
++        const qqPrivacyIdentity = { appId: String(this.config.appId), scope, peerId, senderId };
++        await retireQQPrivacySession(this, qqPrivacyIdentity);
+         const existing = this.sessions.get(key);
+         if (existing) {
+             existing.replyTarget = replyTarget;
+@@ -373,7 +396,7 @@ export class SessionManager {
+             return existing;
+         }
+         const route = this.modelResolver.getEffectiveRoute(key);
+-        const sessionId = SessionId(this.currentSessionId(key));
++        const sessionId = SessionId(privacySessionId(key, qqPrivacyIdentity, this.currentSessionId(key)));
+         this.logger.info(`getOrCreate: key=${key} route=${route ? `${route.provider}/${route.model}` : 'host-default'} sessionId=${sessionId}`);
+         let agent;
+         let handle;
+@@ -404,7 +427,7 @@ export class SessionManager {
+                 const created = await this.agents.create({
+                     sessionId,
+                     meta: {
+-                        cwd: this.config.cwd || process.cwd(),
++                        cwd: qqWorkspace({ appId: String(this.config.appId), scope, peerId, senderId }),
+                         ...(agentPreset ? { agentPreset } : {}),
+                     },
+                     ...(route ? { agentOptions: route } : {}),
+diff --git a/dist/transport/inbound.js b/dist/transport/inbound.js
+index 100626532ae52303f6f54af19a52600d98a7425f..16dcab7e24bf0019f9bf8c3974b8073946afa390 100644
+--- a/dist/transport/inbound.js
++++ b/dist/transport/inbound.js
+@@ -1,5 +1,8 @@
++import { retireQQPrivacySession } from 'dsh-hymemory-qq/bridge';
++import { bindQQEvidence } from 'dsh-hymemory-qq/bridge';
++import { beforeQQTurn, afterQQTurn, IDENTITY, MEMORY_CONTEXT, configureQQResponseSpeed, prepareQQImages, prepareQQAgent, isolateQQFiles, stageQQDownloads, qqWorkspace } from 'dsh-hymemory-qq/bridge';
+ import { createUserMessage } from '@deepseek-ai/dsh-llm';
+-import { classifyContentType, isVoiceContentType, } from "./attachment.js";
++import { classifyContentType, isVoiceContentType, downloadMediaAttachments, } from "./attachment.js";
+ import { clearGroupHistory } from "../features/history-store.js";
+ // ── 主处理函数 ──
+ /**
+@@ -10,17 +13,26 @@ export async function handleInbound(ctx, manager, config, logger) {
+     const mwState = ctx.state;
+     const { bot } = ctx;
+     const scope = msg.kind === 'group' ? 'group' : 'c2c';
+-    const peerId = scope === 'group' ? (msg.groupOpenid ?? msg.senderId) : msg.senderId;
++    const peerId = scope === 'group' ? msg.groupOpenid : msg.senderId;
++    if (!peerId || !msg.senderId) return;
++    const identity = { appId: String(config.appId), scope, peerId, senderId: msg.senderId };
++    isolateQQFiles(identity, mwState);
+     const replyTarget = {
+         scope,
+         targetId: peerId,
+         msgId: msg.messageId,
+     };
+     // ── 组装 agentBody（下载结果经 mwState.downloadedFiles 提供） ──
+-    const agentBody = assembleAgentBody(msg, mwState, scope, logger);
++    const agentBody = assembleAgentBody(msg, mwState, scope, logger) || ((mwState.qqMedia?.quoteAttachments?.length || mwState.quote?.attachments?.length) ? '请查看用户本轮引用的图片。' : null);
+     if (!agentBody)
+         return;
+-    logger.info(`Processing: scope=${scope} peerId=${peerId} body="${agentBody.slice(0, 200)}"`);
++    const memory = await beforeQQTurn({ identity, text: msg.content || '', messageId: msg.messageId, quotedText: mwState.quote?.text || '', hasImages: (msg.attachments || []).some(a => /^image(?:\/|$)/.test(a.content_type || '')) || Boolean(mwState.quote?.attachments?.length || mwState.qqMedia?.quoteAttachments?.length) });
++    await retireQQPrivacySession(manager, identity);
++    if (memory.handled) {
++        await bot.sendMarkdown(replyTarget, memory.reply);
++        return;
++    }
++    logger.info(`Processing: scope=${scope} (message content omitted)`);
+     // ── 获取或创建会话 ──
+     let record;
+     try {
+@@ -38,7 +50,13 @@ export async function handleInbound(ctx, manager, config, logger) {
+         return;
+     }
+     // ── 构建 UserMessage → followup ──
+-    const content = [{ type: 'text', text: agentBody }];
++    await prepareQQAgent(record.agent, identity);
++    bindQQEvidence(record.agent, mwState.qqEvidence, record.sessionId, memory.sourceIds || []);
++    record.agent[MEMORY_CONTEXT] = memory.context || '';
++    record.agent[Symbol.for('qqbot.history.readonly')] = memory.historyOnly === true;
++    configureQQResponseSpeed(record.agent);
++    const media = await prepareQQImages({ identity, message: msg, state: mwState, mediaRoot: qqWorkspace(identity), download: async (items) => stageQQDownloads(identity, await downloadMediaAttachments(items, config.media, logger)) });
++    const content = [{ type: 'text', text: agentBody }, ...media.blocks];
+     const message = createUserMessage({
+         content,
+         source: { kind: 'user' },
+@@ -56,6 +74,7 @@ export async function handleInbound(ctx, manager, config, logger) {
+     catch (err) {
+         logger.warn(`whenIdle rejected: ${err instanceof Error ? err.message : String(err)}`);
+     }
++    await afterQQTurn({ identity, text: msg.content || '', messageId: msg.messageId, sessionId: record.sessionId, mode: memory.mode || 'chat' });
+ }
+ // ══════════════════════════════════════════════════════════════
+ // Body Assembly（5 层组装）
+diff --git a/dist/transport/outbound.js b/dist/transport/outbound.js
+index f50e4b27e8c9cf862983f26ebade8fcee08947fd..975ed4cf156da3483fc3e2bb4aa53158c2d0dbbf 100644
+--- a/dist/transport/outbound.js
++++ b/dist/transport/outbound.js
+@@ -1,3 +1,4 @@
++import { withQQEvidence, captureQQDraft } from 'dsh-hymemory-qq/bridge';
+ import { chunkMarkdownText } from "./chunker.js";
+ import { OutboundBuffer } from "./outbound-buffer.js";
+ import { formatToolResult } from "./tool-presenter.js";
+@@ -30,6 +31,8 @@ class OutboundRouter {
+         const record = this.manager.findBySessionId(session.header.id);
+         if (record === undefined)
+             return;
++        return withQQEvidence(record.agent, () => {
++        captureQQDraft(record.agent, raw, session.header.id);
+         switch (event.type) {
+             case 'assistant/chunk':
+                 this.onChunk(session.header.id, record, event);
+@@ -47,6 +50,7 @@ class OutboundRouter {
+                 this.onTurnEnd(session.header.id, record, event);
+                 break;
+         }
++        });
+     }
+     /** 流式文本增量：累积到会话 buffer */
+     onChunk(sessionId, record, event) {

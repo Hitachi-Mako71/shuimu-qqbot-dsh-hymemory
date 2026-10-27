@@ -1,4 +1,4 @@
-param([string]$OutputFile,[string]$Namespace,[switch]$IncludeTestData)
+﻿param([string]$OutputFile,[string]$Namespace,[switch]$IncludeTestData)
 $ErrorActionPreference='Stop'
 $ProjectDir=Split-Path -Parent $MyInvocation.MyCommand.Path
 if(-not $OutputFile){
@@ -22,7 +22,7 @@ try {
             $Process=Get-CimInstance Win32_Process -Filter ('ProcessId='+$Entry.pid) -ErrorAction SilentlyContinue
             if($Process -and $Process.CommandLine.Contains([string]$Entry.script)){$WasRunning=$true}
         }
-        & (Join-Path $ProjectDir 'stop-all.ps1') | Out-Null
+        & (Join-Path $ProjectDir 'stop-all.ps1') -KeepHindsight | Out-Null
     }
     $Arguments=@((Join-Path $ProjectDir 'export_memories.py'),'--project',$ProjectDir,'--output',$OutputFile)
     if($Namespace){$Arguments+=@('--namespace',$Namespace)}

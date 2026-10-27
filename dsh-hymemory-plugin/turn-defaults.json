@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "privateQuietMs": 1200,
+  "privateMaxWaitMs": 3500,
+  "directQuietMs": 700,
+  "directMaxWaitMs": 2000,
+  "candidateTtlMs": 12000,
+  "quietGapMs": 2500,
+  "followupTtlMs": 120000,
+  "maxUnanswered": 1,
+  "implicitMaxTurns": 2,
+  "maxBatchMessages": 16,
+  "maxBatchChars": 12000,
+  "knownBotIds": []
+}

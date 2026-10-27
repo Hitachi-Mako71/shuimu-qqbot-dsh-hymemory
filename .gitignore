@@ -3,8 +3,15 @@ qq.credentials.json
 qq.credentials.verified
 *.private.txt
 .venv/
+hindsight/
 .run/
+.tmp/
+.privacy/
+.retired/
 data/
+data/transport/onebot.json
+data/transport/status.json
+runtime/napcat/
 exports/
 logs/
 /runtime/

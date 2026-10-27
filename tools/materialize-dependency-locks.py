@@ -54,9 +54,9 @@ if args.part in ('profile', 'all'):
     expected_deps = expected.get('dependencies', {})
     if set(deps) != set(expected_deps) or deps.get('@tencent-connect/dsh-qqbot') != '0.5.2':
         raise SystemExit('QQ profile plugin set differs; refusing to replace custom dependencies')
-    local_names = ('dsh-hymemory-qq', 'dsh-chatgpt-plan')
+    local_names = ('dsh-hymemory-qq',)
     if not all(name in deps for name in local_names):
-        raise SystemExit('QQ profile must include the pinned Hy Memory and ChatGPT plugins')
+        raise SystemExit('QQ profile must include the pinned Hy Memory plugin')
     local_packages = {}
     for name in local_names:
         archived_ref = expected_deps.get(name, '')

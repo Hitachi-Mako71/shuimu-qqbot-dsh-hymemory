@@ -3,17 +3,16 @@
   "private": true,
   "dependencies": {
     "@tencent-connect/dsh-qqbot": "0.5.2",
-    "dsh-chatgpt-plan": "file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-chatgpt-plan-0.4.3.tgz",
-    "dsh-hymemory-qq": "file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz"
+    "dsh-hymemory-qq": "file:../../packages/dsh-hymemory-qq-0.22.6.tgz"
   },
   "dsh": {
     "profile": {
       "bundles": [
         "@deepseek-ai/dsh-base",
         "@tencent-connect/dsh-qqbot",
-        "dsh-hymemory-qq",
-        "dsh-chatgpt-plan"
+        "dsh-hymemory-qq"
       ]
     }
   }
 }
+

@@ -1,8 +1,9 @@
-﻿$ErrorActionPreference='Stop'
+﻿param([switch]$KeepHindsight)
+$ErrorActionPreference='Stop'
 $project=Split-Path -Parent $MyInvocation.MyCommand.Path
-if(Test-Path -LiteralPath (Join-Path $project 'stop-chat-ui.ps1')){& (Join-Path $project 'stop-chat-ui.ps1') -ProjectDir $project}
 $file=Join-Path $project '.run\services.json'
-if(-not(Test-Path $file)){Write-Host 'No managed services recorded.';exit 0}
+if(Test-Path -LiteralPath (Join-Path $project 'stop-napcat.ps1')){& (Join-Path $project 'stop-napcat.ps1')}
+if(-not(Test-Path $file)){if(-not $KeepHindsight -and (Test-Path (Join-Path $project '.run/hindsight.pid'))){& (Join-Path $project 'stop-hindsight.ps1')};Write-Host 'No managed QQ services recorded.';return}
 $services=Get-Content $file -Raw|ConvertFrom-Json
 foreach($name in @('qqbot','memory')){
     $entry=$services.$name
@@ -13,4 +14,5 @@ foreach($name in @('qqbot','memory')){
     }
 }
 Remove-Item -LiteralPath $file -Force
+if(-not $KeepHindsight -and (Test-Path (Join-Path $project '.run/hindsight.pid'))){& (Join-Path $project 'stop-hindsight.ps1')}
 Write-Host 'Stopped the managed QQ/DSH and Hy Memory process trees.'

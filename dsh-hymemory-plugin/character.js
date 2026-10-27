@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-const profileFile = () => path.resolve(process.env.QQBOT_CODEX_RELAY_DIR || 'data/codex-relay', '../character/profile.json');
+const profileFile = () => path.resolve(process.env.QQBOT_CODEX_IMAGES_DIR || 'data/codex-images', '../character/profile.json');
 export function characterDescription() {
   try {
     const value = JSON.parse(fs.readFileSync(profileFile(), 'utf8').replace(/^\uFEFF/, ''));
@@ -26,4 +26,4 @@ export function characterReferences() {
   return { revision: value.revision, description: value.description.slice(0, 3000), references };
 }
 
-export const botNames = Object.freeze(['柚柚', '水木', '公主', '大肥鱼']);
+export const botNames = Object.freeze(['柚柚', '水木', '公主']);

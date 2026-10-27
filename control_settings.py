@@ -76,7 +76,25 @@ def comp_version(settings):
 
 
 def group_version(room):
-    return version({key: room.get(key) for key in ('enabled', 'frequency', 'controller')})
+    return version({key: room.get(key) for key in ('enabled', 'frequency', 'controller', 'activity')})
+
+
+def group_activity(value=None):
+    schema = read_json(Path(__file__).parent / 'dsh-hymemory-plugin/group-activity-config.json')
+    if value is None:
+        value = {}
+    if not isinstance(value, dict) or set(value) - set(schema):
+        raise ValueError('群聊节奏包含未知字段。')
+    result = {key: value.get(key, spec['default']) for key, spec in schema.items()}
+    for key, spec in schema.items():
+        v = result[key]
+        if spec['type'] == 'boolean':
+            valid = type(v) is bool
+        else:
+            valid = type(v) is int and spec['min'] <= v <= spec['max']
+        if not valid:
+            raise ValueError('群聊节奏参数无效：' + spec.get('label', key))
+    return result
 
 
 def qq_config(profile):
@@ -105,6 +123,7 @@ def snapshot(project, profile):
                        'alias': preferences.get('groups', {}).get(key, ''),
                        'enabled': bool(room.get('enabled')), 'bound': bool(room.get('controller')),
                        'frequency': room.get('frequency', '正常'), 'messages': room.get('allMessages', 0),
+                       'activity': group_activity(room.get('activity')), 'normalTurnsRouted': room.get('normalTurnsRouted', 0),
                        'sent': room.get('sent', 0), 'status': room.get('status', '等待群消息'),
                        'version': group_version(room)})
     return {'companion': {'enabled': bool(companion.get('enabled')), 'paired': bool(companion.get('owner') and companion.get('target')),
@@ -115,7 +134,7 @@ def snapshot(project, profile):
                           'version': comp_version(companion)},
             'groups': groups, 'persona': persona_raw.decode('utf-8-sig'), 'personaVersion': digest(persona_raw),
             'streaming': bool(config.get('streaming')), 'provider': config.get('provider', ''), 'model': config.get('model', ''),
-            'images': control_images.snapshot(project), 'chatModel': control_models.snapshot(project, config),
+            'images': control_images.snapshot(project), 'deepseek': control_models.snapshot(project, config),
             'restartRequired': (project / '.run/control-console/restart-required.json').exists()}
 
 
@@ -167,6 +186,8 @@ def save_group(project, payload):
             raise ConfigConflict('这个群的设置已经变化，请重新载入后再保存。')
         if enabled and not room.get('controller'):
             raise ValueError('这个群尚未绑定，请先在QQ完成群友模式绑定。')
+        if 'activity' in payload:
+            room['activity'] = group_activity(payload['activity'])
         room.update(enabled=enabled, frequency=frequency)
         try:
             commit(path, encoded(state), digest(raw), project / '.run/control-console/backups')
@@ -266,7 +287,7 @@ def backup(project, profile):
     _, _, _, config = qq_config(profile)
     safe_bot = {key: config.get(key) for key in ('provider', 'model', 'streaming')}
     with zipfile.ZipFile(destination, 'x', zipfile.ZIP_DEFLATED) as archive:
-        for relative in ('personality.md', 'data/companion/settings.json', 'data/companion/groups/registry.json', 'data/control-console/preferences.json', 'data/codex-relay/images-settings.json', 'data/character/profile.json'):
+        for relative in ('personality.md', 'data/companion/settings.json', 'data/companion/groups/registry.json', 'data/control-console/preferences.json', 'data/codex-images/images-settings.json', 'data/character/profile.json'):
             path = project / relative
             if path.exists():
                 archive.writestr(relative, sanitize(project, path.read_text(encoding='utf-8-sig')))
@@ -295,8 +316,6 @@ def perform(project, profile, action, payload):
         save_profile(project, profile, action, payload)
     elif action == 'SaveImages':
         control_images.save(project, payload, commit, ConfigConflict)
-    elif action == 'SaveModel':
-        control_models.save(project, profile, payload, commit, qq_config, encoded, ConfigConflict)
     elif action in ('CancelImage', 'RetryImage'):
         control_images.control_job(project, payload, action, commit)
     elif action == 'ImagePreview':

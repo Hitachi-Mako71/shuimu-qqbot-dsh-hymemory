@@ -1,10 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { directory, namespace, read, write, withPerson, clock, settings, nextDelay, sanitize } from './companion-state.js';
-import { attention, noteInbound, attentionContext } from './companion-attention.js';
+import { directory, namespace, write, withPerson, settings, sanitize } from './companion-state.js';
+import { noteInbound, attentionContext } from './companion-attention.js';
 import { characterDescription } from './character.js';
 import { modelRoute } from './model-route.js';
+import { runProactiveGreeting } from './companion-proactive.js';
+export { markCompanionActivity } from './companion-proactive.js';
 
 let runtime, polling = false;
 
@@ -72,33 +74,10 @@ async function poll() {
   if (polling || !runtime) return;
   polling = true;
   try {
-    const s = settings(), now = Date.now(), local = clock(now), schedule = read('scheduler.json', {});
-    if (!s.enabled || !s.owner || s.target?.scope !== 'c2c' || now < (s.snoozeUntil || 0) || now < (schedule.nextDueAt || 0)) return;
-    if (namespace({ appId: runtime.appId, scope: 'c2c', peerId: s.target.targetId }) !== s.owner) return;
-    const quiet = s.quietStart === s.quietEnd ? false : s.quietStart > s.quietEnd
-      ? local.hour >= s.quietStart || local.hour < s.quietEnd : local.hour >= s.quietStart && local.hour < s.quietEnd;
-    if (!s.quietDisabled && quiet) return;
-    await withPerson(s.owner, async (state, save) => {
-      const waiting = attention(state, now);
-      if (['busy', 'waiting'].includes(waiting.mode) || now - state.lastInboundAt < 5 * 60000) return;
-      const deliveries = state.deliveries || [];
-      if (deliveries.filter(d => now - d.at < 3600000).length >= s.hourlyMax || deliveries.filter(d => d.date === local.date).length >= s.dailyMax) return;
-      schedule.nextDueAt = now + nextDelay(s); write('scheduler.json', schedule);
-      // A lightweight greeting is not a generated episode or a memory record.
-      const content = waiting.mode === 'check-in' ? '我在这里呢。你忙完、想聊的时候再来找我就好。' : '想和你聊会儿。今天有什么想说的，或者要我帮忙的事吗？';
-      if (!settings().enabled || Date.now() < (settings().snoozeUntil || 0)) return;
-      const receipt = await runtime.sender.sendProactiveMarkdown({ scope: 'c2c', targetId: s.target.targetId }, content);
-      if (!receipt?.id) throw Error('GreetingReceiptUnconfirmed');
-      state.deliveries = [...deliveries, { at: Date.now(), date: local.date, kind: 'check-in', text: content }].slice(-100);
-      save();
-      Object.assign(schedule, { lastSuccessAt: new Date().toISOString(), successfulPushes: (schedule.successfulPushes || 0) + 1, blocked: false, message: 'QQ已接受轻问候；没有生成日记或虚构记忆' });
-      write('scheduler.json', schedule);
-    });
+    const current=runtime;
+    await runProactiveGreeting({ appId:current.appId, sender:current.sender, generate:model, isCurrent:()=>runtime===current });
   } catch {
-    const schedule = read('scheduler.json', {});
-    Object.assign(schedule, { nextDueAt: Date.now() + 6 * 3600000, blocked: true, message: '轻问候发送未确认，暂停自动重试' });
-    write('scheduler.json', schedule);
-    console.warn('[qq-companion] greeting unavailable');
+    console.warn('[qq-companion] proactive cycle unavailable');
   } finally { polling = false; }
 }
 

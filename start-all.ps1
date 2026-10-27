@@ -1,4 +1,4 @@
-$ErrorActionPreference='Stop'
+﻿$ErrorActionPreference='Stop'
 $project=Split-Path -Parent $MyInvocation.MyCommand.Path
 $run=Join-Path $project '.run'
 $logs=Join-Path $project 'logs'
@@ -20,7 +20,7 @@ foreach($name in @('memory','qqbot')){
         do{
             try{
                 $health=Invoke-RestMethod 'http://127.0.0.1:8765/health' -TimeoutSec 1
-                $ready=$health.sdk_ready -and $health.embedding_ready
+                $ready=$health.ok -eq $true
             }catch{}
             if(-not $ready){Start-Sleep -Milliseconds 500}
         }while(-not $ready -and [DateTime]::UtcNow -lt $deadline)

@@ -1,0 +1,12 @@
+{
+  "enabled": {"type":"boolean","default":false},
+  "perMinute": {"type":"integer","min":1,"max":120,"default":6,"label":"每分钟"},
+  "perHour": {"type":"integer","min":1,"max":3600,"default":120,"label":"每小时"},
+  "minIntervalSeconds": {"type":"integer","min":0,"max":3600,"default":10,"label":"间隔"},
+  "settleSeconds": {"type":"integer","min":0,"max":60,"default":0,"label":"静默等待"},
+  "adaptiveGapSeconds": {"type":"integer","min":0,"max":300,"default":0,"label":"自适应间隔"},
+  "implicitImageQuestions": {"type":"boolean","default":false,"label":"图片问答免@"},
+  "judgeIntervalSeconds": {"type":"integer","min":0,"max":300,"default":20,"label":"判断间隔"},
+  "minMessages": {"type":"integer","min":1,"max":30,"default":3,"label":"累计"},
+  "includeDirected": {"type":"boolean","default":false,"label":"限制点名"}
+}

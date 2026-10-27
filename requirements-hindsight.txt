@@ -1,0 +1,4 @@
+hindsight-api-slim[embedded-db]==1.1.0
+hindsight-client==1.1.0
+pg0-embedded==0.15.2
+flashrank==0.2.10

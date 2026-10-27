@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@tencent-connect/dsh-qqbot@0.5.2': 9d249503fef2f1c69207ea746d23c6ad00382c7e040d664f4ed1f590eda08c30
+  '@tencent-connect/dsh-qqbot@0.5.2': dd5564ea9c9439b48fbd008da02b3bc188b0b55c44b374886fb956750d9aac38
 
 importers:
 
@@ -13,13 +13,10 @@ importers:
     dependencies:
       '@tencent-connect/dsh-qqbot':
         specifier: 0.5.2
-        version: 0.5.2(patch_hash=9d249503fef2f1c69207ea746d23c6ad00382c7e040d664f4ed1f590eda08c30)
-      dsh-chatgpt-plan:
-        specifier: file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-chatgpt-plan-0.4.3.tgz
-        version: file:../../../qqbot-hymemory/packages/dsh-chatgpt-plan-0.4.3.tgz
+        version: 0.5.2(patch_hash=dd5564ea9c9439b48fbd008da02b3bc188b0b55c44b374886fb956750d9aac38)
       dsh-hymemory-qq:
-        specifier: file:D:/DeepSeekHarnessData/qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz
-        version: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz
+        specifier: file:../../packages/dsh-hymemory-qq-0.22.6.tgz
+        version: file:../../packages/dsh-hymemory-qq-0.22.6.tgz
 
 packages:
 
@@ -85,18 +82,9 @@ packages:
   dijkstrajs@1.0.3:
     resolution: {integrity: sha512-qiSlmBq9+BCdCA/L46dw8Uy93mloxsPSbwnm5yrKn2vMPiy8KyAskTF6zuV/j5BMsmOGZDPs7KjU+mjb670kfA==}
 
-  dsh-chatgpt-plan@file:../../../qqbot-hymemory/packages/dsh-chatgpt-plan-0.4.3.tgz:
-    resolution: {integrity: sha512-Y2Tf4FkYJDqajYJG7M8k67RiOE4oFEWbiYDAOegEEZhMvQsU2U17TFjUswvdA5H2ZRfuQ8oRxc+zyRgQqqlYNg==, tarball: file:../../../qqbot-hymemory/packages/dsh-chatgpt-plan-0.4.3.tgz}
-    version: 0.4.3
-    peerDependencies:
-      '@deepseek-ai/cordis': '>=4.0.1'
-      '@deepseek-ai/dsh-llm': 0.2.1-rc.2
-    bundledDependencies:
-      - jose
-
-  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz:
-    resolution: {integrity: sha512-mUULcsKA8Uv1iLYykaXNmlIp+U3pHpVlSqE4p1yBqn9B6JVX813v77jRQ+3b8HP/lO5AhP8FW/I74gGw6iqJ5g==, tarball: file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz}
-    version: 0.8.0
+  dsh-hymemory-qq@file:../../packages/dsh-hymemory-qq-0.22.6.tgz:
+    resolution: {integrity: sha512-b/ZLckE3NOtLLc4JYL/K9/yQEHB5hDvXsPCPq68F0u18G82rXx3pOtORQw0DylacE4IFi9Sz6Y82yQnwJWPmZQ==, tarball: file:../../packages/dsh-hymemory-qq-0.22.6.tgz}
+    version: 0.22.6
     peerDependencies:
       '@deepseek-ai/cordis': '>=4.0.1'
       '@deepseek-ai/dsh-llm': 0.2.1-rc.2
@@ -203,7 +191,7 @@ packages:
 
 snapshots:
 
-  '@tencent-connect/dsh-qqbot@0.5.2(patch_hash=9d249503fef2f1c69207ea746d23c6ad00382c7e040d664f4ed1f590eda08c30)':
+  '@tencent-connect/dsh-qqbot@0.5.2(patch_hash=dd5564ea9c9439b48fbd008da02b3bc188b0b55c44b374886fb956750d9aac38)':
     dependencies:
       '@tencent-connect/qqbot-connector': 1.2.0
       '@tencent-connect/qqbot-nodejs': 1.0.5
@@ -252,9 +240,7 @@ snapshots:
 
   dijkstrajs@1.0.3: {}
 
-  dsh-chatgpt-plan@file:../../../qqbot-hymemory/packages/dsh-chatgpt-plan-0.4.3.tgz: {}
-
-  dsh-hymemory-qq@file:../../../qqbot-hymemory/packages/dsh-hymemory-qq-0.8.0.tgz: {}
+  dsh-hymemory-qq@file:../../packages/dsh-hymemory-qq-0.22.6.tgz: {}
 
   emoji-regex@8.0.0: {}
 
@@ -343,3 +329,4 @@ snapshots:
       which-module: 2.0.1
       y18n: 4.0.3
       yargs-parser: 18.1.3
+

@@ -12,8 +12,8 @@ const isImage = a => /^image(?:\/|$)/i.test(a?.content_type || a?.contentType ||
 const imageList = list => (list || []).filter(isImage).filter(a => typeof a.url === 'string' && a.url.length < 8192)
   .slice(0, 4).map(a => ({ content_type: a.content_type || a.contentType, filename: String(a.filename || 'image').slice(0, 180), url: a.url, size: a.size || 0 }));
 function read(key) {
-  try { return JSON.parse(fs.readFileSync(path.join(cacheRoot(), key + '.json'), 'utf8')); }
-  catch (e) { if (e.code === 'ENOENT') return { entries: {} }; throw e; }
+  try { const value = JSON.parse(fs.readFileSync(path.join(cacheRoot(), key + '.json'), 'utf8')); return value.schema === 2 ? value : { schema: 2, entries: {} }; }
+  catch (e) { if (e.code === 'ENOENT') return { schema: 2, entries: {} }; throw e; }
 }
 function write(name, value) {
   fs.mkdirSync(cacheRoot(), { recursive: true });

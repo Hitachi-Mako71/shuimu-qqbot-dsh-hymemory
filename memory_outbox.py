@@ -53,6 +53,11 @@ class Outbox:
         with self._db() as db:
             db.execute("UPDATE jobs SET status='pending',error=?,due=? WHERE id=? AND status='running'", (error_class, time.time() + min(300, 5 * 2 ** min(attempts, 6)), job_id))
 
+    def hold(self, job_id):
+        # Preserve the evidence for review; unauthorized old jobs never write back.
+        with self._db() as db:
+            db.execute("UPDATE jobs SET status='blocked',error='IdentityPermissionRejected' WHERE id=? AND status='running'", (job_id,))
+
     def cancel_user(self, user_id):
         with self._db() as db:
             db.execute("UPDATE jobs SET status='canceled',payload='{}' WHERE user_id=? AND status IN ('pending','running')", (user_id,))

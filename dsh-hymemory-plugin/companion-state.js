@@ -1,10 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
+export { memoryNamespace as namespace } from './identity.js';
 
 export const directory = () => process.env.QQBOT_COMPANION_DIR || path.resolve('data/companion');
-export const namespace = (identity) => identity?.appId && identity?.peerId && ['c2c', 'group'].includes(identity.scope)
-  ? `qq-${createHash('sha256').update(JSON.stringify([identity.appId, identity.scope, identity.peerId])).digest('hex')}` : '';
 export function read(name, fallback) {
   try { return JSON.parse(fs.readFileSync(path.join(directory(), name), 'utf8').replace(/^\uFEFF/, '')); }
   catch (error) { if (error.code === 'ENOENT') return fallback; throw error; }

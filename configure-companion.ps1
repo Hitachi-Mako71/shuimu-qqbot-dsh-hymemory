@@ -1,19 +1,21 @@
 ﻿param([ValidateSet('High','Normal','Light')][string]$Frequency='High',[switch]$Pause,[switch]$ProbeNow)
 $ErrorActionPreference='Stop'
 $Project=Split-Path -Parent $MyInvocation.MyCommand.Path
-$RelayPath=Join-Path $Project 'data\codex-relay\state.json'
-$Relay=$null
-if(Test-Path -LiteralPath $RelayPath){$Relay=Get-Content -LiteralPath $RelayPath -Raw -Encoding UTF8|ConvertFrom-Json}
 $Directory=Join-Path $Project 'data\companion'
 New-Item -ItemType Directory -Force -Path $Directory,(Join-Path $Directory 'control') | Out-Null
 $Account=[Security.Principal.WindowsIdentity]::GetCurrent().Name
 & icacls.exe $Directory /inheritance:r /grant:r ($Account+':(OI)(CI)F') 'SYSTEM:(OI)(CI)F' | Out-Null
 if($LASTEXITCODE -ne 0){throw 'Could not protect companion state permissions.'}
 $Range=switch($Frequency){'High'{@(20,30,3)}'Normal'{@(60,120,1)}'Light'{@(180,360,1)}}
+$SettingsPath=Join-Path $Directory 'settings.json'
+$Existing=$null
+if(Test-Path -LiteralPath $SettingsPath){$Existing=Get-Content -LiteralPath $SettingsPath -Raw -Encoding UTF8|ConvertFrom-Json}
+$Owner='';$Target=$null
+if($Existing){$Owner=[string]$Existing.owner;$Target=$Existing.target}
 $Settings=[ordered]@{
  enabled=(-not $Pause)
- owner=''
- target=$null
+ owner=$Owner
+ target=$Target
  minMinutes=$Range[0]
  maxMinutes=$Range[1]
  hourlyMax=$Range[2]
@@ -24,10 +26,7 @@ $Settings=[ordered]@{
  timezone='Asia/Shanghai'
  snoozeUntil=0
 }
-if($Relay -and $Relay.owner -and $Relay.target.scope -eq 'c2c'){
- $Settings.owner='qq-'+$Relay.owner
- $Settings.target=@{scope='c2c';targetId=$Relay.target.targetId}
-}else{
+if(-not $Settings.owner){
  $Bytes=New-Object byte[] 5
  $Rng=[Security.Cryptography.RandomNumberGenerator]::Create()
  try{$Rng.GetBytes($Bytes)}finally{$Rng.Dispose()}
@@ -36,10 +35,9 @@ if($Relay -and $Relay.owner -and $Relay.target.scope -eq 'c2c'){
  try{$Settings.pairingHash=([BitConverter]::ToString($Sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($Code)))).Replace('-','').ToLowerInvariant()}finally{$Sha.Dispose()}
  $Settings.pairingExpiresAt=[DateTimeOffset]::UtcNow.AddMinutes(15).ToUnixTimeMilliseconds()
  Write-Host ('PAIR_COMMAND=开启陪伴 '+$Code)
- Write-Host 'Send the pairing command in your private QQ chat within 15 minutes. Codex relay is optional.'
+ Write-Host 'Send the pairing command in your private QQ chat within 15 minutes.'
 }
 $Utf8=New-Object Text.UTF8Encoding($false)
-$SettingsPath=Join-Path $Directory 'settings.json'
 [IO.File]::WriteAllText(($SettingsPath+'.tmp'),($Settings|ConvertTo-Json -Depth 5),$Utf8)
 Move-Item -LiteralPath ($SettingsPath+'.tmp') -Destination $SettingsPath -Force
 if($ProbeNow){

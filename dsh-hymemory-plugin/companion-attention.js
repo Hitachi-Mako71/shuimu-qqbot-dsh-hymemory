@@ -2,7 +2,7 @@
 const minute = 60000;
 export function attention(state, now = Date.now()) {
   const inbound = state.lastInboundAt || 0;
-  const pending = (state.deliveries || []).filter((d) => d.at > inbound);
+  const pending = (state.deliveries || []).filter((d) => d.at > inbound && (!d.status || d.status === 'accepted'));
   const last = pending.at(-1);
   const checkIns = pending.filter((d) => d.kind === 'check-in').length;
   const quietUntil = state.attention?.quietUntil || 0;
@@ -25,7 +25,7 @@ export function noteInbound(state, text, messageId, now = Date.now()) {
     quietUntil: 0, returnedAt: returned ? now : state.attention?.returnedAt || 0,
     previousUnanswered: returned ? before.unanswered : 0 };
   // Explicit everyday requests also suppress reminders; no inference from silence.
-  if (/^(?:我先忙(?:一会儿|会儿)?|我去忙了|晚点回你|等我忙完|先别打扰我)[。！!，,\s]*$/.test(text)) state.attention.quietUntil = now + 2 * 60 * minute;
+  if (/^(?:我?先忙(?:了|一会儿?|会儿)?|我去忙了|晚点回你|等我忙完|先别打扰我)(?:[，,\s]*(?:晚点聊|回头聊|晚点再聊))?[。！!，,\s]*$/.test(text)) state.attention.quietUntil = now + 2 * 60 * minute;
   if (/^(?:我(?:先|要|去)?睡了|睡觉去了|晚安)[。！!，,\s]*$/.test(text)) state.attention.quietUntil = now + 8 * 60 * minute;
 }
 

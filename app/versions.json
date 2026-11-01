@@ -11,7 +11,7 @@
   "kuzu": "0.11.3",
   "embedding_model": "BAAI/bge-small-zh-v1.5",
   "embedding_dimensions": 512,
-  "qq_patch_sha256": "de6a617be6c560b4f8b61fe0b2f6dce0c407cfc6e2839523c8a8aa21ff3c33f0",
+  "qq_patch_sha256": "d19a6bd91433a3faa3fd9c3a37cc628f998d2afb4d30c42868f68f0d647fae85",
   "controller": "2.9.0",
   "codex": "0.162.0-alpha.17.2",
   "qqagent_milestone": "3.5.0",

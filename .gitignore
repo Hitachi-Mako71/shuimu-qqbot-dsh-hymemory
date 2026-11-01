@@ -40,3 +40,9 @@ qq.credentials.verified
 *.safetensors
 .DS_Store
 Thumbs.db
+
+# Local engineering evidence and workspace settings
+.run/
+.work/
+.vscode/
+.idea/

@@ -11,3 +11,11 @@
 *.ps1 text eol=crlf
 *.ico binary
 *.tgz binary
+
+# Preserve byte-identical pinned plugin payload and patch hashes across platforms.
+app/dsh-hymemory-plugin/** -text
+*.patch -text
+
+# Existing deployed application and historical snapshots keep their bytes.
+app/** -text
+archive/** -text

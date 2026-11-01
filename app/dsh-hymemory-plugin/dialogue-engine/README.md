@@ -49,4 +49,4 @@ const result = await generateDialogueReply({
 node --test dsh-hymemory-plugin/dialogue-engine/test/*.test.js
 ```
 
-研究依据和未采用的技术见[公开开发说明](../../../docs/development/dialogue-engine.md)。
+研究依据和未采用的技术见项目 `docs/HUMAN_LIKE_DIALOGUE_ENGINE.md`。

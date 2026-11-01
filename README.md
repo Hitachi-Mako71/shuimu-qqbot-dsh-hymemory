@@ -80,6 +80,8 @@ flowchart LR
 | 源码与维护 | [架构](docs/development/architecture.md) · [目录说明](docs/development/repository-layout.md) · [发布流程](docs/development/releasing.md) |
 | 技术契约与历史资料 | [技术参考](docs/reference/README.md) · [历史归档](archive/README.md) |
 
+本机源码与部署目录的职责见[工程维护说明](docs/development/engineering.md)。提交前从仓库根目录运行 `node scripts/check-repository.mjs`。
+
 ## 仓库结构
 
 ```text
@@ -89,6 +91,8 @@ app/                      完整可运行工程
   patches/                Tencent QQ 插件补丁
   packages/               当前业务插件包
   examples/               安全配置模板
+scripts/                  仓库结构与发布前检查
+research/                 研究笔记与显式实验入口
 docs/
   deployment/             安装、两种 QQ 接入、配置、升级与备份
   usage/                  群聊、记忆、生图与控制台

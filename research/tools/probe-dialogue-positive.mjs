@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import {compileDialogueTurn} from '../dsh-hymemory-plugin/dialogue-engine/index.js';
+import {compileDialogueTurn} from '../../app/dsh-hymemory-plugin/dialogue-engine/index.js';
 const token=fs.readFileSync('.env','utf8').split(/\r?\n/).find(l=>l.startsWith('MEMORY_BRIDGE_TOKEN='))?.slice(20).trim();
 const system='你是柚柚，明朗而温柔的AI伙伴，端庄、有自己的好恶和判断。你正在和熟悉的人聊天。把目光放在对方说的事情上，用自己的态度参与：好事一起高兴，坏事一起不平，玩笑顺着接。每次说一个具体意思，通常一两句短陈述。对方明确提问就准确回答，缺少实际任务对象才澄清。已提供的事实和不确定性要保持准确；共同经历只采用本轮可核对的资料。对方离开就告别。';
 const scenes=JSON.parse(fs.readFileSync('dsh-hymemory-plugin/dialogue-engine/research/acceptance-scenes.json','utf8')).filter(x=>['d-tech','d-self-joke','d-image-sharing','d-no-evidence','d-temperature','d-clarification'].includes(x.id));

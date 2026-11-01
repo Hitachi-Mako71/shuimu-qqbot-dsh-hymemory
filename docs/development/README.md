@@ -7,3 +7,6 @@
 - [分版本技术参考](../reference/README.md)：身份、证据、删除、群节奏等设计契约。
 
 运行与维护命令从 `app/` 执行。业务代码与历史模块分开保管；本次 GitHub 目录整理不改变运行插件版本。
+
+- [工程维护与资料依据](engineering.md)：源码/部署分离、结构检查与skill。
+- [ADR 0001](../decisions/0001-source-deployment-and-research.md)：目录分工的原因和后果。

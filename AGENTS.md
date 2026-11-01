@@ -16,3 +16,10 @@ Read `README.md`, `docs/deployment/windows.md`, `docs/deployment/configuration.m
 
 - 处理程序故障、测试失败或异常行为时，记录已执行的修复尝试。
 - 两次不同修复在相关验证后仍未解决问题时，第三次尝试前必须调用并严格遵循 `superpowers:systematic-debugging`；该 skill 的触发规则更早适用时立即调用。
+
+## Repository engineering
+
+- Source checkout and deployed runtime are separate. See docs/development/engineering.md.
+- Research notes and standalone pilots live under research/; keep app/ operational paths intact.
+- Run node scripts/check-repository.mjs before publishing structural changes; it performs no model or QQ calls.
+- Respect the user pause on dialogue optimization. Directory maintenance is not permission to resume inference, training or evaluation.

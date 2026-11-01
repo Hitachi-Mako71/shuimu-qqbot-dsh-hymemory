@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import {compileDialogueTurn} from '../dsh-hymemory-plugin/dialogue-engine/index.js';
+import {compileDialogueTurn} from '../../app/dsh-hymemory-plugin/dialogue-engine/index.js';
 const token=fs.readFileSync('.env','utf8').split(/\r?\n/).find(l=>l.startsWith('MEMORY_BRIDGE_TOKEN='))?.slice(20).trim();
 const input={scope:'private',text:'我又把代码写炸了，笑死。'};
 const compiled=compileDialogueTurn(input);

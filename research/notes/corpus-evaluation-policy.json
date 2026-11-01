@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "directive": "Primary acceptance uses externally published corpus contexts and original human labels/replies; authored scenes are regression-only.",
+  "sources": [
+    {
+      "id": "douban",
+      "repository": "https://github.com/MarkWuNLP/MultiTurnResponseSelection",
+      "revision": "562c7de7155f9894ee03b97e6ae1170b448312ed",
+      "file": "test.txt",
+      "gitBlob": "18dc9495a77ff249d7d3670bd36a0c03cc35823c",
+      "sha256": "dc890b9489bc44b0a6ddcf67c5879d09225cd4973bff745faebb5ba1284468ad",
+      "rows": 10000,
+      "contexts": 1000,
+      "development": 200,
+      "reserved": 800,
+      "rights": "release README requests citation; no explicit comprehensive data license observed; local evaluation only, no republication or training claimed",
+      "task": "context-response appropriateness plus original-reference generation review"
+    },
+    {
+      "id": "irc",
+      "repository": "https://github.com/jkkummerfeld/irc-disentanglement",
+      "revision": "82ed04f9627a45d0d6f2ec3c8683c88eb408a0d5",
+      "dataLicense": "CC-BY-4.0 per upstream LICENSE.md",
+      "origin": "human public IRC",
+      "task": "reply-link and disentanglement; English technical domain",
+      "downloadStatus": "one original official dev log and adjudicated annotation acquired and hash-verified",
+      "manifest": ".run/irc-corpus-evaluation-20261101/manifest.json",
+      "testSplitDownloaded": false,
+      "initialProbe": {
+        "cases": 30,
+        "exactMatches": 21,
+        "previousLineBaselineHits": 12,
+        "errors": 0
+      }
+    },
+    {
+      "id": "when2speak",
+      "url": "https://huggingface.co/datasets/duke-trust-lab/When2Speak",
+      "origin": "synthetic GPT-generated English conversations",
+      "task": "SPEAK/SILENT timing auxiliary only; excluded from human wording reference",
+      "downloadStatus": "card verified, dataset pending"
+    },
+    {
+      "id": "naturalconv",
+      "repository": "https://github.com/naturalconv/NaturalConvDataSet",
+      "task": "Chinese human dialogue continuity and topic shift",
+      "downloadStatus": "official full dataset unavailable so far; no third-party mirror",
+      "conditions": "user confirmed personal noncommercial research and no redistribution"
+    }
+  ],
+  "rules": [
+    "No invented filler turns or fabricated speaker identities",
+    "Keep whole original context and all candidates; labels never provided to model before prediction",
+    "Original positive replies are alternatives, not a unique answer; preserve their wording",
+    "No-positive groups reported separately; do not silently remove them",
+    "Authored regression scenes cannot satisfy corpus-based release acceptance",
+    "Similarity, length and candidate selection metrics are not overall human-naturalness acceptance",
+    "Public corpus may have appeared in model pretraining; do not claim model-level unseen data",
+    "Never upload source corpus or real QQ chat in publication"
+  ]
+}

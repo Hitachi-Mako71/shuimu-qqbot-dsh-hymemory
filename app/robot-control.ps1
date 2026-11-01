@@ -106,13 +106,13 @@ function Begin-Job([string]$Action,$Payload=$null,[bool]$Quiet=$false){
 }
 function Apply-Status($Status){
     $script:Ui.Status=$Status
-    $labels=@{ready='已就绪';idle='按需空闲';starting='连接中';stopped='未运行';unknown='待确认'}
-    $memoryAvailable=$Status.memory -in @('ready','idle')
+    $labels=@{ready='已就绪';starting='连接中';stopped='未运行';unknown='待确认'}
+    $memoryAvailable=$Status.memory -eq 'ready'
     $script:Ui.QqValue.Text=$labels[[string]$Status.qq];$script:Ui.MemoryValue.Text=$labels[[string]$Status.memory]
     $script:Ui.QqValue.ForeColor=if($Status.qq -eq 'ready'){$C.Green}else{$C.Amber}
     $script:Ui.MemoryValue.ForeColor=if($memoryAvailable){$C.Green}else{$C.Amber}
     $script:Ui.QqHint.Text=if($Status.qq -eq 'ready'){'进程运行，已检测到QQ上线记录'}elseif($Status.qq -eq 'starting'){'正在等待QQ网关连接'}else{'可以使用下方按钮启动机器人'}
-    $script:Ui.MemoryHint.Text=if($Status.memory -eq 'ready'){'记忆提炼与向量检索已就绪'}elseif($Status.memory -eq 'idle'){'记忆引擎空闲；需要召回或提炼时启动，闲置5分钟后释放'}elseif($Status.memory -eq 'starting'){'正在按需启动记忆引擎'}else{'启动机器人时会一同启动'}
+    $script:Ui.MemoryHint.Text=if($Status.memory -eq 'ready'){'记忆提炼与向量检索常驻就绪'}elseif($Status.memory -eq 'starting'){'正在预热常驻记忆引擎'}else{'启动机器人时会一同启动'}
     $script:Ui.StatusPill.Text=if($Status.qq -eq 'ready' -and $memoryAvailable){'●  服务已就绪'}elseif($Status.qq -eq 'stopped' -and $Status.memory -eq 'stopped'){'○  服务未运行'}else{'●  部分服务待就绪'}
     $script:Ui.StatusPill.ForeColor=if($Status.qq -eq 'ready' -and $memoryAvailable){$C.Green}else{$C.Amber}
     $script:Ui.LastCheck.Text='最近检查 '+$Status.checkedAt

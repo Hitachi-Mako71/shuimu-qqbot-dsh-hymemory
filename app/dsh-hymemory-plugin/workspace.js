@@ -6,6 +6,7 @@ import { qqIdentity, memoryNamespace } from './identity.js';
 import { deliveryAllowed } from './delivery-permission.js';
 import { assertPrivacyContext } from './privacy.js';
 import {personaPolicy} from './persona-policy.js';
+import {configureQQTurnBudget,qqTurnToolDenial} from './turn-budget.js';
 
 const IDENTITY = Symbol.for('qqbot.identity');
 const allowed = new Set(['read', 'write', 'edit', 'read_image', 'glob', 'grep', 'working_directory',
@@ -71,6 +72,7 @@ export async function prepareQQAgent(agent, identity) {
   const current = directories.get(agent.session);
   try { scopedPath(root, current); }
   catch { await directories.set(agent, root); }
+  configureQQTurnBudget(agent);
   return root;
 }
 
@@ -110,4 +112,5 @@ export function qqToolDenial(exec) {
 
 export function installQQToolBoundary(ctx) {
   ctx.get('tools').guard(qqToolDenial);
+  ctx.get('tools').guard(qqTurnToolDenial);
 }

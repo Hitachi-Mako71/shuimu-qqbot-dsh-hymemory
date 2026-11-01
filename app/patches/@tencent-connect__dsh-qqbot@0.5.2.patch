@@ -258,7 +258,7 @@ index 100626532ae52303f6f54af19a52600d98a7425f..16dcab7e24bf0019f9bf8c3974b80739
  import { clearGroupHistory } from "../features/history-store.js";
  // ── 主处理函数 ──
  /**
-@@ -10,17 +13,26 @@ export async function handleInbound(ctx, manager, config, logger) {
+@@ -10,17 +13,29 @@ export async function handleInbound(ctx, manager, config, logger) {
      const mwState = ctx.state;
      const { bot } = ctx;
      const scope = msg.kind === 'group' ? 'group' : 'c2c';
@@ -278,7 +278,10 @@ index 100626532ae52303f6f54af19a52600d98a7425f..16dcab7e24bf0019f9bf8c3974b80739
      if (!agentBody)
          return;
 -    logger.info(`Processing: scope=${scope} peerId=${peerId} body="${agentBody.slice(0, 200)}"`);
-+    const memory = await beforeQQTurn({ identity, text: msg.content || '', messageId: msg.messageId, quotedText: mwState.quote?.text || '', hasImages: (msg.attachments || []).some(a => /^image(?:\/|$)/.test(a.content_type || '')) || Boolean(mwState.quote?.attachments?.length || mwState.qqMedia?.quoteAttachments?.length) });
++    const quoteText = mwState.quote?.text || mwState.quote?.entry?.content || '';
++    const hasImages = (msg.attachments || []).some(a => classifyContentType(a.content_type) === 'image')
++        || [...(mwState.quote?.attachments || []), ...(mwState.qqMedia?.quoteAttachments || [])].some(a => classifyContentType(a.contentType || a.content_type) === 'image');
++    const memory = await beforeQQTurn({ identity, text: msg.content || '', messageId: msg.messageId, quotedText: quoteText, hasImages });
 +    await retireQQPrivacySession(manager, identity);
 +    if (memory.handled) {
 +        await bot.sendMarkdown(replyTarget, memory.reply);
@@ -288,7 +291,7 @@ index 100626532ae52303f6f54af19a52600d98a7425f..16dcab7e24bf0019f9bf8c3974b80739
      // ── 获取或创建会话 ──
      let record;
      try {
-@@ -38,7 +50,13 @@ export async function handleInbound(ctx, manager, config, logger) {
+@@ -38,7 +52,14 @@ export async function handleInbound(ctx, manager, config, logger) {
          return;
      }
      // ── 构建 UserMessage → followup ──
@@ -296,6 +299,7 @@ index 100626532ae52303f6f54af19a52600d98a7425f..16dcab7e24bf0019f9bf8c3974b80739
 +    await prepareQQAgent(record.agent, identity);
 +    bindQQEvidence(record.agent, mwState.qqEvidence, record.sessionId, memory.sourceIds || []);
 +    record.agent[MEMORY_CONTEXT] = memory.context || '';
++    record.agent[Symbol.for('qqbot.dialogue-policy')] = memory.dialoguePolicy || null;
 +    record.agent[Symbol.for('qqbot.history.readonly')] = memory.historyOnly === true;
 +    configureQQResponseSpeed(record.agent);
 +    const media = await prepareQQImages({ identity, message: msg, state: mwState, mediaRoot: qqWorkspace(identity), download: async (items) => stageQQDownloads(identity, await downloadMediaAttachments(items, config.media, logger)) });
@@ -303,7 +307,7 @@ index 100626532ae52303f6f54af19a52600d98a7425f..16dcab7e24bf0019f9bf8c3974b80739
      const message = createUserMessage({
          content,
          source: { kind: 'user' },
-@@ -56,6 +74,7 @@ export async function handleInbound(ctx, manager, config, logger) {
+@@ -56,6 +77,7 @@ export async function handleInbound(ctx, manager, config, logger) {
      catch (err) {
          logger.warn(`whenIdle rejected: ${err instanceof Error ? err.message : String(err)}`);
      }
@@ -312,15 +316,16 @@ index 100626532ae52303f6f54af19a52600d98a7425f..16dcab7e24bf0019f9bf8c3974b80739
  // ══════════════════════════════════════════════════════════════
  // Body Assembly（5 层组装）
 diff --git a/dist/transport/outbound.js b/dist/transport/outbound.js
-index f50e4b27e8c9cf862983f26ebade8fcee08947fd..975ed4cf156da3483fc3e2bb4aa53158c2d0dbbf 100644
+index f50e4b2..6b1bafd 100644
 --- a/dist/transport/outbound.js
 +++ b/dist/transport/outbound.js
-@@ -1,3 +1,4 @@
+@@ -1,3 +1,5 @@
 +import { withQQEvidence, captureQQDraft } from 'dsh-hymemory-qq/bridge';
++import { splitQQShortMessages } from 'dsh-hymemory-qq/bridge';
  import { chunkMarkdownText } from "./chunker.js";
  import { OutboundBuffer } from "./outbound-buffer.js";
  import { formatToolResult } from "./tool-presenter.js";
-@@ -30,6 +31,8 @@ class OutboundRouter {
+@@ -30,6 +32,8 @@ class OutboundRouter {
          const record = this.manager.findBySessionId(session.header.id);
          if (record === undefined)
              return;
@@ -329,7 +334,7 @@ index f50e4b27e8c9cf862983f26ebade8fcee08947fd..975ed4cf156da3483fc3e2bb4aa53158
          switch (event.type) {
              case 'assistant/chunk':
                  this.onChunk(session.header.id, record, event);
-@@ -47,6 +50,7 @@ class OutboundRouter {
+@@ -47,6 +51,7 @@ class OutboundRouter {
                  this.onTurnEnd(session.header.id, record, event);
                  break;
          }
@@ -337,3 +342,36 @@ index f50e4b27e8c9cf862983f26ebade8fcee08947fd..975ed4cf156da3483fc3e2bb4aa53158
      }
      /** 流式文本增量：累积到会话 buffer */
      onChunk(sessionId, record, event) {
+@@ -119,13 +124,18 @@ class OutboundRouter {
+     }
+     /** 统一发送：切分 + 逐 chunk 发送 + 错误记录 */
+     async send(record, text, tag) {
+-        const chunks = chunkMarkdownText(text, this.config.textChunkLimit);
+-        for (const chunk of chunks) {
+-            try {
+-                await this.bot.sendMarkdown(record.replyTarget, chunk);
+-            }
+-            catch (err) {
+-                this.logger.error(`im-qqbot: ${tag} failed: ${err instanceof Error ? err.message : String(err)}`);
++        const messages = tag === 'sendMarkdown' ? splitQQShortMessages(text) : [text];
++        for (let index = 0; index < messages.length; index++) {
++            if (index > 0)
++                await new Promise(resolve => setTimeout(resolve, 900));
++            const chunks = chunkMarkdownText(messages[index], this.config.textChunkLimit);
++            for (const chunk of chunks) {
++                try {
++                    await this.bot.sendMarkdown(record.replyTarget, chunk);
++                }
++                catch (err) {
++                    this.logger.error(`im-qqbot: ${tag} failed: ${err instanceof Error ? err.message : String(err)}`);
++                }
+             }
+         }
+     }
+@@ -140,4 +150,4 @@ export function createOutboundHandler(manager, bot, config, logger, toolsRegistr
+     const router = new OutboundRouter(manager, bot, config, logger, toolsRegistry);
+     return (session, event) => router.route(session, event);
+ }
+-//# sourceMappingURL=outbound.js.map
+\ No newline at end of file
++//# sourceMappingURL=outbound.js.map

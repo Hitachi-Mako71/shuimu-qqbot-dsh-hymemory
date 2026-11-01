@@ -45,4 +45,4 @@ Invoke-RestMethod http://127.0.0.1:8765/health
 Get-Content .\logs\qqbot.out.log -Tail 30
 ```
 
-本地健康接口说明服务可访问；QQ 登录、群权限及实际收发需要在所选方案中分别确认。Hindsight 按需加载，健康接口在线时引擎可能处于空闲释放状态，见[资源使用说明](../usage/performance.md)。
+本地健康接口说明服务可访问；QQ 登录、群权限及实际收发需要在所选方案中分别确认。Hindsight 与 embedding 随服务启动预热并常驻，接口可达仍需结合报告状态判断，见[资源使用说明](../usage/performance.md)。

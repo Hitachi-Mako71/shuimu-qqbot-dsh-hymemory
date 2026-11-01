@@ -40,18 +40,31 @@ export const correction=t=>/^(?:不对|说错|更正|改成|补充|再补|我指
 export const normalized=t=>strip(t).normalize('NFKC').toLowerCase().replace(/[\p{P}\p{S}\s]/gu,'');
 export function topicTokens(t){const words=normalized(t).match(/[a-z0-9_]{2,}|[\u3400-\u9fff]{2,}/g)||[];return [...new Set(words.flatMap(w=>/^[a-z0-9_]+$/.test(w)?[w]:Array.from({length:w.length-1},(_,i)=>w.slice(i,i+2))).filter(w=>!['这个','那个','怎么','什么','我们','你们','一下','好的','的是','了吗'].includes(w)))].slice(0,32);}
 export function overlap(a,b){const x=new Set(Array.isArray(a)?a:topicTokens(a)),y=new Set(Array.isArray(b)?b:topicTokens(b));return [...x].filter(t=>y.has(t)).length;}
-export const openQuestion=t=>/大家|谁知道|有没有|[？?]|怎么|为啥|何时|哪[个里种]|如何/.test(t);
+export const openQuestion=t=>/大家|谁知道|有没有|[？?]|怎么|为什么|为啥|何时|哪[个里种]|如何|[吗呢][。！!～~\s]*$/.test(t);
+export function conversationalAddress(text){
+ const t=strip(text).normalize('NFKC').replace(/[，,。.!！?？~～\s]/g,'');
+ // Narrow second-person status questions and requests for a response. Do not
+ // turn every occurrence of “你” or third-person complaints into a bot call.
+ if(/^(?:理理我|理我一下|回我一下|回复我一下|回答我(?:一下)?|你在吗|在吗|你能听到吗)$/.test(t)
+   ||/^(?:哎呦|哎哟|哎呀|喂|欸|诶)?你?(?:(?:怎么|为什么|咋)(?:又|还)?|又|还|一直|都)?(?:不理我|没理我|不回我|没回我|不回复我|没回复我|没接上|没回应|不接话)(?:了|呢|啊|呀|吗|嘛)?$/.test(t))return 'REPLY_REQUEST';
+ if(/^你(?:今天|现在|刚才|刚刚|最近|这次|又|有|刚|是不是|怎么|为什么|目前|已经|好像|的|是|什么|在|能){0,6}(?:更新|升级|重启|卡住|变卡|版本|能做什么|有哪些功能|有什么功能)/.test(t))return 'BOT_STATUS_ADDRESS';
+ return null;
+}
+const closing=t=>/^(?:谢谢|好的|收到|懂了|晚安|拜拜)[。！!～~\s]*$/.test(t);
+const naturalContinuation=t=>t.length<=160&&/^(?:那|这(?:个|次|样)|所以|可是|但是|不过|还有|还是|然后|为什么|怎么|为啥|能不能|可以|你(?:觉得|看|说|能)|猜(?:猜|一下)|再(?:说|讲|解释|展开))/.test(t);
+const emotionalContinuation=t=>/^(?:可惜|好可惜|唉|有点可惜|好难|有点难过|不够用|真可惜)[啊呀呢。!！~～\s]*$/.test(t);
 export function observeTurn(identity,message){
  const key=memoryNamespace(identity),now=Date.now(),items=(live.get(key)||[]).filter(x=>now-x.at<180000).slice(-63);
  if(items.some(x=>x.id===message.messageId))return;
  items.push({id:message.messageId,sender:message.senderId,text:strip(message.content).slice(0,1200),at:now});live.delete(key);live.set(key,items);if(live.size>128)live.delete(live.keys().next().value);
 }
 export function noteDirectReply(context,text,receiptId){
- if(context?.identity?.scope!=='group'||context.kind!=='agent'||!text)return;
+ if(context?.identity?.scope!=='group'||!['agent','group'].includes(context.kind)||context.eligible===false||!text||!receiptId)return;
  const registry=read('groups/registry.json',{rooms:{}}),space=memoryNamespace(context.identity);if(registry.rooms[space]){registry.rooms[space].lastReplyAt=Date.now();writeRoom('groups/registry.json',registry);}
- if(!context.groupDirected)return;
  const key=memoryNamespace(context.identity),name='groups/rooms/'+key+'.json',room=read(name,{messages:[],deliveries:[],lastJudgedAt:0,newMessages:0});
  room.directThread={receiptId,sender:context.identity.senderId,at:Date.now(),topic:topicTokens(text),depth:context.followupDepth||0};
+ if(!room.messages.some(m=>m.id===receiptId))room.messages.push({id:receiptId,at:Date.now(),sender:'柚柚',kind:'bot',participation:context.kind==='agent'?'direct':'ambient',text:text.slice(0,1200)});
+ room.messages=room.messages.filter(m=>Date.now()-m.at<30*60000).slice(-30);
  // These are bounded routing hints, stored only in the existing scoped room.
  writeRoom(name,room);
 }
@@ -66,8 +79,14 @@ export function replyEligibility(message,{mentioned=false,called=false,otherMent
  if(otherMention)return {action:'SKIP',reason:'OTHER_ADDRESSEE'};
  if(called)return {action:'REPLY',kind:'DIRECT',reason:'DIRECT_NAME',addressee:message.senderId};
  const t=strip(message.content);
- if(quoteSelf&&/\S/.test(t)&&! /^(?:谢谢|好的|收到|懂了|晚安|拜拜)[。！!～~\s]*$/.test(t)&&(openQuestion(t)||/^(?:查一下|继续|展开|再|能|可以|帮|解释)/.test(t)))return {action:'REPLY',kind:'FOLLOWUP',reason:'BOT_QUOTE_FOLLOWUP',addressee:message.senderId};
- if(thread&&!intervening&&now-thread.at<=turnSettings(namespace).followupTtlMs&&thread.sender===message.senderId&&(thread.depth||0)<turnSettings(namespace).implicitMaxTurns&&openQuestion(t)&&overlap(t,thread.topic)>0)return {action:'REPLY',kind:'FOLLOWUP',reason:'TOPIC_FOLLOWUP',addressee:message.senderId,depth:(thread.depth||0)+1};
+ if(message.refMsgIdx&&quoteSelf!==true)return {action:'EVALUATE',kind:'PROACTIVE',reason:'OTHER_QUOTE_CONTEXT'};
+ const address=conversationalAddress(t);
+ if(address)return {action:'REPLY',kind:'DIRECT',reason:address,addressee:message.senderId};
+ if(quoteSelf&&/\S/.test(t)&&!closing(t)&&(openQuestion(t)||naturalContinuation(t)||emotionalContinuation(t)||/^(?:查一下|继续|展开|再|能|可以|帮|解释)/.test(t)))return {action:'REPLY',kind:'FOLLOWUP',reason:'BOT_QUOTE_FOLLOWUP',addressee:message.senderId};
+ if(thread&&!intervening&&now>=thread.at&&now-thread.at<=turnSettings(namespace).followupTtlMs&&thread.sender===message.senderId&&(thread.depth||0)<turnSettings(namespace).implicitMaxTurns&&!closing(t)){
+  const topical=overlap(t,thread.topic)>0;
+  if((topical&&t.length<=160)||naturalContinuation(t)||emotionalContinuation(t))return {action:'REPLY',kind:'FOLLOWUP',reason:topical?'TOPIC_FOLLOWUP':'CONTEXT_FOLLOWUP',addressee:message.senderId,depth:(thread.depth||0)+1};
+ }
  if((!t&&(message.attachments||[]).length)||/^\[表情\d+\]$|^\[收到(?:图片|文件|媒体).{0,80}\]$/.test(t))return {action:'SKIP',reason:'UNKNOWN_MEDIA'};
  return {action:'EVALUATE',kind:'PROACTIVE',reason:'OPEN_DISCUSSION'};
 }
@@ -84,7 +103,7 @@ export function candidateCheck(candidate,room,row,{now=Date.now(),body=''}={}){
  if(body&&room.messages.filter(m=>m.kind==='bot').slice(-4).some(m=>normalized(m.text)===norm))return {allow:false,reason:'NO_NEW_VALUE'};
  if(room.directThread?.receiptId&&room.directThread.receiptId!==candidate.previousDirectReceipt&&overlap(room.directThread.topic,candidate.topic)>0)return {allow:false,reason:'ALREADY_ANSWERED'};
  const previous=room.lastAmbient;
- if(previous&&previous.id!==candidate.id&&now-previous.at<30*60000&&!previous.acknowledged&&previous.status!=='rejected'&&(previous.unansweredCount||1)>=turnSettings(candidate.namespace).maxUnanswered&&(!openQuestion(candidate.text)||overlap(previous.topic,candidate.topic)>0))return {allow:false,reason:'UNANSWERED_PROACTIVE'};
+ if(previous&&previous.id!==candidate.id&&now-previous.at<30*60000&&!previous.acknowledged&&previous.status!=='rejected'&&(previous.unansweredCount||1)>=turnSettings(candidate.namespace).maxUnanswered&&overlap(previous.topic,candidate.topic)>0)return {allow:false,reason:'UNANSWERED_PROACTIVE'};
  const lastHuman=room.messages.filter(m=>m.kind==='human').at(-1);
  if(lastHuman&&lastHuman.id!==candidate.target&&now-lastHuman.at<turnSettings(candidate.namespace).quietGapMs)return {allow:false,reason:'WAIT_FOR_GAP'};
  return {allow:true,reason:'VALUE_CANDIDATE'};

@@ -12,6 +12,10 @@ import { conversationMode } from './model-route.js';
 import { privacyState, assertPrivacyContext } from './privacy.js';
 import {groupReplyContext,limitGroupSend} from './group-activity.js';
 import {validateGroupMentionText} from './group-mentions.js';
+import {QQ_TURN_BUDGET} from './turn-budget.js';
+import {retentionMetadata} from './retention-policy.js';
+import {withQQInboundSignal,qqInboundSignal} from './turn-context.js';
+import {recordMetric} from './metrics.js';
 
 const trace = new AsyncLocalStorage();
 const EVIDENCE = Symbol.for('qqbot.evidence');
@@ -65,11 +69,13 @@ export class EvidenceStore {
       }
     }
     const length = Array.from(event.text).length;
+    const window=event.role==='user'?JSON.parse(event.raw_json)?._qqAgentEvidence?.retainWindow:null;
+    const due=window&&Number.isFinite(window.closesAt)?Math.max(Date.now()/1000+2,window.closesAt+2):Date.now()/1000+2;
     const statement = this.#db.prepare(`INSERT OR IGNORE INTO evidence_jobs(id,namespace,source_event_id,start_offset,end_offset,status,due,created_at,updated_at)
       VALUES(?,?,?,?,?,'pending',?,?,?)`);
     for (let start = 0; start < length; start += 6000) {
       const end = Math.min(length, start + 6000), stamp = now();
-      statement.run(hash(['extract', event.id, start, end]), event.namespace, event.id, start, end, Date.now() / 1000 + 2, stamp, stamp);
+      statement.run(hash(['extract', event.id, start, end]), event.namespace, event.id, start, end, due, stamp, stamp);
     }
   }
   inbound(value, message, { eligible = true } = {}) {
@@ -83,7 +89,8 @@ export class EvidenceStore {
         if (old.actor_id !== identity.senderId) throw Error('EvidenceActorConflict');
         return { ...context, duplicate: true };
       }
-      this.#insert({ id, identity, role: 'user', kind: 'inbound', state: 'received', text: message.content || '', raw: message,
+      const raw={...message,_qqAgentEvidence:retentionMetadata(identity,message.content||'',eligible,context.privacyVersion)};
+      this.#insert({ id, identity, role: 'user', kind: 'inbound', state: 'received', text: message.content || '', raw,
         sourceTime: message.timestamp ?? null, platformId: message.messageId, eligible });
       this.#db.prepare("INSERT INTO evidence_inbox(event_id,namespace,status,updated_at) VALUES(?,?,'received',?)").run(id, namespace, now());
       this.#enqueue(this.#db.prepare('SELECT * FROM evidence_events WHERE id=?').get(id));
@@ -112,7 +119,11 @@ export class EvidenceStore {
     if (target.scope !== identity.scope || target.targetId !== identity.peerId) throw Error('EvidenceTargetMismatch');
     const id = randomUUID();
     this.#transaction(() => {
-      this.#insert({ id, identity, role: 'assistant', kind, state: 'prepared', text, raw: payload,
+      const directSourceIds=[...new Set(context.turnInboundIds || context.inboundIds || [])];
+      if(directSourceIds.some(source=>typeof source!=='string'||!(context.inboundIds||[]).includes(source)))throw Error('EvidenceDirectSourcesInvalid');
+      // Local journal metadata only; the original payload sent to QQ is unchanged.
+      const raw={...payload,_qqAgentEvidence:{schema:1,directSourceIds}};
+      this.#insert({ id, identity, role: 'assistant', kind, state: 'prepared', text, raw,
         inboundIds: context.inboundIds || [], sessionId: context.sessionId || null,
         eligible: context.eligible !== false && ['agent', 'group'].includes(context.kind) });
       this.#db.prepare("INSERT INTO evidence_deliveries(event_id,state,at) VALUES(?,'prepared',?)").run(id, now());
@@ -162,6 +173,8 @@ export function closeQQEvidence() { singleton?.close(); singleton = undefined; }
 function permitted(identity) { return enabled() && conversationMode() === 'chat' && groupCollectionAllowed(identity); }
 function currentContext(appId, target) {
   const current = trace.getStore();
+  current?.abortSignal?.throwIfAborted();
+  current?.turnBudget?.assertDelivery();
   if (current?.skip) return null;
   if (current?.identity) {
     if (current.identity.scope !== target.scope || current.identity.peerId !== target.targetId) throw Error('EvidenceTargetMismatch');
@@ -175,12 +188,16 @@ function currentContext(appId, target) {
 }
 
 export async function archiveQQInbound(ctx, next, appId) {
+  return withQQInboundSignal(ctx.signal,()=>archiveIncoming(ctx,next,appId));
+}
+async function archiveIncoming(ctx,next,appId) {
   const message = ctx.message;
   const identity = qqIdentity({ appId: String(appId), scope: message.kind, peerId: message.kind === 'group' ? message.groupOpenid : message.senderId, senderId: message.senderId });
   if (!permitted(identity)) return trace.run({ skip: true }, next);
   let context;
   try { context = store().inbound(identity, message, { eligible: !message.senderIsBot && !isControl(message.content || '') }); }
   catch { console.warn('[qq-evidence] incoming commit failed; Agent was not started'); throw Error('EvidenceIncomingUnavailable'); }
+  context.abortSignal=ctx.signal;
   ctx.state.qqEvidence = context;
   observeTurn(identity,message);
   if (context.duplicate) return;
@@ -198,11 +215,18 @@ export async function archiveQQInbound(ctx, next, appId) {
 }
 
 export function bindQQEvidence(agent, context, sessionId, recalledSources = []) {
+  context?.abortSignal?.throwIfAborted();
   const history = context ? store().sessionSources(context.identity,sessionId) : [];
   const deleted = context ? privacyState(context.identity).sources : new Set();
   const ids = context ? store().resolveUserSources(context.identity,[...history,...context.inboundIds,...recalledSources]).filter(id => !deleted.has(id)) : [];
-  agent[EVIDENCE] = context ? { ...context, turnInboundIds: context.inboundIds, inboundIds: ids, kind: 'agent', sessionId } : { skip: true };
-  if(context){const messages=store().platformIds(context.identity,context.inboundIds);agent[EVIDENCE].deliveryCheck=directDeliveryCheck(context.identity,messages.length?messages:[context.messageId].filter(Boolean));}
+  agent[EVIDENCE] = context ? { ...context, turnInboundIds: context.inboundIds, inboundIds: ids, kind: 'agent', sessionId } : { skip: true,abortSignal:qqInboundSignal() };
+  agent[EVIDENCE].turnBudget=agent[QQ_TURN_BUDGET];
+  if(context){
+    const messages=store().platformIds(context.identity,context.inboundIds);
+    const direct=directDeliveryCheck(context.identity,messages.length?messages:[context.messageId].filter(Boolean));
+    const budget=agent[QQ_TURN_BUDGET];
+    agent[EVIDENCE].deliveryCheck=()=>{context.abortSignal?.throwIfAborted();direct();budget?.assertDelivery();};
+  }
   if (context) store().inbox(context, 'processing', sessionId);
 }
 export function withQQEvidence(agent, callback) { return trace.run(agent?.[EVIDENCE] || { skip: true }, callback); }
@@ -213,8 +237,9 @@ export function withQQIdentity(identity, callback, { messageId, messageIds = [],
   const privacy=privacyState(identity);
   if(privacy.pending)throw Error('QQPrivacyCleanupPending');
   if(!Array.isArray(messageIds)||messageIds.length>128||messageIds.some(id=>typeof id!=='string'))throw Error('QQEvidenceMessagesInvalid');
-  const inboundIds=store().resolveUserSources(identity,[...[messageId,...messageIds].flatMap(id=>store().related(identity,id)),...sourceIds]).filter(id=>!privacy.sources.has(id));
-  const context = { identity, namespace: memoryNamespace(identity), inboundIds, kind, eligible, mode: 'chat', privacyVersion: privacy.version,deliveryCheck };
+  const turnInboundIds=store().resolveUserSources(identity,[messageId,...messageIds].flatMap(id=>store().related(identity,id))).filter(id=>!privacy.sources.has(id));
+  const inboundIds=store().resolveUserSources(identity,[...turnInboundIds,...sourceIds]).filter(id=>!privacy.sources.has(id));
+  const context = { identity, namespace: memoryNamespace(identity), turnInboundIds, inboundIds, kind, eligible, mode: 'chat', privacyVersion: privacy.version,deliveryCheck };
   return trace.run(context, callback);
 }
 export function captureQQDraft(agent, event, sessionId) {
@@ -232,7 +257,7 @@ export function captureQQDraft(agent, event, sessionId) {
 async function dispatch(context, target, text, payload, kind, send) {
   if (!context) return send();
   const id = store().prepare(context, target, text, payload, kind);
-  let receipt;
+  let receipt;const started=performance.now();let sendStatus='error';
   try { receipt = await send(); }
   catch (error) {
     const status = error?.status ?? error?.statusCode;
@@ -240,7 +265,7 @@ async function dispatch(context, target, text, payload, kind, send) {
     try { store().settle(id, state, null, String(error?.code || error?.name || 'SendError').slice(0, 100)); }
     catch { console.warn('[qq-evidence] failed-send audit pending review'); }
     throw error;
-  }
+  }finally{if(receipt)sendStatus='ok';recordMetric('send',{elapsedMs:performance.now()-started,scope:context.identity.scope,status:sendStatus});}
   try { store().settle(id, 'accepted', receipt); }
   catch { console.warn('[qq-evidence] send receipt not committed; result remains uncertain'); }
   if(receiptId(receipt)){try{noteDirectReply(context,text,receiptId(receipt));}catch{console.warn('[qq-turn] direct followup metadata unavailable');}}
@@ -262,8 +287,9 @@ export function instrumentQQEvidence(bot, appId) {
       if (payload.buffer) { payload.buffer = { bytes: payload.buffer.length, sha256: createHash('sha256').update(payload.buffer).digest('hex') }; }
       const text = typeof options.markdown?.content === 'string' ? options.markdown.content : typeof options.content === 'string' ? options.content : '';
       validateGroupMentionText(context?.identity||groupReplyContext(null,appId,options.target)?.identity,text);
-      return limitGroupSend(groupReplyContext(context,appId,options.target),()=>dispatch(context, options.target, text, payload, method === 'sendMedia' ? 'media' : 'markdown',
-        () => trace.run({ ...(context || active), sending: true }, () => original(...args))),()=>{assertPrivacyContext(context);context?.deliveryCheck?.();});
+      const queuedAt=performance.now();
+      return limitGroupSend(groupReplyContext(context,appId,options.target),()=>{recordMetric('send_queue',{elapsedMs:performance.now()-queuedAt,status:'ok'});return dispatch(context, options.target, text, payload, method === 'sendMedia' ? 'media' : 'markdown',
+        () => trace.run({ ...(context || active), sending: true }, () => original(...args)));},()=>{assertPrivacyContext(context);context?.deliveryCheck?.();active?.abortSignal?.throwIfAborted();active?.turnBudget?.assertDelivery();});
     };
   }
   if (typeof bot.openStream !== 'function') return;

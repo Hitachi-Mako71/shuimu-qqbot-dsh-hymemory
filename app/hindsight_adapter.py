@@ -1,90 +1,17 @@
 """Pinned Hindsight 1.1 HTTP adapter. Bank IDs come only from canonical gateway identity."""
 import hashlib
 import json
-import os
 import re
-import subprocess
-import threading
-import time
 from urllib.error import HTTPError
 from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import Request, build_opener, ProxyHandler
-
-
-class ManagedHindsightLifecycle:
-    """Start Hindsight on its first real request and stop it after an idle window."""
-
-    def __init__(self, project, idle_seconds=300):
-        self.project = project
-        self.idle_seconds = idle_seconds
-        self._lock = threading.RLock()
-        self._active = 0
-        self._last_used = time.monotonic()
-        self._opener = build_opener(ProxyHandler({}))
-
-    def _healthy(self):
-        try:
-            request = Request('http://127.0.0.1:8889/health', method='GET')
-            with self._opener.open(request, timeout=2) as response:
-                return json.loads(response.read(65536)).get('status') == 'healthy'
-        except Exception:
-            return False
-
-    def _run_script(self, name, timeout):
-        flags = 0x08000000 if os.name == 'nt' else 0
-        subprocess.run(
-            ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
-             str(self.project / name)],
-            cwd=str(self.project), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            timeout=timeout, check=True, creationflags=flags,
-        )
-
-    def _ensure_running(self):
-        if self._healthy():
-            return
-        self._run_script('start-hindsight.ps1', 30)
-        deadline = time.monotonic() + 25
-        while time.monotonic() < deadline:
-            if self._healthy():
-                return
-            time.sleep(1)
-        raise RuntimeError('Managed Hindsight did not become healthy')
-
-    def use(self):
-        lifecycle = self
-
-        class ActiveRequest:
-            def __enter__(self):
-                with lifecycle._lock:
-                    lifecycle._ensure_running()
-                    lifecycle._active += 1
-                    lifecycle._last_used = time.monotonic()
-                return self
-
-            def __exit__(self, *_):
-                with lifecycle._lock:
-                    lifecycle._active = max(0, lifecycle._active - 1)
-                    lifecycle._last_used = time.monotonic()
-
-        return ActiveRequest()
-
-    def stop_if_idle(self, can_stop):
-        with self._lock:
-            if self._active or time.monotonic() - self._last_used < self.idle_seconds:
-                return False
-            if not can_stop() or not self._healthy():
-                return False
-            self._run_script('stop-hindsight.ps1', 90)
-            if self._healthy():
-                raise RuntimeError('Managed Hindsight remained healthy after stop')
-            return True
 
 
 class HindsightAdapter:
     name = 'hindsight'
     engine_version = '1.1.0'
 
-    def __init__(self, token, base_url='http://127.0.0.1:8889', timeout=180, lifecycle=None):
+    def __init__(self, token, base_url='http://127.0.0.1:8889', timeout=180):
         parsed = urlsplit(base_url)
         if parsed.scheme != 'http' or parsed.hostname != '127.0.0.1' or parsed.path:
             raise ValueError('Managed loopback Hindsight required')
@@ -92,12 +19,8 @@ class HindsightAdapter:
             raise ValueError('Hindsight credential required')
         self.token, self.base_url, self.timeout = token, base_url.rstrip('/'), timeout
         self.opener = build_opener(ProxyHandler({}))
-        self.lifecycle = lifecycle
 
     def request(self, method, path, body=None):
-        if self.lifecycle is not None and path != '/health':
-            with self.lifecycle.use():
-                return self._request(method, path, body)
         return self._request(method, path, body)
 
     def _request(self, method, path, body=None):
@@ -148,7 +71,7 @@ class HindsightAdapter:
     def recall(self, namespace, query, limit):
         raw = self.request('POST', self.bank(namespace) + '/memories/recall', {
             'query': query, 'types': ['world', 'experience'], 'budget': 'low',
-            'max_tokens': 2200, 'include_chunks': False, 'include_entities': False})
+            'max_tokens': 2200, 'include': {'chunks': None, 'entities': None}})
         return self.rows(namespace, (raw or {}).get('results', []))[:limit], (raw or {}).get('usage')
 
     def list(self, namespace, limit):

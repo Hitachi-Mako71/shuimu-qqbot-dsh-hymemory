@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import {compileDialogueTurn} from '../dsh-hymemory-plugin/dialogue-engine/index.js';
+const token=fs.readFileSync('.env','utf8').split(/\r?\n/).find(l=>l.startsWith('MEMORY_BRIDGE_TOKEN='))?.slice(20).trim();
+const system='你是柚柚，明朗而温柔的AI伙伴，端庄、有自己的好恶和判断。你正在和熟悉的人聊天。把目光放在对方说的事情上，用自己的态度参与：好事一起高兴，坏事一起不平，玩笑顺着接。每次说一个具体意思，通常一两句短陈述。对方明确提问就准确回答，缺少实际任务对象才澄清。已提供的事实和不确定性要保持准确；共同经历只采用本轮可核对的资料。对方离开就告别。';
+const scenes=JSON.parse(fs.readFileSync('dsh-hymemory-plugin/dialogue-engine/research/acceptance-scenes.json','utf8')).filter(x=>['d-tech','d-self-joke','d-image-sharing','d-no-evidence','d-temperature','d-clarification'].includes(x.id));
+const dir='.run/dialogue-optimization-20261029/positive-only-probe-20261101';if(fs.existsSync(dir))throw Error('Run exists');fs.mkdirSync(dir,{recursive:true});
+const tasks=[];for(const s of scenes)for(let rep=1;rep<=3;rep++)tasks.push({s,rep});const rows=[];
+async function one({s,rep}){const data=compileDialogueTurn(s.input).data;const {text,...turn}=data.turn;const user='本轮核验资料：'+JSON.stringify({ground:data.ground,context:data.suppliedContext,turn})+'\n正在说的话：\n'+text;const started=performance.now();try{
+const r=await fetch('http://127.0.0.1:8766/v1/chat/completions',{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({messages:[{role:'system',content:system},{role:'user',content:user}],max_tokens:640}),signal:AbortSignal.timeout(60000)});if(!r.ok)throw Error('HTTP'+r.status);const b=await r.json();rows.push({scene:s.id,rep,text:b.choices[0].message.content,finishReason:b.choices[0].finish_reason,usage:b.usage,elapsedMs:performance.now()-started});}catch(e){rows.push({scene:s.id,rep,error:e.name+':'+e.message});}fs.writeFileSync(dir+'/results.json',JSON.stringify(rows,null,2));}
+await Promise.all([0,1].map(async()=>{while(tasks.length)await one(tasks.shift());}));fs.writeFileSync(dir+'/prompt.txt',system);console.log(JSON.stringify({rows:rows.length,errors:rows.filter(x=>x.error).length,dir}));

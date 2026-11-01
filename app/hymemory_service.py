@@ -1,7 +1,6 @@
 """Loopback Hy Memory bridge, local embeddings, durable QQ turn outbox."""
 from __future__ import annotations
 
-import gc
 import hmac
 import json
 import logging
@@ -20,10 +19,11 @@ from evidence_queue import EvidenceQueue
 from privacy_ledger import PrivacyLedger, PrivacyBlocked, evidence_ids
 from memory_lifecycle import MemoryLifecycle
 from history_recall import HistoryRecall
-from memory_gateway import MemoryGateway, HyMemoryAdapter, normalize_memories
+from memory_gateway import MemoryGateway, HyMemoryAdapter, normalize_memories, InvalidRetentionPayload
 from hindsight_adapter import HindsightAdapter
 from memory_network import sdk_config
 from qq_identity import validate_request
+from memory_metrics import record as record_metric
 
 load_dotenv(Path(__file__).with_name('.env'))
 HOST = '127.0.0.1'
@@ -33,16 +33,12 @@ DATA = Path(os.environ.get('MEMORY_BRIDGE_DATA_DIR', str(Path(__file__).parent /
 AGENT = 'qqbot-hymemory'
 _client: Any = None
 _client_lock = threading.Lock()
-_hindsight_lifecycle_lock = threading.Lock()
 _write_lock = threading.RLock()
 _embed_lock = threading.RLock()
 _embedding: Any = None
-_embedding_last_used = 0.0
-_embedding_idle_seconds = 300
 _outbox: Any = None
 _evidence: Any = None
 _lifecycle: Any = None
-_hindsight_lifecycle: Any = None
 _privacy_launch_lock=threading.Lock()
 _audit_lock = threading.Lock()
 _stop = threading.Event()
@@ -59,7 +55,7 @@ def get_client():
             if engine.get('primary')=='hindsight':
                 if engine.get('version')!='1.1.0' or engine.get('migration_complete') is not True:
                     raise RuntimeError('Verified Hindsight migration selection required')
-                client=HindsightAdapter(TOKEN, lifecycle=get_hindsight_lifecycle())
+                client=HindsightAdapter(TOKEN)
                 _client=client
                 return _client
             from hy_memory import HyMemoryClient
@@ -91,40 +87,33 @@ def get_embedding():
 
 
 def embed_texts(texts):
-    global _embedding_last_used
     with _embed_lock:
-        vectors = list(get_embedding().embed(texts))
-        _embedding_last_used = time.monotonic()
-        return vectors
+        return list(get_embedding().embed(texts))
 
 
-def release_embedding_if_idle(force=False):
-    global _embedding, _embedding_last_used
-    with _embed_lock:
-        if _embedding is None or (not force and time.monotonic() - _embedding_last_used < _embedding_idle_seconds):
-            return False
-        _embedding = None
-        _embedding_last_used = 0.0
-    gc.collect()
-    return True
-
-
-def memory_queues_idle():
-    try:
-        statuses = (get_outbox().stats(), get_evidence_queue().stats())
-        queues_idle = not any(stats.get(state, 0) for stats in statuses for state in ('pending', 'running'))
-        return queues_idle and not get_lifecycle().ledger.operations(pending=True)
-    except Exception:
-        return False
-
-
-def get_hindsight_lifecycle():
-    global _hindsight_lifecycle
-    with _hindsight_lifecycle_lock:
-        if _hindsight_lifecycle is None:
-            from hindsight_adapter import ManagedHindsightLifecycle
-            _hindsight_lifecycle = ManagedHindsightLifecycle(DATA.resolve().parent, idle_seconds=300)
-        return _hindsight_lifecycle
+def warmup():
+    """Initialize resident resources before the first QQ memory request."""
+    get_embedding()
+    client = get_client()
+    if isinstance(client, HindsightAdapter):
+        project = Path(__file__).resolve().parent
+        subprocess.run(
+            ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+             str(project / 'start-hindsight.ps1')],
+            cwd=str(project), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=30, check=True,
+            creationflags=0x08000000 if os.name == 'nt' else 0,
+        )
+        deadline = time.monotonic() + 120
+        while not _stop.is_set():
+            try:
+                if client.health().get('status') == 'healthy':
+                    return
+            except Exception:
+                pass
+            if time.monotonic() >= deadline:
+                raise RuntimeError('Resident Hindsight startup is not ready')
+            _stop.wait(1)
 
 
 def get_evidence_queue():
@@ -191,13 +180,21 @@ def write_memory(body):
         # what the assistant said, never that the user agreed or an action ran.
         if isinstance(data,str): data=[dict(role='user',content=data)]
         data = [{'role': 'system', 'content': '以下为QQ真实会话证据窗口。user是用户原话；assistant仅是平台接受的助手原话，不代表用户同意、用户事实、工具成功或用户已读。群聊按成员标签分别归属。提炼双方明确偏好、互动和约定时保留说话人和来源；不把助手猜测、玩笑、角色设定、虚构经历当成现实记忆；缺失的上下文不得补写。'}] + data
-    result = get_gateway().retain(
+    started=time.perf_counter();status='error'
+    try:
+        result = get_gateway().retain(
         body['user_id'],data,session_id=str(body.get('session_id') or 'explicit-memory'),
         request_id=body.get('job_id'),
         meta={'message_id':body.get('message_id'),'scope':body.get('scope'),
               'actor_id':body.get('identity',{}).get('senderId'),**({'evidence':evidence} if evidence else {})},
         expected_version=(evidence or {}).get('privacy_version',0),source_ids=evidence_ids(body),
-    )
+        )
+        status='ok'
+    finally:
+        record_metric('retain',elapsedMs=(time.perf_counter()-started)*1000,
+            messageCount=len(data) if isinstance(data,list) else 1,
+            inputCharacters=sum(len(m.get('content','')) for m in data) if isinstance(data,list) else len(str(data)),
+            sourceCount=len(evidence_ids(body)),status=status)
     audit('write', body['user_id'], request_id=result.get('request_id'))
     return result
 
@@ -241,6 +238,7 @@ def evidence_worker():
     queue = get_evidence_queue()
     while not _stop.is_set():
         job = None
+        job_started=time.perf_counter();claimed_at=time.time();job_status='error'
         try:
             if os.environ.get('QQBOT_EVIDENCE_EXTRACT_ENABLED', 'true').lower() in ('false', '0', 'off'):
                 _stop.wait(1)
@@ -270,20 +268,32 @@ def evidence_worker():
                         if queue.is_running(job):
                             write_memory(body)
                             queue.done(job)
+                            job_status='ok'
                 finally:
                     heartbeat_stop.set()
                     heartbeat_thread.join(timeout=2)
         except PrivacyBlocked:
+            job_status='retry'
             if job: queue.retry(job,'PrivacyRevisionChanged')
+        except InvalidRetentionPayload:
+            job_status='blocked'
+            if job: queue.reject(job)
+            print('[memory-evidence] invalid payload held for repair', flush=True)
         except PermissionError:
+            job_status='blocked'
             if job:
                 queue.hold(job)
             print('[memory-evidence] unauthorized source held', flush=True)
         except Exception as error:
+            job_status='retry'
             if job:
                 queue.retry(job, type(error).__name__)
             print(f'[memory-evidence] retry pending ({type(error).__name__})', flush=True)
             _stop.wait(1)
+        finally:
+            if job:record_metric('retention_job',elapsedMs=(time.perf_counter()-job_started)*1000,
+                count=len(job.get('members') or [job]),attempts=job['attempts'],
+                queueWaitMs=max(0,claimed_at-float(job['due']))*1000,status=job_status)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -415,7 +425,7 @@ class Handler(BaseHTTPRequestHandler):
                 result = client.recall(user_id,query,limit=body.get('limit',8))
                 memories = result['memories']
                 audit('search', user_id, memories)
-                self._json(200, {'ok': True, 'memories': memories})
+                self._json(200, {'ok': True, **result})
             elif self.path == '/list':
                 result = client.list(user_id,limit=30)
                 self._json(200, {'ok': True, **result})
@@ -448,31 +458,26 @@ class Handler(BaseHTTPRequestHandler):
             self._json(503, {'ok': False, 'error': f'Hy Memory operation failed: {type(error).__name__}'})
 
 
-def idle_resource_worker():
-    while not _stop.wait(5):
+def startup_warmup_worker():
+    while not _stop.is_set():
         try:
-            if _hindsight_lifecycle is not None:
-                stopped = _hindsight_lifecycle.stop_if_idle(memory_queues_idle)
-                if stopped:
-                    release_embedding_if_idle(force=True)
-            release_embedding_if_idle()
+            warmup()
+            print('[memory-startup] resident resources ready', flush=True)
+            return
         except Exception as error:
-            print(f'[memory-idle] managed resource release pending ({type(error).__name__})', flush=True)
+            print(f'[memory-startup] warmup pending ({type(error).__name__})', flush=True)
+            _stop.wait(5)
 
 
 def main():
     if not TOKEN:
         raise SystemExit('Set MEMORY_BRIDGE_TOKEN in local .env before starting')
     DATA.mkdir(parents=True, exist_ok=True)
-    config_file = DATA / 'memory-engine.json'
-    engine = json.loads(config_file.read_text(encoding='utf-8')) if config_file.exists() else {}
-    if engine.get('primary') == 'hindsight':
-        get_hindsight_lifecycle()
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     get_outbox()
     get_evidence_queue()
     kick_privacy_worker()
-    threading.Thread(target=idle_resource_worker, daemon=True).start()
+    threading.Thread(target=startup_warmup_worker, daemon=True).start()
     threading.Thread(target=worker, daemon=True).start()
     threading.Thread(target=evidence_worker, daemon=True).start()
     print(f'Hy Memory bridge listening on http://{HOST}:{PORT}', flush=True)

@@ -3,14 +3,16 @@
 **在 QQ 中聊天、管理群参与，并保留可追溯的真实记忆。**
 
 [![Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/deployment/windows.md)
-[![Plugin 0.22.6](https://img.shields.io/badge/plugin-0.22.6-6C5CE7)](app/versions.json)
+[![Plugin 0.22.23](https://img.shields.io/badge/plugin-0.22.23-6C5CE7)](app/versions.json)
 [![Hindsight 1.1.0](https://img.shields.io/badge/memory-Hindsight%201.1.0-00897B)](docs/reference/V2_3_HINDSIGHT_MEMORY.md)
 
 [开始部署](docs/deployment/README.md) · [使用指南](docs/usage/README.md) · [开发文档](docs/development/README.md) · [更新记录](CHANGELOG.md)
 
 柚柚是基于 **DeepSeek Harness（DSH）** 的 QQ AI 助手，使用 **DeepSeek** 进行文字对话，使用 **Hindsight** 管理长期记忆。项目同时支持腾讯官方 QQ Bot，以及个人 QQ + NapCat / OneBot 11 两种接入方式。
 
-当前应用版本为 **V3.5.0**，业务插件为 **0.22.6**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
+当前应用版本为 **V3.5.0**，业务插件为 **0.22.23**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
+
+**2026-11-01 源码同步：** 0.22.23 为隔离验证候选包，本机活动版本仍是 0.22.22；回复自然度与完整宿主联调尚未通过验收。新版独立对话引擎默认一次生成，候选风格、额外规划与复核仍需显式开启。见[对话引擎与验证状态](docs/development/dialogue-engine.md)。
 
 ## 可以做什么
 
@@ -22,7 +24,7 @@
 | 日常工具 | 时区、时间计算、私聊课表及可配置的主动消息 |
 | 本机管理 | Windows 控制台、服务启停、生图任务、日志、备份与导出 |
 
-Hindsight 和本地 embedding 在需要时加载，相关工作与队列空闲 **5 分钟**后释放。群聊、私聊和不同账号使用独立的身份分区。
+Hindsight 和本地 embedding 随服务启动预热并常驻，空闲不再自动释放。群聊、私聊和不同账号使用独立的身份分区。
 
 ## 选择 QQ 接入方式
 
@@ -73,7 +75,7 @@ flowchart LR
 |---|---|
 | 安装与接入 | [部署导航](docs/deployment/README.md) · [Windows 安装](docs/deployment/windows.md) |
 | 群聊、记忆和图片 | [群聊管理](docs/usage/groups.md) · [记忆与原文](docs/usage/memory.md) · [生图](docs/usage/images.md) |
-| 配置与运行资源 | [配置说明](docs/deployment/configuration.md) · [按需加载](docs/usage/performance.md) |
+| 配置与运行资源 | [配置说明](docs/deployment/configuration.md) · [资源使用](docs/usage/performance.md) |
 | 升级与恢复 | [已有部署升级](docs/deployment/upgrading.md) · [备份与恢复](docs/deployment/backup-and-recovery.md) |
 | 源码与维护 | [架构](docs/development/architecture.md) · [目录说明](docs/development/repository-layout.md) · [发布流程](docs/development/releasing.md) |
 | 技术契约与历史资料 | [技术参考](docs/reference/README.md) · [历史归档](archive/README.md) |

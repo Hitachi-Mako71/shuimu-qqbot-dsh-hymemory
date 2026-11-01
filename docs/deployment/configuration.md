@@ -24,6 +24,6 @@
 
 `data/transport/onebot.json` 缺失或 `mode: official` 时使用官方 QQBot；`mode: onebot` 时使用 NapCat。OneBot 的 `legacyAppId`、用户与群逻辑 ID 决定旧记忆分区的对应关系，迁移时应逐项核对。
 
-主聊天模型读取本机 `data/model-routing.json`；记忆提炼模型独立读取环境配置。Hindsight 和 embedding 的按需加载见[资源使用](../usage/performance.md)。
+主聊天模型读取本机 `data/model-routing.json`；记忆提炼模型独立读取环境配置。Hindsight 和 embedding 的常驻资源说明见[资源使用](../usage/performance.md)。
 
 群控制者只管理被授权的群，不能因此访问成员私聊记忆。群/私聊分区、原文证据和删除规则见[技术参考](../reference/README.md)。

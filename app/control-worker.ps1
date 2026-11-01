@@ -39,7 +39,7 @@ function Get-ControllerStatus{
     $ready=$false;$readable=$true
     if($pids.qqbot){try{$ready=(Read-SharedLogPrefix (Join-Path $ProjectDir 'logs\qqbot.out.log')).Contains('Bot ready!')}catch{$readable=$false}}
     $qqState=if($ready){'ready'}elseif($unknown.qqbot){'unknown'}elseif($pids.qqbot){'starting'}else{'stopped'}
-    $memoryState=if($health -and $health.sdk_ready -and $health.embedding_ready){'ready'}elseif($health -and $health.ok -and -not $health.sdk_ready){'idle'}elseif($health -or $pids.memory){'starting'}elseif($unknown.memory){'unknown'}else{'stopped'}
+    $memoryState=if($health -and $health.sdk_ready -and $health.embedding_ready){'ready'}elseif($health -or $pids.memory){'starting'}elseif($unknown.memory){'unknown'}else{'stopped'}
     $zone=[TimeZoneInfo]::FindSystemTimeZoneById('China Standard Time')
     return @{qq=$qqState;memory=$memoryState;qqPid=$pids.qqbot;memoryPid=$pids.memory;logReadable=$readable;modelProvider='deepseek-account';restartRequired=(Test-Path (Join-Path $ProjectDir '.run\control-console\restart-required.json'));checkedAt=[TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow,$zone).ToString('HH:mm:ss')}
 }

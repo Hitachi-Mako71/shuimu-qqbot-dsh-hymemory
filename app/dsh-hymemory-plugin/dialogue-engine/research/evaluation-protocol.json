@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "id": "qq-dialogue-research-20261101",
+  "status": "draft_protocol_not_content_approval",
+  "papers": [
+    {
+      "id": "C1",
+      "name": "NaturalConv: A Chinese Dialogue Dataset Towards Multi-turn Topic-driven Conversation",
+      "url": "https://cdn.aaai.org/ojs/17649/17649-13-21143-1-2-20210518.pdf",
+      "use": "full-sequence continuity, natural topic shifts, greetings and chitchat",
+      "limitation": "news-grounded scenario conversation; not private QQ or persona gold data"
+    },
+    {
+      "id": "C2",
+      "name": "Sequential Matching Network / Douban Conversation Corpus",
+      "url": "https://aclanthology.org/P17-1046/",
+      "use": "judge reply against the complete multi-turn context; preserve multi-rater disagreement",
+      "limitation": "retrieval response selection, not free generation or persona evaluation"
+    },
+    {
+      "id": "R1",
+      "url": "https://doi.org/10.1073/pnas.2531748123"
+    },
+    {
+      "id": "R2",
+      "url": "https://aclanthology.org/2025.naacl-long.316/"
+    },
+    {
+      "id": "R3",
+      "url": "https://aclanthology.org/2025.acl-long.1261/"
+    },
+    {
+      "id": "R4",
+      "url": "https://aclanthology.org/2025.sigdial-1.50/"
+    },
+    {
+      "id": "R5",
+      "url": "https://arxiv.org/abs/2506.05309v2"
+    },
+    {
+      "id": "R6",
+      "url": "https://aclanthology.org/2025.findings-emnlp.1098/"
+    }
+  ],
+  "linguistics": [
+    {
+      "id": "L1",
+      "name": "Tannen & Wallat 1987, interactive frames",
+      "primaryUrl": "https://www.deborahtannen.com/scholarly-articles"
+    },
+    {
+      "id": "L2",
+      "name": "Clark & Brennan 1991, grounding and collaborative effort",
+      "primaryUrl": "https://web.stanford.edu/~clark/pubs.html"
+    },
+    {
+      "id": "L3",
+      "name": "Sacks, Schegloff & Jefferson 1974, turn organization",
+      "primaryUrl": "https://doi.org/10.2307/412243"
+    },
+    {
+      "id": "L4",
+      "name": "Tannen 1984/2005, conversational style",
+      "primaryUrl": "https://www.deborahtannen.com/conversational-style"
+    }
+  ],
+  "dimensions": [
+    {
+      "id": "frame",
+      "name": "交流框架",
+      "sourceIds": [
+        "R2",
+        "L1"
+      ],
+      "unit": "同主题分享/玩笑/提问/委托的最小差异场景",
+      "failureExample": "技术吐槽变成报错采集",
+      "evidenceLevel": "paper-inspired engineering operationalization, not a reproduced paper metric"
+    },
+    {
+      "id": "addressee",
+      "name": "对象归属",
+      "sourceIds": [
+        "R5",
+        "L2",
+        "L3"
+      ],
+      "unit": "多人话轮及引用",
+      "failureExample": "把另一位成员的第一人称当自己",
+      "evidenceLevel": "paper-inspired engineering operationalization, not a reproduced paper metric"
+    },
+    {
+      "id": "meaning_facts",
+      "name": "意义与事实",
+      "sourceIds": [
+        "R1",
+        "R6",
+        "L2"
+      ],
+      "unit": "回复与其来源",
+      "failureExample": "数值方向反转、虚构记忆或操作",
+      "evidenceLevel": "paper-inspired engineering operationalization, not a reproduced paper metric"
+    },
+    {
+      "id": "emotion",
+      "name": "情绪适切",
+      "sourceIds": [
+        "R2"
+      ],
+      "unit": "完整情绪转折",
+      "failureExample": "坏消息后仍庆祝或擅自判定心态",
+      "evidenceLevel": "paper-inspired engineering operationalization, not a reproduced paper metric"
+    },
+    {
+      "id": "persona",
+      "name": "人物一致",
+      "sourceIds": [
+        "R2",
+        "R3",
+        "R6"
+      ],
+      "unit": "跨话题多轮",
+      "failureExample": "人设退回客服、以固定积极取代判断",
+      "evidenceLevel": "paper-inspired engineering operationalization, not a reproduced paper metric"
+    },
+    {
+      "id": "natural_expression",
+      "name": "表达自然",
+      "sourceIds": [
+        "R1",
+        "R3"
+      ],
+      "unit": "具体回复",
+      "failureExample": "话语点评、空洞复述及用户拒绝的套话",
+      "evidenceLevel": "paper-inspired engineering operationalization, not a reproduced paper metric"
+    },
+    {
+      "id": "style_coordination",
+      "name": "风格协调",
+      "sourceIds": [
+        "R4",
+        "L4"
+      ],
+      "unit": "同一发言者跨轮",
+      "failureExample": "机械模仿口头禅或错配交流负担",
+      "evidenceLevel": "paper-inspired engineering operationalization, not a reproduced paper metric"
+    },
+    {
+      "id": "turn_progress",
+      "name": "话轮与收尾",
+      "sourceIds": [
+        "R5",
+        "L2",
+        "L3"
+      ],
+      "unit": "群聊事件序列",
+      "failureExample": "抢半句话、无对象插话、告别后续问",
+      "evidenceLevel": "paper-inspired engineering operationalization, not a reproduced paper metric"
+    },
+    {
+      "id": "whole_context_fit",
+      "name": "完整上下文贴合与自然转题",
+      "sourceIds": [
+        "C1",
+        "C2",
+        "L2",
+        "L3"
+      ],
+      "unit": "带发送者、引用归属和至少10轮上下文的完整场景簇",
+      "failureExample": "只匹配最后一句的词面，忽略前文正在进行的分享/玩笑/请求，或把转题当成突兀新话题",
+      "evidenceLevel": "paper-inspired engineering operationalization, not a reproduced paper metric"
+    }
+  ],
+  "annotationScale": [
+    "fail",
+    "borderline",
+    "appropriate",
+    "insufficient_evidence"
+  ],
+  "pairPreferences": [
+    "left",
+    "right",
+    "tie",
+    "both_bad"
+  ],
+  "criticalFailureFlags": [
+    "cross_scope_disclosure",
+    "speaker_conflation",
+    "fabricated_memory",
+    "fabricated_operation",
+    "unsupported_capability_claim",
+    "material_fact_reversal"
+  ],
+  "primaryStatisticalUnit": "scenario_cluster",
+  "repetitionsAreIndependentSamples": false,
+  "holdoutStatus": "No untouched holdout is currently established. Existing scenes have been viewed or used in development; create and freeze a new set after the prompt is frozen before claiming held-out results.",
+  "benchmark": {
+    "path": "natural-conversation-benchmark-v1.json",
+    "status": "development_set_only",
+    "clusters": 35,
+    "contrastItems": 70,
+    "priorContextTurnsPerItem": 10,
+    "sourceMaterialCopied": false
+  },
+  "modelErrorsCountAsContentPass": false,
+  "missingHumanRatingsStatus": "pending",
+  "modelOrAssistantChecksAreHumanEvidence": false,
+  "groundTruth": "Multiple suitable answers may be accepted; examples are not exact-match targets.",
+  "humanRatingProtocol": {
+    "unit": "scenario_cluster",
+    "blindPairedCandidates": true,
+    "minimumIndependentRaters": 3,
+    "allowTieBothBadInsufficientEvidence": true,
+    "retainIndividualLabelsAndDisagreement": true,
+    "reportInterRaterAgreement": true,
+    "userPreferenceReportedSeparately": true,
+    "status": "planned_not_yet_run"
+  },
+  "corpusAccess": {
+    "NaturalConv": "user confirmed personal non-commercial research/development/testing and no redistribution; paper and repository README saved locally; full corpus remains unavailable because the official historical page now serves Yuanbao and the official data hostname did not resolve to a usable endpoint in this environment; no third-party mirror used; any deployment of corpus-trained artifacts requires separate license review",
+    "MultiTurnResponseSelection": "repository README and 60 KB train.sample saved locally for private qualitative inspection; repository has no explicit license, so do not redistribute, train on it, or place examples in prompts; full corpus not downloaded",
+    "rawCorpusInPromptOrPublicRepo": false,
+    "localReferenceDirectory": ".run/research-corpora-20261101/",
+    "doubanSampleSha256": "BE6DBFE4248CCE7E0E29FD84F310F6953BFCAFE730757655102C5D8AB3577029",
+    "doubanSampleRows": 114,
+    "naturalConvFullCorpusLocal": false
+  },
+  "userPreferences": {
+    "questions": "Only genuinely necessary clarification for an already explicit question/task.",
+    "sharing": "Concrete personal reaction to the event, not evaluation of speaker phrasing or psychology.",
+    "length": "Short statements for casual chat, adequate detail for explicit tasks."
+  },
+  "releaseGates": {
+    "criticalSet": "No critical failures observed on a frozen critical set; does not establish zero out-of-set risk.",
+    "humanPreference": "Separate blind paired human comparison, preserve disagreements and uncertainty; no invented scores or automatic approval from lexical checks.",
+    "multiTurn": "Evaluate 10–20-turn episodes and preserve corrections, speaker ownership and topic changes.",
+    "cost": "Report all calls, median and p95 latency, token usage, errors, truncations and cancellation separately."
+  },
+  "nonGoals": [
+    "AI-authorship concealment",
+    "Maximize HUMT",
+    "Claim Chinese sentence length is LIWC LSM",
+    "Claim paper thresholds transfer unchanged"
+  ]
+}

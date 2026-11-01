@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
+import {write} from '../dsh-hymemory-plugin/companion-state.js';
+import {groupSchedule} from '../dsh-hymemory-plugin/conversation-policy.js';
+import {candidateCheck} from '../dsh-hymemory-plugin/turn-strategy.js';
+const root=fs.mkdtempSync(path.join(os.tmpdir(),'qq-frequency-'));process.env.QQBOT_COMPANION_DIR=root;write('conversation-policy.json',{enabled:true});
+test.after(()=>{assert.equal(path.dirname(root),path.resolve(os.tmpdir()));assert.match(path.basename(root),/^qq-frequency-/);fs.rmSync(root,{recursive:true,force:true});});
+const row={enabled:true,frequency:'活跃',conversationPolicy:'adaptive'};
+test('direct answers do not consume ambient participation quota',()=>{const now=Date.now();const r=groupSchedule(row,{messages:[{kind:'human',sender:'a',at:now},...Array.from({length:5},()=>({kind:'bot',participation:'direct',at:now}))]},now);assert.equal(r.allow,true);assert.equal(r.ownMessages,0);});
+test('fragmenting one burst does not manufacture many conversational turns',()=>{const now=Date.now();const r=groupSchedule(row,{messages:[...Array.from({length:20},(_,i)=>({kind:'human',sender:'a',at:now-1000+i})),{kind:'bot',at:now}]},now);assert.equal(r.humanTurns,1);assert.equal(r.allow,false);});
+test('no new human input never creates an invitation',()=>{assert.equal(groupSchedule(row,{messages:[]}).allow,false);});
+test('unanswered proactive content suppresses its topic rather than all new statements',()=>{const now=Date.now(),c={id:'new',target:'m',sender:'a',text:'午饭的面很好吃',topic:['午饭','好吃'],epoch:'e',cancelEpoch:0,visibleMessageIds:[],expiresAt:now+1000,previousDirectReceipt:null};const room={epoch:'e',cancelEpoch:0,messages:[],lastAmbient:{id:'old',at:now,status:'accepted',acknowledged:false,unansweredCount:1,topic:['电脑','更新']}};assert.equal(candidateCheck(c,room,row,{now}).allow,true);assert.equal(candidateCheck({...c,topic:['电脑']},room,row,{now}).reason,'UNANSWERED_PROACTIVE');});
+test('frequency presets keep a monotonic ambient gap and user override wins',()=>{const room={messages:[{kind:'human',sender:'a',at:Date.now()}]};assert.ok(groupSchedule({...row,frequency:'安静'},room).gap>groupSchedule({...row,frequency:'正常'},room).gap);assert.equal(groupSchedule({...row,activity:{enabled:true,adaptiveGapSeconds:7}},room).gap,7000);});

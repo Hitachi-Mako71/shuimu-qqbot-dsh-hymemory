@@ -188,6 +188,39 @@ if 'withQQEvidence' not in outbound:
     outbound = outbound.replace(anchor, '        return withQQEvidence(record.agent, () => {\n        captureQQDraft(record.agent, raw, session.header.id);\n' + anchor, 1)
     outbound = outbound.replace(end, "        }\n        });\n    }\n    /** 流式文本增量", 1)
     outbound_path.write_text(outbound, encoding='utf-8', newline='\n')
+if 'splitQQShortMessages' not in outbound:
+    outbound = "import { splitQQShortMessages } from 'dsh-hymemory-qq/bridge';\n" + outbound
+    old = '''    async send(record, text, tag) {
+        const chunks = chunkMarkdownText(text, this.config.textChunkLimit);
+        for (const chunk of chunks) {
+            try {
+                await this.bot.sendMarkdown(record.replyTarget, chunk);
+            }
+            catch (err) {
+                this.logger.error(`im-qqbot: ${tag} failed: ${err instanceof Error ? err.message : String(err)}`);
+            }
+        }
+    }'''
+    new = '''    async send(record, text, tag) {
+        const messages = tag === 'sendMarkdown' ? splitQQShortMessages(text) : [text];
+        for (let index = 0; index < messages.length; index++) {
+            if (index > 0)
+                await new Promise(resolve => setTimeout(resolve, 900));
+            const chunks = chunkMarkdownText(messages[index], this.config.textChunkLimit);
+            for (const chunk of chunks) {
+                try {
+                    await this.bot.sendMarkdown(record.replyTarget, chunk);
+                }
+                catch (err) {
+                    this.logger.error(`im-qqbot: ${tag} failed: ${err instanceof Error ? err.message : String(err)}`);
+                }
+            }
+        }
+    }'''
+    if outbound.count(old) != 1:
+        raise SystemExit('Official outbound sender differs; no short-message patch written')
+    outbound = outbound.replace(old, new, 1)
+    outbound_path.write_text(outbound, encoding='utf-8', newline='\n')
 if 'retireQQPrivacySession' not in session_source:
     session_source = "import { retireQQPrivacySession, privacySessionId } from 'dsh-hymemory-qq/bridge';\n" + session_source
     anchor = '    async getOrCreate(scope, peerId, senderId, replyTarget) {\n        const key = this.sessionKey(scope, peerId);'

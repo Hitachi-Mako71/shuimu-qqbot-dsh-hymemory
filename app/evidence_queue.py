@@ -2,6 +2,7 @@
 from contextlib import contextmanager
 import hashlib
 import json
+import math
 from pathlib import Path
 import sqlite3
 import time
@@ -65,22 +66,39 @@ class EvidenceQueue:
 
         if event['role'] == 'assistant':
             related = json.loads(event['related_ids_json'])
+            # Complete dependencies remain authoritative for deletion. A locally
+            # generated marker narrows extraction context, never that closure.
+            raw = json.loads(event['raw_json'])
+            marker = raw.get('_qqAgentEvidence') if isinstance(raw, dict) else None
+            direct = None
+            if marker is not None:
+                if (not isinstance(marker, dict) or marker.get('schema') != 1
+                    or not isinstance(marker.get('directSourceIds'), list)
+                    or any(not isinstance(i, str) or i not in related for i in marker['directSourceIds'])):
+                    raise PermissionError('Invalid direct source marker')
+                direct = set(marker['directSourceIds'])
             rows = []
             for source_id in related:
                 row = db.execute('SELECT * FROM evidence_events WHERE id=? AND namespace=? AND role=\'user\'', (source_id, job['namespace'])).fetchone()
                 if not row or row['seq'] <= cutoff:
                     raise PermissionError('Related source was forgotten or unavailable')
                 if row['id'] in blocked: raise PermissionError('Related source deleted')
-                rows.append(row)
+                if direct is None or source_id in direct:
+                    rows.append(row)
             # Bounded, role-labelled immediate context; every original user span
             # also has its own task, so this bound cannot discard unique evidence.
-            remaining, windows = 6000, []
+            # Gateway admits 128 messages including the service's system prefix.
+            # Reserve that prefix and the current assistant span before context.
+            remaining, windows, slots = 6000, [], 126
             for row in sorted(rows, key=lambda r: r['seq'], reverse=True):
+                if not slots:
+                    break
                 length = len(row['text'])
                 count = min(remaining, length)
                 if count:
                     windows.append((row, length-count, length))
                     remaining -= count
+                    slots -= 1
             for row, start, end in reversed(windows):
                 append(row, start, end)
         start, end = job['start_offset'], job['end_offset']
@@ -88,6 +106,35 @@ class EvidenceQueue:
             raise PermissionError('Invalid source range')
         append(event, start, end)
         return dict(user_id=job['namespace'], identity=identity, scope=event['scope'], mode='chat', messages=messages, job_id=job['id'], session_id=event['session_id'] or 'evidence', message_id=event['platform_message_id'], evidence=dict(sources=sources, current_source_id=event['id'], delivery_state=event['state'], kind=event['kind'],privacy_version=privacy['version']))
+
+    def _window(self, db, job, now):
+        event=db.execute('SELECT * FROM evidence_events WHERE id=? AND namespace=?',(job['source_event_id'],job['namespace'])).fetchone()
+        if not event or event['role']!='user' or event['kind']!='inbound' or job['start_offset']!=0 or job['end_offset']!=len(event['text']):return None
+        raw=json.loads(event['raw_json']);marker=raw.get('_qqAgentEvidence',{}) if isinstance(raw,dict) else {}
+        window=marker.get('retainWindow') if marker.get('schema')==1 else None
+        if not window:return None
+        if (not isinstance(window,dict) or not isinstance(window.get('id'),str) or len(window['id'])!=36
+            or not isinstance(window.get('closesAt'),(int,float)) or not math.isfinite(window['closesAt'])
+            or type(window.get('maxItems')) is not int or not 2<=window['maxItems']<=8):
+            raise PermissionError('Invalid retention window')
+        if now<window['closesAt']+2:return {'wait':window['closesAt']+2}
+        rows=db.execute('''SELECT j.* FROM evidence_jobs j JOIN evidence_events e ON e.id=j.source_event_id
+            WHERE j.namespace=? AND e.actor_id=? AND e.role='user' AND e.kind='inbound' AND e.eligible=1
+            AND e.state='received' AND j.start_offset=0 AND j.end_offset=length(e.text)
+            AND j.status IN ('pending','running','done') AND json_valid(e.raw_json)
+            AND json_extract(e.raw_json,'$._qqAgentEvidence.retainWindow.id')=? ORDER BY e.seq''',
+            (job['namespace'],event['actor_id'],window['id'])).fetchall()
+        if not rows or len(rows)>window['maxItems']:raise PermissionError('Invalid retention window members')
+        wait=max((r['lease_until'] if r['status']=='running' and (r['lease_until'] or 0)>now else r['due'] if r['status']=='pending' else 0 for r in rows),default=0)
+        if wait>now:return {'wait':wait}
+        payloads=[self._payload(db,r) for r in rows]
+        version=payloads[0]['evidence']['privacy_version']
+        if any(p['identity']!=payloads[0]['identity'] or p['evidence']['privacy_version']!=version for p in payloads):return None
+        body=dict(payloads[0]);sources=[s for p in payloads for s in p['evidence']['sources']]
+        body['messages']=[m for p in payloads for m in p['messages']]
+        body['job_id']=hashlib.sha256(json.dumps(['retain-window-v1',job['namespace'],version,window['id'],[r['id'] for r in rows]],separators=(',',':')).encode()).hexdigest()
+        body['evidence']={**payloads[0]['evidence'],'sources':sources,'window_id':window['id']}
+        return {'payload':body,'rows':[dict(r) for r in rows if r['status']!='done']}
 
     def claim(self, now=None):
         now = time.time() if now is None else now
@@ -102,41 +149,68 @@ class EvidenceQueue:
                 job = dict(row)
                 try:
                     job['payload'] = self._payload(db, job)
+                    window=self._window(db,job,now)
                 except (PermissionError, ValueError, TypeError):
                     db.execute("UPDATE evidence_jobs SET status='blocked',error='InvalidSource',lease_token=NULL,lease_until=NULL WHERE id=?", (job['id'],))
                     continue
+                if window and 'wait' in window:
+                    # An expired running member must leave the claim predicate;
+                    # otherwise another still-leased member causes a busy loop.
+                    db.execute("UPDATE evidence_jobs SET status='pending',due=?,lease_token=NULL,lease_until=NULL WHERE id=?",(window['wait'],job['id']))
+                    continue
+                if window:
+                    members=[]
+                    for member in window['rows']:
+                        member['lease_token']=uuid.uuid4().hex;member['attempts']+=1
+                        db.execute("UPDATE evidence_jobs SET status='running',attempts=?,lease_token=?,lease_until=?,updated_at=? WHERE id=?",
+                            (member['attempts'],member['lease_token'],now+600,str(now),member['id']))
+                        members.append(member)
+                    leader=next((m for m in members if m['id']==job['id']),None)
+                    if leader is None:raise RuntimeError('Retention window leader changed')
+                    job.update(leader);job['payload']=window['payload'];job['members']=members
+                    return job
                 job['lease_token'] = uuid.uuid4().hex
                 job['attempts'] += 1
                 db.execute("UPDATE evidence_jobs SET status='running',attempts=?,lease_token=?,lease_until=?,updated_at=? WHERE id=?", (job['attempts'], job['lease_token'], now+600, str(now), job['id']))
                 return job
 
     def is_running(self, job):
+        members=job.get('members') or [job]
+        valid=True
         with self.connection() as db:
-            row = db.execute("SELECT * FROM evidence_jobs WHERE id=? AND lease_token=? AND status='running'", (job['id'], job['lease_token'])).fetchone()
-            if not row:
-                return False
-            try:
-                self._payload(db, row)
-                return True
-            except PermissionError:
-                return False
+            for member in members:
+                row = db.execute("SELECT * FROM evidence_jobs WHERE id=? AND lease_token=? AND status='running'", (member['id'], member['lease_token'])).fetchone()
+                if not row:valid=False;break
+                try:self._payload(db,row)
+                except (PermissionError,ValueError,TypeError):valid=False;break
+        if not valid and len(members)>1:self._finish(job,'pending','BatchMembershipChanged',time.time()+1)
+        return valid
 
     def _finish(self, job, status, error=None, due=None):
         with self.connection(transaction=True) as db:
-            return db.execute("UPDATE evidence_jobs SET status=?,error=?,due=COALESCE(?,due),lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=? AND lease_token=? AND status='running'", (status, error, due, str(time.time()), job['id'], job['lease_token'])).rowcount == 1
+            members=job.get('members') or [job]
+            changed=sum(db.execute("UPDATE evidence_jobs SET status=?,error=?,due=COALESCE(?,due),lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=? AND lease_token=? AND status='running'", (status,error,due,str(time.time()),m['id'],m['lease_token'])).rowcount for m in members)
+            return changed==len(members)
 
     def done(self, job):
         return self._finish(job, 'done')
 
     def renew(self, job):
         with self.connection(transaction=True) as db:
-            return db.execute("UPDATE evidence_jobs SET lease_until=? WHERE id=? AND lease_token=? AND status='running'", (time.time()+600, job['id'], job['lease_token'])).rowcount == 1
+            members=job.get('members') or [job]
+            if any(not db.execute("SELECT 1 FROM evidence_jobs WHERE id=? AND lease_token=? AND status='running'",(m['id'],m['lease_token'])).fetchone() for m in members):return False
+            for m in members:db.execute("UPDATE evidence_jobs SET lease_until=? WHERE id=? AND lease_token=? AND status='running'", (time.time()+600,m['id'],m['lease_token']))
+            return True
 
     def retry(self, job, error):
         return self._finish(job, 'pending', error, time.time()+min(300, 2**min(job['attempts'], 8)))
 
     def hold(self, job):
         return self._finish(job, 'blocked', 'PermissionRejected')
+
+    def reject(self, job, error='InvalidPayload'):
+        """Deterministic local validation failures require repair, not retries."""
+        return self._finish(job, 'blocked', error)
 
     def cancel_user(self, namespace):
         with self.connection(transaction=True) as db:

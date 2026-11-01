@@ -1,6 +1,8 @@
 import { createServer } from 'node:http';
 import { createHash, timingSafeEqual, randomUUID } from 'node:crypto';
 import { memoryModelRoute } from './model-route.js';
+import {toOpenAIUsage,recordMetric} from './metrics.js';
+export {toOpenAIUsage} from './metrics.js';
 
 export async function startModelProxy(ctx) {
   const { BlockAssembler, createUserMessage, createAssistantMessage, createSystemMessage, createToolResultMessage } = await import('@deepseek-ai/dsh-llm');
@@ -25,6 +27,8 @@ export async function startModelProxy(ctx) {
         if (Buffer.byteLength(raw) > 2_000_000) throw new Error('Request too large');
       }
       const body = JSON.parse(raw);
+      const reasoningEffort=body.reasoning_effort??'off';
+      if(!['off','low','high','max'].includes(reasoningEffort))return send(400,{error:{message:'Unsupported reasoning effort'}});
       const messages = (body.messages || []).map((m) => {
         const content = [{ type: 'text', text: typeof m.content === 'string' ? m.content : JSON.stringify(m.content ?? '') }];
         if (m.role === 'system' || m.role === 'developer') return createSystemMessage(content[0].text);
@@ -38,22 +42,31 @@ export async function startModelProxy(ctx) {
       const tools = body.tools?.map((t) => ({ name: t.function.name, description: t.function.description || '', parameters: t.function.parameters || { type: 'object', properties: {} } }));
       const assembler = new BlockAssembler();
       let usage = {};
-      for await (const chunk of ctx.get('llm').stream({ provider, model, messages, ...(tools?.length ? { tools } : {}), reasoningEffort: 'off', maxTokens: Math.min(body.max_tokens || 2500, 8192), signal: AbortSignal.timeout(120000) })) {
+      const started=performance.now();let status='error';
+      try {
+      for await (const chunk of ctx.get('llm').stream({ provider, model, messages, ...(tools?.length ? { tools } : {}), reasoningEffort, maxTokens: Math.min(body.max_tokens || 2500, 8192), signal: AbortSignal.timeout(120000) })) {
         assembler.push(chunk);
         if (chunk.type === 'usage') usage = chunk.usage || chunk;
       }
-      if (['error', 'aborted'].includes(assembler.finish.kind)) throw new Error(`Harness LLM ${assembler.finish.failure?.code || assembler.finish.kind}`);
+      if (['error', 'aborted'].includes(assembler.finish.kind)) {
+        const error=new Error('Harness LLM request failed');
+        error.code=assembler.finish.failure?.code||assembler.finish.kind.toUpperCase();
+        throw error;
+      }
+      status='ok';
+      }finally{recordMetric('memory_llm',{elapsedMs:performance.now()-started,...usage,status});}
       const blocks = assembler.blocks();
       const content = blocks.filter((b) => b.type === 'text').map((b) => b.text).join('');
       const calls = blocks.filter((b) => b.type === 'tool-call').map((b) => ({ id: b.id, type: 'function', function: { name: b.name, arguments: b.arguments } }));
       send(200, {
         id: `chatcmpl-${randomUUID()}`, object: 'chat.completion', created: Math.floor(Date.now() / 1000), model,
-        choices: [{ index: 0, message: { role: 'assistant', content, ...(calls.length ? { tool_calls: calls } : {}) }, finish_reason: calls.length ? 'tool_calls' : 'stop' }],
-        usage: { prompt_tokens: usage.input || 0, completion_tokens: usage.output || 0, total_tokens: (usage.input || 0) + (usage.output || 0) },
+        choices: [{ index: 0, message: { role: 'assistant', content, ...(calls.length ? { tool_calls: calls } : {}) }, finish_reason: calls.length ? 'tool_calls' : assembler.finish.kind==='max-tokens'?'length':'stop' }],
+        usage: toOpenAIUsage(usage),
       });
     } catch (error) {
-      console.warn(`[qq-hymemory-model] request failed (${error?.name || 'Error'})`);
-      send(503, { error: { message: 'Harness memory model unavailable', type: 'provider_unavailable' } });
+      const code=/^[A-Z][A-Z0-9_-]{0,79}$/.test(String(error?.code||''))?error.code:'PROVIDER_UNAVAILABLE';
+      console.warn(`[qq-hymemory-model] request failed (${code})`);
+      send(503, { error: { message: 'Harness memory model unavailable', type: 'provider_unavailable',code } });
     }
   });
   await ctx.effect(async () => {

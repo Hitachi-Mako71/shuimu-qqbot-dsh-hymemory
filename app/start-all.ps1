@@ -15,12 +15,12 @@ foreach($name in @('memory','qqbot')){
     $process=Start-Process powershell.exe -ArgumentList $args -WorkingDirectory $project -WindowStyle Hidden -RedirectStandardOutput (Join-Path $logs ($name+'.out.log')) -RedirectStandardError (Join-Path $logs ($name+'.err.log')) -PassThru
     $services[$name]=@{pid=$process.Id;script=$script}
     if($name -eq 'memory'){
-        $deadline=[DateTime]::UtcNow.AddSeconds(30)
+        $deadline=[DateTime]::UtcNow.AddSeconds(120)
         $ready=$false
         do{
             try{
                 $health=Invoke-RestMethod 'http://127.0.0.1:8765/health' -TimeoutSec 1
-                $ready=$health.ok -eq $true
+                $ready=$health.ok -eq $true -and $health.sdk_ready -eq $true -and $health.embedding_ready -eq $true
             }catch{}
             if(-not $ready){Start-Sleep -Milliseconds 500}
         }while(-not $ready -and [DateTime]::UtcNow -lt $deadline)
@@ -28,4 +28,4 @@ foreach($name in @('memory','qqbot')){
     }
 }
 $services|ConvertTo-Json|Set-Content -LiteralPath $file -Encoding UTF8
-Write-Host 'Started QQ/DSH and Hy Memory in hidden background processes. Logs are in the local logs directory.'
+Write-Host 'Started QQ/DSH and resident memory services in hidden background processes. Logs are in the local logs directory.'

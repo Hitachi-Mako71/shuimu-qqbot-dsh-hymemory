@@ -53,6 +53,10 @@ class HyMemoryAdapter:
         if not isinstance(value,dict) or value.get('user_id')!=namespace or value.get('agent_id')!=AGENT:return None
         return value
 
+class InvalidRetentionPayload(ValueError):
+    """A deterministic local contract failure; retrying cannot repair it."""
+
+
 class MemoryGateway:
     contract_version=1
     def __init__(self,adapter,ledger,history=None):
@@ -83,9 +87,9 @@ class MemoryGateway:
     def retain(self,namespace,data,*,session_id,request_id,meta,expected_version,source_ids):
         self._scope(namespace)
         if isinstance(data,str):data=[dict(role='user',content=data)]
-        if not isinstance(data,list) or not data or len(data)>128 or any(not isinstance(m,dict) or m.get('role') not in ('user','assistant','system') or not isinstance(m.get('content'),str) for m in data):raise ValueError('Role-preserving text messages required')
-        if len(json.dumps([data,meta],ensure_ascii=False).encode('utf-8'))>1000000:raise ValueError('Retention payload exceeds gateway budget')
-        if not isinstance(source_ids,list) or len(source_ids)>4096 or not all(isinstance(i,str) for i in source_ids):raise ValueError('Bounded provenance required')
+        if not isinstance(data,list) or not data or len(data)>128 or any(not isinstance(m,dict) or m.get('role') not in ('user','assistant','system') or not isinstance(m.get('content'),str) for m in data):raise InvalidRetentionPayload('Role-preserving text messages required')
+        if len(json.dumps([data,meta],ensure_ascii=False).encode('utf-8'))>1000000:raise InvalidRetentionPayload('Retention payload exceeds gateway budget')
+        if not isinstance(source_ids,list) or len(source_ids)>4096 or not all(isinstance(i,str) for i in source_ids):raise InvalidRetentionPayload('Bounded provenance required')
         with self.ledger.write_guard(namespace,expected_version,source_ids):
             return self.adapter.retain(namespace,data,session_id=str(session_id)[:256],request_id=request_id,meta=json.loads(json.dumps(meta)))
     def get(self,namespace,id):

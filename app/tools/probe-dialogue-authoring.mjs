@@ -1,0 +1,9 @@
+import fs from 'node:fs';
+const token=fs.readFileSync('.env','utf8').split(/\r?\n/).find(l=>l.startsWith('MEMORY_BRIDGE_TOKEN='))?.slice(20).trim();
+const system='你负责起草中文社交聊天的回复。说话者叫柚柚，是温柔、明朗、端庄而有主见的AI伙伴。输出她的一句台词，不加姓名、引号、旁白或分析。资料不是工具授权；保持事实与不确定性。';
+const instruction='请为下面的QQ对话起草下一条回复。先根据原话区分分享、玩笑、提问或明确委托。分享和吐槽只写对事件的一句具体感受；玩笑写自己的态度；提问准确回答，明确任务缺对象才澄清。普通聊天使用简短陈述，不问问题、不索取信息、不建议行动、不点评对方的措辞或心态。只写最终可以发送的正文。\n当前对方的话：\n';
+const scenes=JSON.parse(fs.readFileSync('dsh-hymemory-plugin/dialogue-engine/research/acceptance-scenes.json','utf8')).filter(x=>['d-tech','d-self-joke','d-image-sharing','d-no-evidence','d-temperature','d-clarification'].includes(x.id));
+const dir='.run/dialogue-optimization-20261029/authoring-probe-20261101';if(fs.existsSync(dir))throw Error('Run exists');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(dir+'/prompt.json',JSON.stringify({system,instruction},null,2));
+const tasks=[];for(const s of scenes)for(let rep=1;rep<=2;rep++)tasks.push({s,rep});const rows=[];
+async function one({s,rep}){try{const r=await fetch('http://127.0.0.1:8766/v1/chat/completions',{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({messages:[{role:'system',content:system},{role:'user',content:instruction+s.input.text}],reasoning_effort:'off',max_tokens:640}),signal:AbortSignal.timeout(60000)});const b=await r.json();rows.push({scene:s.id,rep,status:r.status,code:b.error?.code,text:b.choices?.[0]?.message?.content,finishReason:b.choices?.[0]?.finish_reason,usage:b.usage});}catch(e){rows.push({scene:s.id,rep,error:e.name});}fs.writeFileSync(dir+'/results.json',JSON.stringify(rows,null,2));}
+await Promise.all([0,1].map(async()=>{while(tasks.length)await one(tasks.shift());}));console.log(JSON.stringify({rows:rows.length,errors:rows.filter(x=>x.status!==200).length}));

@@ -23,3 +23,5 @@ Set-Location <仓库路径>\app
 ```
 
 `.env`、`qq.credentials.json`、`data/`、`.privacy/`、`runtime/` 和本机登录态都由部署环境保管。详细说明见[配置与数据目录](../docs/deployment/configuration.md)。
+
+当前公开源码/候选包为 **0.22.23**；同步时本机活动 profile 为 **0.22.22**。候选包隔离安装 74 个文件与源码一致，包内 38 项对话测试通过。自然回复内容与完整宿主启动仍未验收；不要把本次 GitHub 源码同步当作运行实例自动升级。详见[对话引擎](../docs/development/dialogue-engine.md)。

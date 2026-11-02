@@ -12,6 +12,10 @@ export function groupContextMode() {
   const mode = conversationPolicy().groupContext?.mode;
   return mode === 'structured' ? 'structured' : 'legacy';
 }
+export function participationMode() {
+  const mode = conversationPolicy().participation?.mode;
+  return ['shadow', 'mock', 'pilot'].includes(mode) ? mode : 'off';
+}
 export const adaptiveGroup=row=>conversationPolicy().enabled===true && row?.conversationPolicy==='adaptive';
 export function dialogueContext(identity, turn = {}) {
   return conversationPolicy().enabled ? nativeDialoguePrompt(identity, turn) : {context:'',policy:null};

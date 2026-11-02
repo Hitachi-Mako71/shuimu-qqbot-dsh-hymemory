@@ -311,11 +311,11 @@ async function consider(key) {
         if (!active || !current?.enabled || Date.now() < (current.snoozeUntil || 0)
             || Date.now() - (current.lastReplyAt || 0) < replyGap
             || Date.now() > candidate.expiresAt) return;
-        const checked=candidateCheck(candidate,loadRoom(key),current,{body:draft.text});
-        if(!checked.allow){recordDecision(key,checked.reason);return;}
-        const parts=splitQQShortMessages(draft.text.trim()).map(part=>sanitize(part,300)).filter(Boolean);
+        const parts=splitQQShortMessages(draft.text.trim()).map(part=>sanitize(stripFinalChineseFullStop(part),300)).filter(Boolean);
         if(!parts.length||parts.length>3)throw Error('InvalidGroupParts');
         const content = parts.join('\n');
+        const checked=candidateCheck(candidate,loadRoom(key),current,{body:content});
+        if(!checked.allow){recordDecision(key,checked.reason);return;}
         if (!deliveryAllowed({ identity: event.identity, target: event.target, purpose: 'group' })) return;
         const reserved=reserveCandidate(candidate,()=>({room:loadRoom(key),row:registry().rooms[key]}),r=>write(roomPath(key),r),content);
         if(!reserved.allow){recordDecision(key,reserved.reason);return;}

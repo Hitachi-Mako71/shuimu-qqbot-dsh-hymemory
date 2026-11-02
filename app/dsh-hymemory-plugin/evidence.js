@@ -16,6 +16,7 @@ import {QQ_TURN_BUDGET} from './turn-budget.js';
 import {retentionMetadata} from './retention-policy.js';
 import {withQQInboundSignal,qqInboundSignal} from './turn-context.js';
 import {recordMetric} from './metrics.js';
+import {stripFinalChineseFullStop} from './voice.js';
 
 const trace = new AsyncLocalStorage();
 const EVIDENCE = Symbol.for('qqbot.evidence');
@@ -272,6 +273,29 @@ async function dispatch(context, target, text, payload, kind, send) {
   return receipt;
 }
 
+function normalizeAssistantSendArgs(method, args, context) {
+  if (!['agent', 'group'].includes(context?.kind)) return args;
+  const next = [...args];
+  if (method === 'send' || method === 'sendMedia') {
+    const source = next[0];
+    if (!source || typeof source !== 'object') return next;
+    const payload = { ...source };
+    let changed = false;
+    if (typeof payload.content === 'string') {
+      payload.content = stripFinalChineseFullStop(payload.content);
+      changed = true;
+    }
+    if (typeof payload.markdown?.content === 'string') {
+      payload.markdown = { ...payload.markdown, content: stripFinalChineseFullStop(payload.markdown.content) };
+      changed = true;
+    }
+    if (changed) next[0] = payload;
+  } else if (typeof next[1] === 'string') {
+    next[1] = stripFinalChineseFullStop(next[1]);
+  }
+  return next;
+}
+
 export function instrumentQQEvidence(bot, appId) {
   if (instrumented.has(bot)) return;
   instrumented.add(bot);
@@ -281,7 +305,8 @@ export function instrumentQQEvidence(bot, appId) {
     bot[method] = (...args) => {
       const active = trace.getStore();
       if (active?.sending) return original(...args);
-      const options = method === 'send' || method === 'sendMedia' ? args[0] : { target: args[0], content: args[1], ...(args[2] || {}) };
+      const sendArgs = normalizeAssistantSendArgs(method, args, active);
+      const options = method === 'send' || method === 'sendMedia' ? sendArgs[0] : { target: sendArgs[0], content: sendArgs[1], ...(sendArgs[2] || {}) };
       const context = currentContext(appId, options.target);
       const payload = { ...options };
       if (payload.buffer) { payload.buffer = { bytes: payload.buffer.length, sha256: createHash('sha256').update(payload.buffer).digest('hex') }; }
@@ -289,7 +314,7 @@ export function instrumentQQEvidence(bot, appId) {
       validateGroupMentionText(context?.identity||groupReplyContext(null,appId,options.target)?.identity,text);
       const queuedAt=performance.now();
       return limitGroupSend(groupReplyContext(context,appId,options.target),()=>{recordMetric('send_queue',{elapsedMs:performance.now()-queuedAt,status:'ok'});return dispatch(context, options.target, text, payload, method === 'sendMedia' ? 'media' : 'markdown',
-        () => trace.run({ ...(context || active), sending: true }, () => original(...args)));},()=>{assertPrivacyContext(context);context?.deliveryCheck?.();active?.abortSignal?.throwIfAborted();active?.turnBudget?.assertDelivery();});
+        () => trace.run({ ...(context || active), sending: true }, () => original(...sendArgs)));},()=>{assertPrivacyContext(context);context?.deliveryCheck?.();active?.abortSignal?.throwIfAborted();active?.turnBudget?.assertDelivery();});
     };
   }
   if (typeof bot.openStream !== 'function') return;
@@ -306,7 +331,11 @@ export function instrumentQQEvidence(bot, appId) {
       complete: async () => {
         if (finished) return session.complete();
         finished = true;
-        return limitGroupSend(groupReplyContext(context,appId,options.target),()=>dispatch(context, options.target, text, { streamId, target: options.target, text }, 'stream', () => trace.run({...context,sending:true},()=>session.complete())),()=>{assertPrivacyContext(context);context?.deliveryCheck?.();});
+        const finalText = ['agent', 'group'].includes(context?.kind) ? stripFinalChineseFullStop(text) : text;
+        return limitGroupSend(groupReplyContext(context,appId,options.target),()=>dispatch(context, options.target, finalText, { streamId, target: options.target, text: finalText }, 'stream', () => trace.run({...context,sending:true},async()=>{
+          if (finalText !== text && typeof session.update === 'function') await session.update(finalText);
+          return session.complete();
+        })),()=>{assertPrivacyContext(context);context?.deliveryCheck?.();});
       },
       cancel: () => { finished = true; return session.cancel?.(); },
     };

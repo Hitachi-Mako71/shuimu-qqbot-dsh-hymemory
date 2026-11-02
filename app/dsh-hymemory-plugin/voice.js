@@ -4,6 +4,9 @@ export { DEFAULT_STYLE as VOICE_STYLE } from './dialogue-engine/style-persona.js
 // This standalone marker is an internal delivery boundary. It is stripped
 // before sending and recognized only outside fenced code blocks.
 export const SHORT_MESSAGE_MARKER = '<qqbot:next-message/>';
+export function stripFinalChineseFullStop(text) {
+  return typeof text === 'string' ? text.replace(/。(?=\s*$)/u, '') : text;
+}
 export function splitQQShortMessages(text) {
   if (typeof text !== 'string' || !text.includes(SHORT_MESSAGE_MARKER)) return [text];
   const parts = [];

@@ -4,7 +4,7 @@
 - 新增 `participation-model.js`，默认 mock 固定返回 SILENT，不加载训练 schema，不调用 DeepSeek，不提供文本或发送权限。
 - 决策标签、reasonCode、confidence 和 modelVersion 均严格校验；输入上限 32,768 字符，默认超时 600ms、上限 10 秒。
 - 超时、取消、拒绝、非法 JSON、NaN、未知标签、额外字段和过长输入都 fail closed 为 SILENT。
-- 合成测试：`node --test app/tests/participation-model.test.mjs`，7/7 通过。
+- 合成场景核验：`node --test app/tests/participation-model.test.mjs`，7 项全部通过；这不代表真实 QQ 测试。
 - 本 PR 不连接 `consider()`，不改变机器人参与策略；未进行训练、模型下载或真实 QQ 内容验收。
 
 ## 执行记录

@@ -24,4 +24,4 @@ Set-Location <仓库路径>\app
 
 `.env`、`qq.credentials.json`、`data/`、`.privacy/`、`runtime/` 和本机登录态都由部署环境保管。详细说明见[配置与数据目录](../docs/deployment/configuration.md)。
 
-当前公开源码、候选包和本机活动 profile 均为 **0.22.28**。PR06 参与决策路由已部署，默认 off；未启用 A 发言决策，真实 QQ 内容验收未完成。详见[维护交接](../docs/development/handoff.md)。
+当前公开源码、候选包和本机活动 profile 均为 **0.22.28**。PR06 参与决策路由已部署，默认 off；真实 QQ 收发已在两个已启用群核对，回复内容质量尚未验收。详见[维护交接](../docs/development/handoff.md)。

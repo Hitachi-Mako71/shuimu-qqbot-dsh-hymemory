@@ -1,3 +1,17 @@
+## 0.22.27 — 2026-11-02
+
+- 修复参与决策 API 的取消注册竞态；超时参数上限为 10 秒。其余行为仍是隔离 mock，不接入线上发言。
+
+## 0.22.26 — 2026-11-02
+
+- 新增隔离的 A0 群参与决策 API：确定性 mock、严格结果白名单、输入长度上限，以及超时/取消/异常安全降级。此版本不接入线上发言流程，不生成消息、不发送消息，也不调用模型。
+
+## 0.22.25 — 2026-11-02
+
+- Structured group context now accepts quote text and author only when OneBot verified the referenced message belongs to the same group and the proof matches the current reference ID.
+- Unverified quotes remain unattributed; incomplete history and unresolved references are surfaced in coverage gaps.
+- This is a source candidate; local profile 0.22.24 remains installed. No 0.6B model or real QQ content evaluation was used.
+
 # 2026-11-01 / 当前源码同步与对话引擎候选 0.22.23
 
 - 同步当前 QQ 业务源码、记忆常驻实现、测试和维护工具，保留官方 QQ Bot 与 NapCat/OneBot 两种接入及原有仓库层次。

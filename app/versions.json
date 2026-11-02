@@ -4,7 +4,7 @@
   "node": "v24.11.1",
   "dsh": "0.2.1-rc.2",
   "qq_plugin": "0.5.2",
-  "cordis_plugin": "0.22.23",
+  "cordis_plugin": "0.22.27",
   "hy-memory": "2.0.4",
   "fastembed": "0.9.0",
   "chromadb": "1.5.9",
@@ -27,7 +27,7 @@
   "flashrank": "0.2.10",
   "memory_engine": "hindsight",
   "clock_contract": 1,
-  "release_state": "source_snapshot_candidate_content_unaccepted",
+  "release_state": "local_participation_api_deployed_content_unaccepted",
   "timetable_contract": 1,
   "proactive_contract": 1,
   "group_active_contract": 1,
@@ -55,5 +55,5 @@
   "persona_voice_contract": 2,
   "yuzu_chat_skill_contract": 6,
   "dialogue_engine": "0.2.0",
-  "local_running_plugin_at_snapshot": "0.22.22"
+  "local_running_plugin_at_snapshot": "0.22.27"
 }

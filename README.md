@@ -3,16 +3,16 @@
 **在 QQ 中聊天、管理群参与，并保留可追溯的真实记忆。**
 
 [![Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/deployment/windows.md)
-[![Plugin 0.22.23](https://img.shields.io/badge/plugin-0.22.23-6C5CE7)](app/versions.json)
+[![Plugin 0.22.27](https://img.shields.io/badge/plugin-0.22.27-6C5CE7)](app/versions.json)
 [![Hindsight 1.1.0](https://img.shields.io/badge/memory-Hindsight%201.1.0-00897B)](docs/reference/V2_3_HINDSIGHT_MEMORY.md)
 
 [开始部署](docs/deployment/README.md) · [使用指南](docs/usage/README.md) · [开发文档](docs/development/README.md) · [更新记录](CHANGELOG.md)
 
 柚柚是基于 **DeepSeek Harness（DSH）** 的 QQ AI 助手，使用 **DeepSeek** 进行文字对话，使用 **Hindsight** 管理长期记忆。项目同时支持腾讯官方 QQ Bot，以及个人 QQ + NapCat / OneBot 11 两种接入方式。
 
-当前应用版本为 **V3.5.0**，业务插件为 **0.22.23**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
+当前应用版本为 **V3.5.0**，源码及本机 profile 插件均为 **0.22.27**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
 
-**2026-11-01 源码同步：** 0.22.23 为隔离验证候选包，本机活动版本仍是 0.22.22；回复自然度与完整宿主联调尚未通过验收。新版独立对话引擎默认一次生成，候选风格、额外规划与复核仍需显式开启。见[对话引擎与验证状态](docs/development/dialogue-engine.md)。
+**2026-11-02 本地部署：** 插件 0.22.27 已部署隔离的参与决策 API（默认 mock 安静，不接入发言链路），结构化群聊上下文及引用归属校验保留；OneBot 已连接、记忆服务健康。真实群聊内容验收尚未完成。
 
 ## 可以做什么
 

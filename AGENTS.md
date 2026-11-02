@@ -22,4 +22,4 @@ Read `README.md`, `docs/deployment/windows.md`, `docs/deployment/configuration.m
 - Source checkout and deployed runtime are separate. See docs/development/engineering.md.
 - Research notes and standalone pilots live under research/; keep app/ operational paths intact.
 - Run node scripts/check-repository.mjs before publishing structural changes; it performs no model or QQ calls.
-- Respect the user pause on dialogue optimization. Directory maintenance is not permission to resume inference, training or evaluation.
+- The owner has authorized isolated source development, synthetic application tests, and local deployment of structured group context 0.22.24 (2026-11-02). Manual QQ acceptance messages and model/content evaluation were not part of this deployment; private data collection, model training, and broader rollout remain separately gated.

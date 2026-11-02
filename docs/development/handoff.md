@@ -1,6 +1,6 @@
 # 当前维护交接
 
-当前应用为 V3.5.0 / 公开源码/候选插件 0.22.23（同步时本机活动版本仍为 0.22.22）。运行源码、安装脚本、依赖锁和当前插件包统一位于 `app/`，固定组件见 [`versions.json`](../../app/versions.json)。
+当前应用为 V3.5.0；源码与本机活动 profile 均为插件 0.22.27。PR04 引用校验及 PR05 隔离参与决策 API 已部署，安装目录 77 个文件与源码逐项 SHA256 一致，OneBot 当前 ready，记忆服务 `ok/sdk_ready/embedding_ready=true`。PR05 默认 mock 固定安静，不接入线上发言流程；本次没有发送 QQ 测试消息或调用真实模型作内容验收。部署记录见`D:/DeepSeekHarnessData/qqbot-hymemory/.run/deployment-evidence-0.22.27-20261102.json`，PR05 实现见[本地参与决策 API](handoffs/PR05-participation-api-20261102.md)，此前 PR04 记录见[PR04 引用校验](handoffs/PR04-quote-coverage-20261102.md)。
 
 QQ 收发保留腾讯官方 Bot 与个人 QQ + NapCat/OneBot 11 两条路径；选择方式见[部署导航](../deployment/README.md)。两者共用身份与记忆契约，不自动合并不同账号或群的记忆。
 

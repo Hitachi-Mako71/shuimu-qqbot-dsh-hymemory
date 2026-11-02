@@ -8,6 +8,10 @@ export {projectMemoryView} from './memory-view.js';
 
 // Policy contains configuration only. Recalled text is never persisted here.
 export const conversationPolicy=()=>read('conversation-policy.json',{enabled:false});
+export function groupContextMode() {
+  const mode = conversationPolicy().groupContext?.mode;
+  return mode === 'structured' ? 'structured' : 'legacy';
+}
 export const adaptiveGroup=row=>conversationPolicy().enabled===true && row?.conversationPolicy==='adaptive';
 export function dialogueContext(identity, turn = {}) {
   return conversationPolicy().enabled ? nativeDialoguePrompt(identity, turn) : {context:'',policy:null};

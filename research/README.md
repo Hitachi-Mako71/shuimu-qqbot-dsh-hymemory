@@ -17,3 +17,5 @@ node ../research/tools/probe-dialogue-positive.mjs
 上面的示例会调用模型，只有明确恢复研究任务后才运行。仅检查结构时使用仓库根目录的scripts/check-repository.mjs。原创场景只作故障回归，真人语料验收记录应保留真实来源与原始标签；不以程序通过或助手自评分数代替内容验收。
 
 历史方法记录：[原始中文语料](notes/REAL_CORPUS_EVALUATION_20261101.md)、[真人示例对照](notes/HUMAN_CORPUS_ICL_20261101.md)、[IRC回复边基线](notes/IRC_REAL_REPLY_LINK_BASELINE_20261101.md)。这些是暂停前的记录，不是继续优化或部署放行。
+
+- [参与决策标注协议 v1](schemas/README.md)：P02 草案与版本化 JSON Schema；当前不包含样本。

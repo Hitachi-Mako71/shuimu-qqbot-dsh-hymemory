@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Hitachi-Mako71/shuimu-qqbot-dsh-hymemory/blob/main/research/schemas/participation-v1.json",
+  "title": "QQ Agent participation decision sample v1",
+  "description": "De-identified, explicitly authorized annotation record for SPEAK/WAIT/SILENT research. Not a runtime message format.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sampleId", "authorization", "split", "context", "target", "annotation"],
+  "properties": {
+    "schemaVersion": {"const": "participation-v1"},
+    "sampleId": {"$ref": "#/$defs/opaqueId"},
+    "authorization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "basis", "deidentified", "reviewedAt"],
+      "properties": {
+        "status": {"const": "authorized"},
+        "basis": {"type": "string", "minLength": 1, "maxLength": 80},
+        "deidentified": {"const": true},
+        "reviewedAt": {"type": "string", "format": "date"}
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceId", "license", "sourceType"],
+      "properties": {
+        "sourceId": {"$ref": "#/$defs/opaqueId"},
+        "license": {"type": "string", "minLength": 1, "maxLength": 120},
+        "sourceType": {"enum": ["public_corpus", "consented_private", "synthetic"]},
+        "citation": {"type": "string", "maxLength": 300}
+      }
+    },
+    "split": {
+      "type": "object", "additionalProperties": false,
+      "required": ["partition", "groupKey", "timeBlock"],
+      "properties": {
+        "partition": {"enum": ["train", "development", "test", "shadow"]},
+        "groupKey": {"$ref": "#/$defs/opaqueId", "description": "Opaque stable pseudonym; never a QQ group/account ID."},
+        "timeBlock": {"type": "string", "pattern": "^[0-9]{4}-(Q[1-4]|H[1-2]|Y)$", "description": "Coarse time block to support group/time-disjoint evaluation."}
+      }
+    },
+    "context": {
+      "type": "array", "minItems": 1, "maxItems": 100,
+      "items": {"$ref": "#/$defs/message"}
+    },
+    "target": {"$ref": "#/$defs/message"},
+    "annotation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["label", "reasonCode", "annotatorId", "guidelineVersion"],
+      "properties": {
+        "label": {"enum": ["SPEAK", "WAIT", "SILENT"]},
+        "reasonCode": {"enum": ["DIRECT_ADDRESS", "DIRECT_QUESTION", "BOT_FOLLOWUP", "OPEN_INVITATION", "MEANINGFUL_ENTRY", "OTHERS_ALREADY_RESPONDING", "NO_ENTRY_POINT", "LOW_INFORMATION", "WAIT_FOR_CONTEXT", "UNCERTAIN"]},
+        "annotatorId": {"$ref": "#/$defs/opaqueId"},
+        "guidelineVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"},
+        "confidence": {"type": "integer", "minimum": 1, "maximum": 5},
+        "adjudicated": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "opaqueId": {"type": "string", "pattern": "^[a-zA-Z0-9_-]{8,80}$"},
+    "message": {
+      "type": "object", "additionalProperties": false,
+      "required": ["messageId", "speakerId", "speakerRole", "text", "textReviewed", "attachmentsPresent"],
+      "properties": {
+        "messageId": {"$ref": "#/$defs/opaqueId"},
+        "speakerId": {"$ref": "#/$defs/opaqueId"},
+        "speakerRole": {"enum": ["member", "agent", "moderator", "unknown"]},
+        "text": {"type": "string", "minLength": 1, "maxLength": 4000},
+        "textReviewed": {"const": true, "description": "Human-reviewed for direct/indirect identifiers and secrets before export."},
+        "attachmentsPresent": {"type": "boolean", "description": "Record presence only; never include attachment bytes, local paths or URLs."},
+        "replyToMessageId": {"$ref": "#/$defs/opaqueId"}
+      }
+    }
+  }
+}

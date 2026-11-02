@@ -10,3 +10,8 @@
 
 - [工程维护与资料依据](engineering.md)：源码/部署分离、结构检查与skill。
 - [ADR 0001](../decisions/0001-source-deployment-and-research.md)：目录分工的原因和后果。
+
+- [回话系统更新 P01](handoffs/P01.md)：版本基线与当前停止条件。
+- [ADR 0002](../decisions/0002-dialogue-engineering-baseline.md)：本次回话工程分阶段边界。
+
+- [回话系统更新 P02](handoffs/P02.md)：参与决策数据协议。

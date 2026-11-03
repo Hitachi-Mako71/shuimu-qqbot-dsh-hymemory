@@ -16,6 +16,7 @@ import {QQ_TURN_BUDGET} from './turn-budget.js';
 import {retentionMetadata} from './retention-policy.js';
 import {withQQInboundSignal,qqInboundSignal} from './turn-context.js';
 import {recordMetric} from './metrics.js';
+import {groundedQQReply} from './tool-evidence.js';
 import {stripFinalChineseFullStop} from './voice.js';
 
 const trace = new AsyncLocalStorage();
@@ -221,6 +222,7 @@ export function bindQQEvidence(agent, context, sessionId, recalledSources = []) 
   const deleted = context ? privacyState(context.identity).sources : new Set();
   const ids = context ? store().resolveUserSources(context.identity,[...history,...context.inboundIds,...recalledSources]).filter(id => !deleted.has(id)) : [];
   agent[EVIDENCE] = context ? { ...context, turnInboundIds: context.inboundIds, inboundIds: ids, kind: 'agent', sessionId } : { skip: true,abortSignal:qqInboundSignal() };
+  agent[EVIDENCE].webEvidence={search:{attempts:0,successes:0},fetch:{attempts:0,successes:0}};
   agent[EVIDENCE].turnBudget=agent[QQ_TURN_BUDGET];
   if(context){
     const messages=store().platformIds(context.identity,context.inboundIds);
@@ -282,16 +284,16 @@ function normalizeAssistantSendArgs(method, args, context) {
     const payload = { ...source };
     let changed = false;
     if (typeof payload.content === 'string') {
-      payload.content = stripFinalChineseFullStop(payload.content);
+      payload.content = stripFinalChineseFullStop(groundedQQReply(payload.content,context));
       changed = true;
     }
     if (typeof payload.markdown?.content === 'string') {
-      payload.markdown = { ...payload.markdown, content: stripFinalChineseFullStop(payload.markdown.content) };
+      payload.markdown = { ...payload.markdown, content: stripFinalChineseFullStop(groundedQQReply(payload.markdown.content,context)) };
       changed = true;
     }
     if (changed) next[0] = payload;
   } else if (typeof next[1] === 'string') {
-    next[1] = stripFinalChineseFullStop(next[1]);
+    next[1] = stripFinalChineseFullStop(groundedQQReply(next[1],context));
   }
   return next;
 }
@@ -324,9 +326,9 @@ export function instrumentQQEvidence(bot, appId) {
     const streamId = randomUUID(); let text = '', counter = 0, finished = false;
     return {
       update: async fullText => {
-        text = fullText;
+        text = groundedQQReply(fullText,context);
         if(context)store().draft(context, `${streamId}:${++counter}`, text, { streamId, text }, 'stream_snapshot');
-        return session.update(fullText);
+        return session.update(text);
       },
       complete: async () => {
         if (finished) return session.complete();

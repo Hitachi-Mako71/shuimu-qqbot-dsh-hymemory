@@ -17,6 +17,7 @@ import {personaMaterialAllowed} from './persona-policy.js';
 import { hasGroupController } from './group-control.js';
 import { adaptiveGroup, groupWindow, groupSchedule, recallConversation, groupContextMode, participationMode } from './conversation-policy.js';
 import { publicPageRequest } from './query-policy.js';
+import {isGroupQuestion} from './group-question.js';
 import { decideParticipation } from './participation-model.js';
 import { routeParticipation } from './participation-routing.js';
 import { createParticipationWait } from './participation-wait.js';
@@ -446,17 +447,27 @@ export async function groupParticipationGate(ctx, next, appId) {
   // listening model. Preserve the actual platform mention flag.
   const pageConversation = !mentioned && !calledForConversation && !calledForImage
     && row.enabled && Date.now() >= (row.snoozeUntil || 0)
-    && eligibility.action !== 'SKIP' && !otherMention && !text.startsWith('/') && publicPageRequest(text);
+    && eligibility.action !== 'SKIP' && !otherMention && !(msg.refMsgIdx && msg.quotedIsSelf !== true) && !text.startsWith('/') && publicPageRequest(text);
+  const questionConversation = !mentioned && !calledForConversation && !calledForImage && !pageConversation
+    && row.enabled && Date.now() >= (row.snoozeUntil || 0)
+    && activitySettings(row.activity||{}).replyQuestions && eligibility.action !== 'SKIP'
+    && !otherMention && !(msg.refMsgIdx && msg.quotedIsSelf !== true) && isGroupQuestion(text);
   // Active mode is ordinary conversation, not a background listening decision.
   // Keep the real mention flag intact and let the existing identity, concurrency,
   // agent, tool guards and receipt handling run exactly as for a direct question.
   const activeConversation = !mentioned && !calledForConversation && !calledForImage && !pageConversation
     && !adaptiveGroup(row) && row.enabled && row.frequency === '活跃' && Date.now() >= (row.snoozeUntil || 0)
     && Boolean(text || msg.attachments?.length || ctx.state.qqMedia?.quoteAttachments?.length)
-    && !text.startsWith('/') && text !== '[凭证已隐藏]' && !otherMention;
-  if (mentioned || calledForConversation || calledForImage || activeConversation || pageConversation) {
+    && !text.startsWith('/') && text !== '[凭证已隐藏]' && !otherMention && !(msg.refMsgIdx && msg.quotedIsSelf !== true);
+  if (mentioned || calledForConversation || calledForImage || activeConversation || pageConversation || questionConversation) {
     if(calledForConversation&&!mentioned){row.lastDecision={reason:'明确交流或追问进入正常对话',code:eligibility.reason,at:Date.now()};row.directTurnsRouted=(row.directTurnsRouted||0)+1;write('groups/registry.json',state);}
-    if (!mentioned) ctx.state.mention = { ...ctx.state.mention, wasMentioned: (activeConversation || pageConversation) ? false : true, shouldAnswer: true };
+    if (!mentioned) ctx.state.mention = { ...ctx.state.mention, wasMentioned: (activeConversation || pageConversation || questionConversation) ? false : true, shouldAnswer: true };
+    if(questionConversation){
+      if(ctx.state.qqEvidence)ctx.state.qqEvidence.groupDirected=true;
+      rememberGroupReply({appId:String(appId),scope:'group',peerId:msg.groupOpenid,senderId:msg.senderId},msg.messageId,{directed:true,control:false});
+      row.lastDecision={reason:'群疑问句进入正常问答',code:'GROUP_QUESTION',at:Date.now()};
+      row.questionTurnsRouted=(row.questionTurnsRouted||0)+1;write('groups/registry.json',state);
+    }
     if(pageConversation){
       if(ctx.state.qqEvidence)ctx.state.qqEvidence.groupDirected=true;
       rememberGroupReply({appId:String(appId),scope:'group',peerId:msg.groupOpenid,senderId:msg.senderId},msg.messageId,{directed:true,control:false});

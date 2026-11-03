@@ -8,5 +8,6 @@
   "implicitImageQuestions": {"type":"boolean","default":false,"label":"图片问答免@"},
   "judgeIntervalSeconds": {"type":"integer","min":0,"max":300,"default":20,"label":"判断间隔"},
   "minMessages": {"type":"integer","min":1,"max":30,"default":3,"label":"累计"},
-  "includeDirected": {"type":"boolean","default":false,"label":"限制点名"}
+  "includeDirected": {"type":"boolean","default":false,"label":"限制点名"},
+  "replyQuestions": {"type":"boolean","default":true,"label":"疑问句回复"}
 }

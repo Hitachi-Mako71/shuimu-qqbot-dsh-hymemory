@@ -19,7 +19,7 @@ export function updateActivity(current,input) {
   if(text==='重置')return {...activityDefaults};
   if(!text) return s;
   const labels=Object.fromEntries(Object.entries(schema).filter(([,v])=>v.label).map(([k,v])=>[v.label,k]));
-  const pattern=/(判断间隔|每分钟|每小时|间隔|累计|限制点名|静默等待|自适应间隔|图片问答免@)\s*=?\s*(\d+|是|否)(?:条|秒)?/y;
+  const pattern=/(判断间隔|每分钟|每小时|间隔|累计|限制点名|静默等待|自适应间隔|图片问答免@|疑问句回复)\s*=?\s*(\d+|是|否)(?:条|秒)?/y;
   const seen=new Set();let cursor=0;
   while(cursor<text.length){while(/\s/.test(text[cursor]||'')&&cursor<text.length)cursor++;if(cursor===text.length)break;pattern.lastIndex=cursor;const m=pattern.exec(text);if(!m)throw Error('格式：群聊节奏 每分钟6条 间隔10秒 每小时120条 静默等待5秒 自适应间隔15秒；还可填“判断间隔5秒 累计1条 限制点名否”。');const key=labels[m[1]];if(seen.has(key))throw Error('同一参数不能重复。');seen.add(key);s[key]=schema[key].type==='boolean'?m[2]==='是'?true:m[2]==='否'?false:null:Number(m[2]);cursor=pattern.lastIndex;}
   return activitySettings({...s,enabled:true});
@@ -27,7 +27,7 @@ export function updateActivity(current,input) {
 export function describeActivity(value,frequency='正常') {
   const s=activitySettings(value);
   const adaptiveGap=s.adaptiveGapSeconds?`${s.adaptiveGapSeconds}秒`:'沿用档位间隔';
-  return `群聊节奏：${s.enabled?'自定义开启':'沿用档位'}，模式${frequency}。\n自定义：每分钟最多${s.perMinute}条，每小时最多${s.perHour}条，回复间隔至少${s.minIntervalSeconds}秒；${s.includeDirected?'@和点名也受限':'@和点名不受自定义限额限制'}。\n正常/安静档：累计${s.minMessages}条再考虑接话，判断间隔${s.judgeIntervalSeconds}秒；静默等待${s.settleSeconds}秒后评估新消息；自适应最短回复间隔${adaptiveGap}；附图提问${s.implicitImageQuestions?'可免@进入识图':'需@才进入识图'}。活跃档默认直接对话；本群若开启自适应策略则择机接话。\n用“群聊节奏 每分钟6条 间隔10秒 每小时120条 静默等待5秒 自适应间隔15秒 图片问答免@是”修改；开启、关闭、重置也可。限额内排队，等候超过2分钟的旧回复会取消。`;
+  return `群聊节奏：${s.enabled?'自定义开启':'沿用档位'}，模式${frequency}。\n自定义：每分钟最多${s.perMinute}条，每小时最多${s.perHour}条，回复间隔至少${s.minIntervalSeconds}秒；${s.includeDirected?'@和点名也受限':'@和点名不受自定义限额限制'}。\n疑问句回复${s.replyQuestions?'开启':'关闭'}；开启时未@的疑问句直接问答，明确问其他成员的消息仍礼让。\n正常/安静档：累计${s.minMessages}条再考虑接话，判断间隔${s.judgeIntervalSeconds}秒；静默等待${s.settleSeconds}秒后评估新消息；自适应最短回复间隔${adaptiveGap}；附图提问${s.implicitImageQuestions?'可免@进入识图':'需@才进入识图'}。活跃档默认直接对话；本群若开启自适应策略则择机接话。\n用“群聊节奏 每分钟6条 间隔10秒 每小时120条 静默等待5秒 自适应间隔15秒 图片问答免@是 疑问句回复是”修改；开启、关闭、重置也可。限额内排队，等候超过2分钟的旧回复会取消。`;
 }
 export function nextGroupSendAt(attempts,s,now) {
   const recent=attempts.filter(at=>Number.isFinite(at)&&at>now-3600000).sort((a,b)=>a-b);

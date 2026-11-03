@@ -45,7 +45,7 @@ test('fixed adaptive observation window is bounded; legacy keeps its former wind
 test('adaptive active ordinary message is observed; explicit mention retains the normal pipeline',async()=>{
  const id={appId:'policy-test',scope:'group',peerId:'group-a',senderId:'member-a'},key=memoryNamespace(id);
  write('groups/registry.json',{rooms:{[key]:{enabled:true,frequency:'活跃',conversationPolicy:'adaptive',controller:'owner',allMessages:0,atMessages:0}}});
- const ctx={message:{kind:'group',content:'这个主意怎么样？',messageId:'msg-a',groupOpenid:id.peerId,senderId:id.senderId,rawEventType:'GROUP_MESSAGE_CREATE'},state:{mention:{}},bot:{},replyTarget:{scope:'group',targetId:id.peerId,msgId:'msg-a'}};
+ const ctx={message:{kind:'group',content:'这个主意挺有意思',messageId:'msg-a',groupOpenid:id.peerId,senderId:id.senderId,rawEventType:'GROUP_MESSAGE_CREATE'},state:{mention:{}},bot:{},replyTarget:{scope:'group',targetId:id.peerId,msgId:'msg-a'}};
  let routed=0;await groupParticipationGate(ctx,async()=>routed++,id.appId);assert.equal(routed,0);
  ctx.state.mention.wasMentioned=true;ctx.message.messageId='msg-b';await groupParticipationGate(ctx,async()=>routed++,id.appId);assert.equal(routed,1);
 });

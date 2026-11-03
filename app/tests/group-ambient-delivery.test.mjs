@@ -17,7 +17,7 @@ test('ambient reply reaches the send boundary with terminal full stops removed a
     Object.assign(process.env,{QQBOT_COMPANION_DIR:path.join(root,'companion'),QQBOT_PRIVACY_DIR:path.join(root,'privacy'),QQBOT_EVIDENCE_DIR:path.join(root,'evidence'),QQBOT_MODEL_ROUTING_FILE:path.join(root,'routing.json'),QQBOT_METRICS_DIR:path.join(root,'metrics'),MEMORY_BRIDGE_URL:'http://127.0.0.1:1',MEMORY_BRIDGE_TOKEN:'synthetic-only'});
     const identity={appId:'synthetic-ambient',scope:'group',peerId:'synthetic-room',senderId:'synthetic-person'},key=memoryNamespace(identity);
     write('conversation-policy.json',{enabled:true,groupContext:{mode:'legacy'}});
-    write('groups/registry.json',{rooms:{[key]:{enabled:true,controller:identity.senderId,frequency:'正常',allMessages:0,atMessages:0,sent:0,activity:{enabled:true,minMessages:1,judgeIntervalSeconds:0}}}});
+    write('groups/registry.json',{rooms:{[key]:{enabled:true,controller:identity.senderId,frequency:'正常',allMessages:0,atMessages:0,sent:0,activity:{enabled:true,minMessages:1,judgeIntervalSeconds:0,replyQuestions:false}}}});
     let models=0,memoryCalls=0;
     globalThis.fetch=async(url)=>{assert.equal(String(url),'http://127.0.0.1:1/search');memoryCalls++;return Response.json({ok:true,memories:[]});};
     const llm={async *stream(){models++;yield {type:'text-delta',index:0,text:'这个思路可以。先从简单的开始。\n<qqbot:next-message/>\n慢慢完善就好。'};yield {type:'finish',reason:{kind:'stop'}};}};

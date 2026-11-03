@@ -19,3 +19,7 @@ for(const input of ['上次我问的烟雾训练是什么','你刚才说的是�
   fs.writeFileSync(path.join(root,'conversation-policy.json'),JSON.stringify({enabled:true}));let calls=0;
   await recallConversation({identity,input,base,request:async()=>{calls++;return {memories:[]};}});assert.equal(calls,1);
 });
+
+for(const input of ['1+1等于几','计算 (12+3)*4','柚柚，2+2等于多少？'])test('self-contained calculation avoids memory I/O: '+input,async()=>{let calls=0;await recallConversation({identity,input,base,request:async()=>{calls++;return {memories:[]};}});assert.equal(calls,0);});
+
+for(const input of ['如何配置 Docker','怎么使用 Git','怎样训练 Qwen 模型'])test('self-contained how-to avoids memory I/O: '+input,async()=>{let calls=0;await recallConversation({identity,input,base,request:async()=>{calls++;return {memories:[]};}});assert.equal(calls,0);});

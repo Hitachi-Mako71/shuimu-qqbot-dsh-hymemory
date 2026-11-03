@@ -1,5 +1,6 @@
 import {VOICE_STYLE} from './voice.js';
 import {installTLSCompatibility} from './tls-compat.js';
+import {installQQToolEvidence} from './tool-evidence.js';
 import { installClock } from './clock.js';
 import { installTimetable } from './timetable.js';
 import { namespaceOf, MEMORY_CONTEXT } from './bridge.js';
@@ -19,6 +20,7 @@ export async function apply(ctx) {
   installTLSCompatibility();
   installQQMetrics(ctx);
   installQQToolBoundary(ctx);
+  installQQToolEvidence(ctx);
   installClock(ctx);
   installTimetable(ctx);
   installGroupMentions(ctx);

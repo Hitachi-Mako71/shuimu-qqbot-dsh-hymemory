@@ -158,3 +158,23 @@ test('source lineage cannot cross users and follows accepted assistant reference
   await withQQIdentity(f.identity,()=>bot.send({target:{scope:'c2c',targetId:f.identity.peerId},content:'带来源的后台消息'}),{sourceIds:[assistant,other.id]});
   const db=new DatabaseSync(evidenceFile,{readOnly:true});try{assert.deepEqual(JSON.parse(db.prepare('SELECT related_ids_json FROM evidence_events WHERE platform_message_id=?').get('lineage-platform').related_ids_json),[f.inbound.id]);}finally{db.close();}
 });
+
+for (const text of [
+  '刚检查过工作区，文档里面仍没有文字，请重新上传附件。',
+  '我已经读完附件并执行了里面的修改，接下来等结果。',
+  '文档上传卡住了，改成 zip 再发一次给我。',
+  '工作区里还没有 md 文件，建议改一个格式传送。',
+]) test('background file claims without a live inspection stay quiet: '+text.slice(0,8), async()=>{
+  const f=fixture();let sends=0;
+  const r=await runProactiveGreeting({...f.options,generate:async()=>JSON.stringify({send:true,topic:'文档状态',text,source_ids:[f.inbound.id]}),sender:{sendProactiveMarkdown:async()=>{sends++;return {id:'synthetic-file-receipt'};}}});
+  assert.deepEqual(r,{sent:false,reason:'unsupported_file_status'});
+  assert.equal(sends,0);assert.equal(f.state().deliveries.length,0);
+});
+test('file topic discussion is allowed without claiming current read or upload status',()=>{
+  const f=fixture();const r=validateProactiveDraft({send:true,topic:'阅读习惯',text:'整理文档时用简短的小标题，读起来往往更轻松些。',source_ids:[]},readProactiveContext(f.identity));assert.equal(r.send,true);
+});
+test('background generation receives explicit file observation capabilities',async()=>{
+  const f=fixture();let observed;const result=await runProactiveGreeting({...f.options,generate:async(_system,body)=>{
+    observed=JSON.parse(body).observationCapabilities;return JSON.stringify({send:false});
+  }});assert.deepEqual(observed,{inspectWorkspace:false,readAttachments:false,verifyUpload:false});assert.equal(result.reason,'model_chose_quiet');assert.equal(f.stats().sends,0);
+});

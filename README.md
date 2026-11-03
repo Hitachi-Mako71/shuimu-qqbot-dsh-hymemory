@@ -3,16 +3,16 @@
 **在 QQ 中聊天、管理群参与，并保留可追溯的真实记忆。**
 
 [![Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/deployment/windows.md)
-[![Plugin 0.22.31](https://img.shields.io/badge/plugin-0.22.31-6C5CE7)](app/versions.json)
+[![Plugin 0.22.32](https://img.shields.io/badge/plugin-0.22.32-6C5CE7)](app/versions.json)
 [![Hindsight 1.1.0](https://img.shields.io/badge/memory-Hindsight%201.1.0-00897B)](docs/reference/V2_3_HINDSIGHT_MEMORY.md)
 
 [开始部署](docs/deployment/README.md) · [使用指南](docs/usage/README.md) · [开发文档](docs/development/README.md) · [更新记录](CHANGELOG.md)
 
 柚柚是基于 **DeepSeek Harness（DSH）** 的 QQ AI 助手，使用 **DeepSeek** 进行文字对话，使用 **Hindsight** 管理长期记忆。项目同时支持腾讯官方 QQ Bot，以及个人 QQ + NapCat / OneBot 11 两种接入方式。
 
-当前应用版本为 **V3.5.0**，源码及本机 profile 插件均为 **0.22.31**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
+当前应用版本为 **V3.5.0**，源码及本机 profile 插件均为 **0.22.32**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
 
-**2026-11-03 本地部署：** 插件 0.22.31 完成 PR07：WAIT 最多两次重判，复用原候选和到期时间，新消息与直接回复取消旧候选。参与模式默认 off。保留 OneBot 附件来源与暂存诊断。日志仅记录来源类型、白名单匹配结果、路径类别和计数，不记录消息正文、文件名、QQ 号或完整路径；附件白名单与暂存行为未放宽。真实附件复现已确认 Windows 文档重定向导致缓存目录不在白名单；本机已补入精确目录并恢复两份附件，新的机器人读文件回复仍待验收。
+**2026-11-03 本地部署：** 插件 0.22.32 修复主动私聊将历史附件失败当作当前文件状态的误报，增加无文件观察能力的明确约束及发送前校验；正常 Agent 的文件任务先检查会话 incoming/ 再读取，附件内容不能自行授予执行权限。两份已恢复附件通过本机读取权限、非空内容及哈希核对；原错误回复的只读回放已被拦截。428 项离线合成核验通过，新的 QQ 端读文件回复仍待验收。参与模式保持 off。
 
 ## 可以做什么
 

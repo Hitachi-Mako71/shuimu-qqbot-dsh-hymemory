@@ -24,4 +24,4 @@ Set-Location <仓库路径>\app
 
 `.env`、`qq.credentials.json`、`data/`、`.privacy/`、`runtime/` 和本机登录态都由部署环境保管。详细说明见[配置与数据目录](../docs/deployment/configuration.md)。
 
-当前公开源码、候选包和本机活动 profile 均为 **0.22.34**。修复群旁听回复发送前的 ReferenceError，444 项离线合成核验通过，真实群回执待观察。保留上一版文件路由与 TLS 修复及 9.349 秒真实 QQ 请求记录。详见[维护交接](../docs/development/handoff.md)。
+当前公开源码、候选包和本机活动 profile 均为 **0.22.35**。独立概念问题跳过无关长期召回，公开查询增加领域消歧；458 项离线合成核验通过。新版本真实 QQ 全流程耗时及回答准确性待观察。详见[维护交接](../docs/development/handoff.md)。

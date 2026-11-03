@@ -53,6 +53,8 @@ Copy-Item .\examples\onebot.json.example .\data\transport\onebot.json
 
 `legacyAppId` 和 AppSecret 仍由当前 DSH QQ 启动器的应用配置检查使用；实际个人 QQ 消息收发经 OneBot 完成。模板占位符都需要替换，QQ 登录态、真实映射和令牌只保存在本机。
 
+附件暂存必须匹配 NapCat `get_file` 返回文件的真实缓存根。Windows 的“文档”可能被 OneDrive 或系统已知文件夹重定向，不能用固定的用户目录猜测路径；确认实际缓存落点后，仅将该精确目录加入 `mediaRoots`。QQ 界面显示文件已收到，不代表机器人已经获得可读的会话内副本。
+
 ## 启动
 
 ```powershell

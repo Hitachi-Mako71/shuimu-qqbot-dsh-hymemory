@@ -19,6 +19,7 @@ import { adaptiveGroup, groupWindow, groupSchedule, recallConversation, groupCon
 import { publicPageRequest } from './query-policy.js';
 import { decideParticipation } from './participation-model.js';
 import { routeParticipation } from './participation-routing.js';
+import { createParticipationWait } from './participation-wait.js';
 
 import { resolveGroupReplyContext } from './context-builder.js';
 
@@ -30,6 +31,14 @@ const running = new Set();
 const directBusy = new Map();
 const selfIds = new Map();
 let active = false;
+const participationWait=createParticipationWait({
+  onWait:(key,event,delay)=>{enqueue(key,event);schedule(key,delay,{reset:true});},
+  onCancel:(key,event)=>{
+    const queue=(pending.get(key)||[]).filter(item=>item!==event);
+    if(queue.length)pending.set(key,queue);
+    else{pending.delete(key);clearTimeout(timers.get(key));timers.delete(key);}
+  },
+});
 const profiles = { 安静: { gap: 180000, hourly: 4, judgeGap: 60000 }, 正常: { gap: 90000, hourly: 12, judgeGap: 20000 }, 活跃: { gap: 45000, hourly: 24, judgeGap: 15000 } };
 const digest = (text) => createHash('sha256').update(text).digest('hex');
 const registry = () => read('groups/registry.json', { rooms: {}, pairing: null });
@@ -128,6 +137,7 @@ function loadRoom(key) {
   return room;
 }
 function stopPending(key) {
+  participationWait.cancel(key);
   clearTimeout(timers.get(key)); timers.delete(key); pending.delete(key);
 }
 function disable(state, key) {
@@ -225,7 +235,8 @@ async function consider(key) {
   timers.delete(key);
   if (!active || running.has(key)) return;
   const event = takeEvent(key);
-  if (!event) return;
+  if (!event) { participationWait.cancel(key); return; }
+  let waitRecord;let waitCurrent=()=>true;
   running.add(key);
   try {
     const startedAt = Date.now();
@@ -233,14 +244,22 @@ async function consider(key) {
     const custom=activitySettings(row?.activity||{});
     const limits = custom.enabled?{gap:0,hourly:Infinity,judgeGap:custom.judgeIntervalSeconds*1000,minMessages:custom.minMessages}: {...(profiles[row?.frequency] || profiles.正常),minMessages:3};
     const latest = room.messages.find((message) => message.id === event.messageId) || event;
-    const candidate=candidateFor(event,room,now);
+    const mode=participationMode();
+    const candidate=event.participationCandidate||candidateFor(event,room,now);
+    waitRecord=event.participationWait;
+    if(['mock','pilot'].includes(mode)&&!event.called&&!event.explicitFollowup){
+      event.participationCandidate=candidate;
+      waitRecord=participationWait.track(key,event,candidate);
+    }
+    waitCurrent=()=>!waitRecord||participationWait.current(key,waitRecord,{room:loadRoom(key),row:registry().rooms[key],mode:participationMode()});
+    if(!waitCurrent()){recordDecision(key,'WAIT 候选已失效','A_WAIT_CANCELLED');return;}
     const initial=candidateCheck(candidate,room,row,{now});
     if(!initial.allow){recordDecision(key,initial.reason);return;}
     const timing=groupSchedule(row,room,now);
     const replyGap = event.called ? 1000 : adaptiveGroup(row)?timing.gap:limits.gap;
     if(!event.called && !timing.allow){recordDecision(key,timing.reason);return;}
     if (!row?.enabled || now < (row.snoozeUntil || 0) || now - event.receivedAt > 120000) { recordDecision(key, '关闭或用户暂停'); return; }
-    const due = Math.max((row.lastReplyAt || 0) + replyGap, event.called ? (room.senderReplies?.[event.sender] || 0) + 5000 : (room.lastJudgedAt || 0) + limits.judgeGap);
+    const due = Math.max((row.lastReplyAt || 0) + replyGap, event.called ? (room.senderReplies?.[event.sender] || 0) + 5000 : waitRecord?.attempts>0 ? 0 : (room.lastJudgedAt || 0) + limits.judgeGap);
     if (directBusy.has(key) || now < due || now < (row.backoffUntil || 0)) {
       if (event.called) { enqueue(key, event, true); schedule(key, directBusy.has(key) ? 500 : Math.max(100, Math.max(due, row.backoffUntil || 0) - now)); recordDecision(key, '呼唤排队稍后回应'); }
       else {
@@ -252,7 +271,7 @@ async function consider(key) {
     }
     const rateCount = room.deliveries.filter((item) => event.called ? item.kind === 'called' : item.kind !== 'called').length;
     if (rateCount >= (event.called ? 60 : limits.hourly)) { recordDecision(key, '达到当前小时限额'); return; }
-    if (!latest || latest.otherMention || (room.newMessages < limits.minMessages && !addressed(latest) && !/大家|谁知道|有没有|[？?]|开心|难过/.test(latest.text))) return;
+    if (!latest || latest.otherMention || (room.newMessages < limits.minMessages && !(waitRecord?.attempts>0) && !addressed(latest) && !/大家|谁知道|有没有|[？?]|开心|难过/.test(latest.text))) return;
     const batchRecords=room.messages.filter(m=>personaMaterialAllowed(m.text)).slice(-12);
     const speakers = groupSpeakerContext(batchRecords.map((m) => ({ ...m, text: m.text.slice(0, m.id === latest.id ? 600 : 240) })), event);
     const legacyData = {
@@ -268,6 +287,7 @@ async function consider(key) {
     const contextData = routedContext.data;
     const contextSourceIds = routedContext.sourceIds;
     const evidenceMessageIds = routedContext.roomMessageIds.length ? routedContext.roomMessageIds : batchRecords.map(m => m.id);
+    if(!waitCurrent())return;
     room.lastJudgedAt = now; room.newMessages = 0; write(roomPath(key), room);
     const participationRoute = await routeParticipation({
       mode: participationMode(),
@@ -286,7 +306,9 @@ async function consider(key) {
         write('groups/registry.json', shadowState);
       },
       continueWithReply: async () => {
+        if(!waitCurrent())return;
         const recalled = await groupRecall(event.identity, latest.text);
+        if(!waitCurrent())return;
         const memories = recalled.memories;
         const recalledAt = Date.now();
         const structuredHistoryGuidance = routedContext.mode === 'structured'
@@ -305,6 +327,7 @@ async function consider(key) {
         const draft = decodeReply(raw);
         if (draft.reply !== true) { recordDecision(key, draft.malformed ? '格式异常，本次保持安静' : '本轮选择倾听'); return; }
         if (typeof draft.text !== 'string' || !draft.text.trim() || draft.text.length > 300) throw new Error('InvalidGroupDraft');
+        if(!waitCurrent())return;
         // Re-read current state: closing/snoozing during a model call cancels delivery.
         const latestState = registry(); const current = latestState.rooms[key];
         if (directBusy.has(key)) { if (event.called) { enqueue(key, event, true); schedule(key, 500); } return; }
@@ -320,7 +343,7 @@ async function consider(key) {
         const reserved=reserveCandidate(candidate,()=>({room:loadRoom(key),row:registry().rooms[key]}),r=>write(roomPath(key),r),content);
         if(!reserved.allow){recordDecision(key,reserved.reason);return;}
         const receipts=[];
-        const deliveryCheck=()=>{if(directBusy.has(key))throw Object.assign(Error('Direct reply has priority'),{name:'GroupCandidateCancelled',code:'DIRECT_PRIORITY'});const r=candidateCheck(candidate,loadRoom(key),registry().rooms[key],{body:content});if(!r.allow)throw Object.assign(Error(r.reason),{name:'GroupCandidateCancelled',code:r.reason});};
+        const deliveryCheck=()=>{if(!waitCurrent())throw Object.assign(Error('WAIT candidate cancelled'),{name:'GroupCandidateCancelled',code:'A_WAIT_CANCELLED'});if(directBusy.has(key))throw Object.assign(Error('Direct reply has priority'),{name:'GroupCandidateCancelled',code:'DIRECT_PRIORITY'});const r=candidateCheck(candidate,loadRoom(key),registry().rooms[key],{body:content});if(!r.allow)throw Object.assign(Error(r.reason),{name:'GroupCandidateCancelled',code:r.reason});};
         // The same candidate reservation is not its own unanswered predecessor.
         try{for(let i=0;i<parts.length;i++){if(i)await new Promise(resolve=>setTimeout(resolve,900));const receipt=await withQQIdentity(event.identity, () => event.bot.sendMarkdown(event.target, parts[i]), { messageId: event.messageId, kind: 'group', eligible: true, sourceIds:[...new Set([...recalled.sourceIds,...contextSourceIds])],messageIds:evidenceMessageIds,deliveryCheck });if(!receipt?.id)throw Error('GroupReceiptUnconfirmed');receipts.push(receipt);const partial=loadRoom(key);if(!partial.messages.some(m=>m.id===receipt.id))partial.messages.push({id:receipt.id,at:Date.now(),sender:'柚柚',kind:'bot',text:parts[i]});write(roomPath(key),partial);}}
         catch(error){const r=loadRoom(key);if(r.lastAmbient?.id===candidate.id){r.lastAmbient.status=error?.name==='GroupCandidateCancelled'?'rejected':'unknown';write(roomPath(key),r);}throw error;}
@@ -335,6 +358,11 @@ async function consider(key) {
       },
     });
     if (!participationRoute.continueFlow) {
+      if(waitRecord&&participationRoute.decision?.decision==='WAIT'){
+        const plan=participationWait.defer(key,waitRecord,participationRoute.decision,{room:loadRoom(key),row:registry().rooms[key],mode:participationMode()},1000);
+        recordDecision(key,plan.action==='reschedule'?'WAIT 等待后重判':'WAIT 已到重判上限或失效',plan.action==='reschedule'?'A_WAIT_RETRY':'A_WAIT_EXPIRED');
+        return;
+      }
       recordDecision(key, 'A 决策未进入回复生成', 'A_' + (participationRoute.decision?.decision || 'SILENT'));
       return;
     }
@@ -344,6 +372,7 @@ async function consider(key) {
     if (row) { row.backoffUntil = Date.now() + 15000; row.status = `接话未确认成功（${error?.name || 'Error'}），短暂退避15秒`; write('groups/registry.json', state); }
     console.warn(`[qq-group-participation] unavailable (${error?.name || 'Error'})`);
   } finally {
+    if(waitRecord&&!(pending.get(key)||[]).includes(event))participationWait.complete(key,waitRecord);
     running.delete(key);
     if (pending.has(key) && active && !timers.has(key)) {
       const queued=pending.get(key)||[],nextEvent=queued[0],row=registry().rooms[key];
@@ -367,6 +396,7 @@ export async function groupParticipationGate(ctx, next, appId) {
   if (self.has(String(msg.senderId))) return;
   const key = namespace({ appId, scope: 'group', peerId: msg.groupOpenid });
   if (!key) return;
+  participationWait.cancel(key,msg.messageId);
   if (msg.senderIsBot) {
     const state = registry(); const row = state.rooms[key];
     if (!row?.enabled) return;
@@ -470,6 +500,6 @@ export function registerGroupParticipation(ctx) {
       try { for (const key of Object.keys(registry().rooms)) { const room = loadRoom(key); write(roomPath(key), room); } }
       catch { console.warn('[qq-group-participation] cache cleanup unavailable'); }
     }, 5 * minute); cleaner.unref();
-    return () => { active = false; clearInterval(cleaner); for (const timer of timers.values()) clearTimeout(timer); timers.clear(); pending.clear(); };
+    return () => { active = false; clearInterval(cleaner); for (const timer of timers.values()) clearTimeout(timer); timers.clear(); participationWait.clear(); pending.clear(); };
   }, 'qq-group-participation.lifecycle');
 }

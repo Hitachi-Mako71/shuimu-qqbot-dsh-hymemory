@@ -15,8 +15,8 @@ importers:
         specifier: 0.5.2
         version: 0.5.2(patch_hash=607e4d3f68bad7a6f7d0424c75f53325eaa2e330f1cb064ada86526f4aa5e8fc)
       dsh-hymemory-qq:
-        specifier: file:../../packages/dsh-hymemory-qq-0.22.29.tgz
-        version: file:../../packages/dsh-hymemory-qq-0.22.29.tgz
+        specifier: file:../../packages/dsh-hymemory-qq-0.22.31.tgz
+        version: file:../../packages/dsh-hymemory-qq-0.22.31.tgz
 
 packages:
 
@@ -82,9 +82,9 @@ packages:
   dijkstrajs@1.0.3:
     resolution: {integrity: sha512-qiSlmBq9+BCdCA/L46dw8Uy93mloxsPSbwnm5yrKn2vMPiy8KyAskTF6zuV/j5BMsmOGZDPs7KjU+mjb670kfA==}
 
-  dsh-hymemory-qq@file:../../packages/dsh-hymemory-qq-0.22.29.tgz:
-    resolution: {integrity: sha512-yIRglPlJrd5YSmbhBecYYviS6JLuedQFM4WJvbMcUcXxJ2OfPx/28EZzBKMnMPuNIpemH1sPpQIGqH8KOD5GqA==, tarball: file:../../packages/dsh-hymemory-qq-0.22.29.tgz}
-    version: 0.22.29
+  dsh-hymemory-qq@file:../../packages/dsh-hymemory-qq-0.22.31.tgz:
+    resolution: {integrity: sha512-pU48w6UjE9Wrnk5mUTHzRt2y7PA0rtDAabjthLG2St/KvZeBRI6cYq7CC2X1Eq3FRCnRJEifVxhdLWLBKOSqeQ==, tarball: file:../../packages/dsh-hymemory-qq-0.22.31.tgz}
+    version: 0.22.31
     peerDependencies:
       '@deepseek-ai/cordis': '>=4.0.1'
       '@deepseek-ai/dsh-llm': 0.2.1-rc.2
@@ -240,7 +240,7 @@ snapshots:
 
   dijkstrajs@1.0.3: {}
 
-  dsh-hymemory-qq@file:../../packages/dsh-hymemory-qq-0.22.29.tgz: {}
+  dsh-hymemory-qq@file:../../packages/dsh-hymemory-qq-0.22.31.tgz: {}
 
   emoji-regex@8.0.0: {}
 

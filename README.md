@@ -3,16 +3,16 @@
 **在 QQ 中聊天、管理群参与，并保留可追溯的真实记忆。**
 
 [![Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/deployment/windows.md)
-[![Plugin 0.22.29](https://img.shields.io/badge/plugin-0.22.29-6C5CE7)](app/versions.json)
+[![Plugin 0.22.31](https://img.shields.io/badge/plugin-0.22.31-6C5CE7)](app/versions.json)
 [![Hindsight 1.1.0](https://img.shields.io/badge/memory-Hindsight%201.1.0-00897B)](docs/reference/V2_3_HINDSIGHT_MEMORY.md)
 
 [开始部署](docs/deployment/README.md) · [使用指南](docs/usage/README.md) · [开发文档](docs/development/README.md) · [更新记录](CHANGELOG.md)
 
 柚柚是基于 **DeepSeek Harness（DSH）** 的 QQ AI 助手，使用 **DeepSeek** 进行文字对话，使用 **Hindsight** 管理长期记忆。项目同时支持腾讯官方 QQ Bot，以及个人 QQ + NapCat / OneBot 11 两种接入方式。
 
-当前应用版本为 **V3.5.0**，源码及本机 profile 插件均为 **0.22.29**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
+当前应用版本为 **V3.5.0**，源码及本机 profile 插件均为 **0.22.31**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
 
-**2026-11-02 本地部署：** 插件 0.22.29 已部署参与决策路由，默认 off，shadow/mock 需本机显式配置；新增临时正文风格处理，只去掉 DeepSeek 正文末尾中文句号。两个已启用群的真实收发与回执核对记录来自 0.22.28；本次未重发 QQ 消息。
+**2026-11-03 本地部署：** 插件 0.22.31 完成 PR07：WAIT 最多两次重判，复用原候选和到期时间，新消息与直接回复取消旧候选。参与模式默认 off。保留 OneBot 附件来源与暂存诊断。日志仅记录来源类型、白名单匹配结果、路径类别和计数，不记录消息正文、文件名、QQ 号或完整路径；附件白名单与暂存行为未放宽。真实附件复现已确认 Windows 文档重定向导致缓存目录不在白名单；本机已补入精确目录并恢复两份附件，新的机器人读文件回复仍待验收。
 
 ## 可以做什么
 

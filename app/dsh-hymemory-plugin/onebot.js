@@ -11,6 +11,10 @@ const logical=id=>typeof id==='string'&&/^[A-Za-z0-9_-]{1,256}$/.test(id);
 const packetId=id=>typeof id==='number'&&Number.isSafeInteger(id)||typeof id==='string'&&/^-?[0-9]{1,22}$/.test(id)&&Number.isSafeInteger(Number(id));
 const LOCAL_FILES=Symbol.for('qqbot.onebot.local-files');
 const failure=(code,message)=>Object.assign(new Error(message),{code});
+const safeDiagnosticCode=e=>typeof e?.code==='string'&&/^[A-Za-z0-9_-]{1,32}$/.test(e.code)?e.code:'error';
+const pathWithin=(root,target)=>{const relative=path.relative(root,target);return !path.isAbsolute(relative)&&relative!==''&&relative!=='..'&&!relative.startsWith('..'+path.sep);};
+const approvedMediaRoot=(config,file)=>{try{const actual=fs.realpathSync(file);return (config.mediaRoots||[]).findIndex(root=>{try{return pathWithin(fs.realpathSync(root),actual);}catch{return false;}});}catch{return -1;}};
+const filePathFamily=file=>{try{const target=path.resolve(file),normalized=target.split(path.sep).join('/').toLowerCase();const under=root=>{try{const relative=path.relative(path.resolve(root),target);return !path.isAbsolute(relative)&&relative!=='..'&&!relative.startsWith('..'+path.sep);}catch{return false;}};const home=process.env.USERPROFILE||'',appdata=process.env.APPDATA||'';if(home&&(under(path.join(home,'Documents','Tencent Files'))||under(path.join(home,'Tencent Files'))))return 'documents-tencent';if(appdata&&under(path.join(appdata,'Tencent')))return 'appdata-tencent';if(normalized.includes('/runtime/napcat/'))return 'napcat-runtime';return 'other';}catch{return 'unknown';}};
 export function validateOneBotConfig(c,appId){
   if(c?.schema!==1||c.mode!=='onebot'||c.legacyAppId!==String(appId)||!numeric(c.selfId))throw failure('OneBotConfigInvalid','小号接入配置无效。');
   const u=new URL(c.url);if(u.protocol!=='ws:'||u.hostname!=='127.0.0.1'||u.username||u.password||u.search||u.hash)throw failure('OneBotEndpointRejected','OneBot仅连接本机受保护的WebSocket。');
@@ -108,7 +112,27 @@ export function configureQQTransport(bot,config,options={}){
     const fileNotice=normalizeOneBotFileNotice(originalEvent);const event=fileNotice||originalEvent;
     const message=normalizeOneBotMessage(event,ids);if(!message)return;
     if(fileNotice){message.raw=originalEvent;delete message.msgIdx;message.messageId='ob-file-'+createHash('sha256').update(JSON.stringify([originalEvent.self_id,originalEvent.notice_type,originalEvent.group_id,originalEvent.user_id,originalEvent.file.id,originalEvent.time])).digest('hex');}
-    for(const segment of event.message){if(segment?.type!=='file'||/^https?:\/\//i.test(segment.data?.url||''))continue;try{let f;try{f=await connection.rpc('get_file',{file_id:segment.data?.file_id||segment.data?.file});}catch(e){if(message.kind!=='group')throw e;f=await connection.rpc('get_group_file_url',{group_id:Number(event.group_id),file_id:segment.data?.file_id||segment.data?.file,busid:originalEvent.file?.busid});}const filename=path.basename(String(f.file_name||segment.data?.name||'attachment'));if(/^https?:\/\//i.test(f.url||'')){message.attachments.push({content_type:'application/octet-stream',url:f.url,filename});}else if(typeof f.file==='string'){message.attachments.push({content_type:'application/octet-stream',url:'',filename});(message[LOCAL_FILES]||=[]).push({localPath:f.file,filename});}if(message.attachments.some(a=>a.filename===filename))message.content=message.content.replace('[收到文件，本次网关没有提供可下载链接]','');}catch{}}
+    for(const segment of event.message){
+      if(segment?.type!=='file'||/^https?:\/\//i.test(segment.data?.url||''))continue;
+      try{
+        let f;
+        try{f=await connection.rpc('get_file',{file_id:segment.data?.file_id||segment.data?.file});}
+        catch(e){if(message.kind!=='group')throw e;f=await connection.rpc('get_group_file_url',{group_id:Number(event.group_id),file_id:segment.data?.file_id||segment.data?.file,busid:originalEvent.file?.busid});}
+        const filename=path.basename(String(f.file_name||segment.data?.name||'attachment'));
+        if(/^https?:\/\//i.test(f.url||'')){
+          message.attachments.push({content_type:'application/octet-stream',url:f.url,filename});
+          console.info('[im-onebot] inbound file resolved source=url');
+        }else if(typeof f.file==='string'){
+          message.attachments.push({content_type:'application/octet-stream',url:'',filename});
+          (message[LOCAL_FILES]||=[]).push({localPath:f.file,filename});
+          const exists=fs.existsSync(f.file),rootIndex=exists?approvedMediaRoot(c,f.file):-1;
+          console.info(`[im-onebot] inbound file resolved source=local exists=${exists} approved_root=${rootIndex<0?'none':rootIndex+1} family=${filePathFamily(f.file)}`);
+        }else{
+          console.warn('[im-onebot] inbound file resolved source=missing');
+        }
+        if(message.attachments.some(a=>a.filename===filename))message.content=message.content.replace('[收到文件，本次网关没有提供可下载链接]','');
+      }catch(e){console.warn(`[im-onebot] inbound file resolve failed code=${safeDiagnosticCode(e)}`);}
+    }
     if(message.refMsgIdx){try{const ref=event.message.find(s=>s.type==='reply')?.data?.id;const quote=await connection.rpc('get_msg',{message_id:Number(ref)}),sent=outgoingPeers.get(String(ref));const same=message.kind==='group'?String(quote.group_id)===String(event.group_id):quote.message_type==='private'&&([String(quote.user_id),String(quote.sender?.user_id)].includes(String(event.user_id))||(String(quote.sender?.user_id||quote.user_id)===c.selfId&&sent?.scope==='c2c'&&sent.targetId===message.senderId));if(same){const original=normalizeOneBotMessage({...quote,self_id:c.selfId,post_type:'message',message_type:event.message_type,sub_type:'friend',group_id:event.group_id,user_id:quote.user_id||quote.sender?.user_id},ids,{quoted:true});if(original){message.msgElements=[{msg_idx:message.refMsgIdx,content:original.content,attachments:original.attachments}];message.quotedIsSelf=String(quote.user_id||quote.sender?.user_id)===c.selfId;message.quotedSenderId=original.senderId;message.quotedSenderIsBot=message.quotedIsSelf||turnSettings().knownBotIds.includes(original.senderId);message.quotedAt=Number(quote.time)*1000||null;message.quotedText=original.content;message.verifiedQuoteRefMsgIdx=message.refMsgIdx;message.quoteStatus='verified';}}}catch{}}
     await bot.handleInboundMessage(message);
   }});
@@ -138,11 +162,12 @@ export function stageOneBotFiles(ctx){
   const identity={appId:config.legacyAppId,scope:ctx.message.kind,peerId:ctx.message.kind==='group'?ctx.message.groupOpenid:ctx.message.senderId,senderId:ctx.message.senderId};
   const evidence=ctx.state.qqEvidence;assertPrivacyContext(evidence);const before=privacyState(identity);if(before.pending)throw failure('OneBotPrivacyPending','正在清理本会话。');
   const root=qqWorkspace(identity),incoming=path.join(root,'incoming');fs.mkdirSync(incoming,{recursive:true});
-  const staged=[];
+  const staged=[];let rootRejected=0,notFile=0,tooLarge=0;
   try{for(const f of items.slice(0,8)){
-    const actual=fs.realpathSync(f.localPath);const allowed=(config.mediaRoots||[]).some(r=>{try{const rel=path.relative(fs.realpathSync(r),actual);return rel!==''&&!path.isAbsolute(rel)&&rel!=='..'&&!rel.startsWith('..'+path.sep);}catch{return false;}});if(!allowed)continue;
-    const stat=fs.statSync(actual);if(!stat.isFile()||stat.size>21*1024*1024)continue;
+    const actual=fs.realpathSync(f.localPath);const allowed=(config.mediaRoots||[]).some(r=>{try{const rel=path.relative(fs.realpathSync(r),actual);return rel!==''&&!path.isAbsolute(rel)&&rel!=='..'&&!rel.startsWith('..'+path.sep);}catch{return false;}});if(!allowed){rootRejected++;continue;}
+    const stat=fs.statSync(actual);if(!stat.isFile()){notFile++;continue;}if(stat.size>21*1024*1024){tooLarge++;continue;}
     const filename=path.basename(f.filename).replace(/[^\p{L}\p{N}._-]/gu,'_').slice(-120)||'attachment';const target=scopedPath(root,path.join(incoming,randomUUID()+'-'+filename));fs.copyFileSync(actual,target,fs.constants.COPYFILE_EXCL);staged.push({localPath:target,filename,contentType:'application/octet-stream',size:stat.size});
   }assertPrivacyContext(evidence);const after=privacyState(identity);if(after.pending||after.version!==before.version)throw failure('OneBotPrivacyChanged','会话清理版本已变化。');ctx.state.downloadedFiles=[...(ctx.state.downloadedFiles||[]),...staged];
-  }catch(e){for(const f of staged)try{fs.unlinkSync(f.localPath);}catch{}throw e;}
+  console.info(`[im-onebot] inbound file staging candidates=${Math.min(items.length,8)} staged=${staged.length} root_rejected=${rootRejected} non_file=${notFile} oversized=${tooLarge}`);
+  }catch(e){for(const f of staged)try{fs.unlinkSync(f.localPath);}catch{}console.warn(`[im-onebot] inbound file staging failed code=${safeDiagnosticCode(e)} candidates=${Math.min(items.length,8)}`);throw e;}
 }

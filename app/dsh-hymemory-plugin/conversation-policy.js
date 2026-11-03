@@ -4,6 +4,7 @@ import {personaMaterialAllowed} from './persona-policy.js';
 import {activitySettings} from './group-activity.js';
 import {evidenceSourceIds} from './memory-view.js';
 import {recordMetric} from './metrics.js';
+import {isCurrentFileTask} from './file-task-intent.js';
 export {projectMemoryView} from './memory-view.js';
 
 // Policy contains configuration only. Recalled text is never persisted here.
@@ -28,6 +29,7 @@ export function memorySourceIds(value) {
   return evidenceSourceIds(value);
 }
 export async function recallConversation({identity,input,request,base}) {
+  if(isCurrentFileTask(input))return {memories:[],sourceIds:[],context:''};
   const started=performance.now();
   const enabled=conversationPolicy().enabled===true;
   if(enabled&&!recallNeeded(input))return {memories:[],sourceIds:[],context:''};

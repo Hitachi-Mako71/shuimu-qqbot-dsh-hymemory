@@ -1,4 +1,5 @@
 import {VOICE_STYLE} from './voice.js';
+import {installTLSCompatibility} from './tls-compat.js';
 import { installClock } from './clock.js';
 import { installTimetable } from './timetable.js';
 import { namespaceOf, MEMORY_CONTEXT } from './bridge.js';
@@ -15,6 +16,7 @@ export const name = 'dsh-hymemory-qq';
 export const inject = ['llm', 'systemPrompt', 'tools', 'workingDirectory'];
 
 export async function apply(ctx) {
+  installTLSCompatibility();
   installQQMetrics(ctx);
   installQQToolBoundary(ctx);
   installClock(ctx);

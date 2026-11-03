@@ -1,4 +1,5 @@
 import {queryPolicy} from './query-policy.js';
+import {isCurrentFileTask} from './file-task-intent.js';
 export function historyPlan(value) {
   const text=value.trim();
   const sources=text.match(/^展开原话\s*[:：]\s*([a-zA-Z0-9_-]{1,128})$/);
@@ -8,7 +9,7 @@ export function historyPlan(value) {
   if(/^约定\s*[:：]\s*\S/.test(text))return {mode:'episode-save'};
   if(/^约定列表[。！!\s]*$/.test(text))return {mode:'episode-list'};
   if(/^(?:查原话|查历史)\s*[:：]/.test(text))return {mode:'search',explicit:true};
-  if(queryPolicy(text).web)return null;
+  if(queryPolicy(text).web||isCurrentFileTask(text))return null;
   if(/上次|刚才|那件事|之前|以前|还记得|最早|第一次|首次|原话|说过什么|约好|答应过|我们的约定/.test(text))return {mode:'search'};
   return null;
 }

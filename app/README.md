@@ -24,4 +24,4 @@ Set-Location <仓库路径>\app
 
 `.env`、`qq.credentials.json`、`data/`、`.privacy/`、`runtime/` 和本机登录态都由部署环境保管。详细说明见[配置与数据目录](../docs/deployment/configuration.md)。
 
-当前公开源码、候选包和本机活动 profile 均为 **0.22.32**。临时正文风格处理只去掉 DeepSeek 正文末尾中文句号；两个群的真实 QQ 收发核对记录来自上一版 0.22.28，本次没有发送验收消息。详见[维护交接](../docs/development/handoff.md)。
+当前公开源码、候选包和本机活动 profile 均为 **0.22.33**。当前附件任务避开模糊历史查询；QQ 专用进程使用兼容 TLS 组，三次真实模型请求通过，真实 QQ 入站到出站记录为 9.349 秒（原 88.425 秒），单次模型调用、零 TRANSPORT 重试，并有平台发送回执。详见[维护交接](../docs/development/handoff.md)。

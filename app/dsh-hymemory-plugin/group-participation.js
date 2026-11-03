@@ -1,4 +1,4 @@
-import {splitQQShortMessages} from './voice.js';
+import {splitQQShortMessages,stripFinalChineseFullStop} from './voice.js';
 import {turnSettings,replyEligibility,candidateFor,candidateCheck,reserveCandidate} from './turn-strategy.js';
 import { botNames } from './character.js';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';

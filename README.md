@@ -3,16 +3,16 @@
 **在 QQ 中聊天、管理群参与，并保留可追溯的真实记忆。**
 
 [![Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/deployment/windows.md)
-[![Plugin 0.22.33](https://img.shields.io/badge/plugin-0.22.33-6C5CE7)](app/versions.json)
+[![Plugin 0.22.34](https://img.shields.io/badge/plugin-0.22.34-6C5CE7)](app/versions.json)
 [![Hindsight 1.1.0](https://img.shields.io/badge/memory-Hindsight%201.1.0-00897B)](docs/reference/V2_3_HINDSIGHT_MEMORY.md)
 
 [开始部署](docs/deployment/README.md) · [使用指南](docs/usage/README.md) · [开发文档](docs/development/README.md) · [更新记录](CHANGELOG.md)
 
 柚柚是基于 **DeepSeek Harness（DSH）** 的 QQ AI 助手，使用 **DeepSeek** 进行文字对话，使用 **Hindsight** 管理长期记忆。项目同时支持腾讯官方 QQ Bot，以及个人 QQ + NapCat / OneBot 11 两种接入方式。
 
-当前应用版本为 **V3.5.0**，源码及本机 profile 插件均为 **0.22.33**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
+当前应用版本为 **V3.5.0**，源码及本机 profile 插件均为 **0.22.34**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
 
-**2026-11-03 本地部署：** 插件 0.22.33 修复当前附件任务被“刚才”误判为历史查询的额外等待，并修复本机 Node 默认 TLS 组协商导致的 DeepSeek 连接超时。三次真实模型请求均成功（1.447 / 0.552 / 0.471 秒），443 项离线合成核验通过；用户新发消息的真实 QQ 入站到出站记录为 9.349 秒（原 88.425 秒），单次模型调用、零 TRANSPORT 重试，已核对平台回执。保留 0.22.32 附件状态误报约束与现有文件权限，参与模式保持 off。
+**2026-11-03 本地部署：** 插件 0.22.34 补齐群旁听发送前的句尾句号处理函数导入，修复模型已生成却因 ReferenceError 无法发送的问题。444 项离线合成核验通过，真实群回复回执待新消息观察；群聊频率及权限保持原设置。上一版文件路由及 TLS 修复保留，其真实 QQ 请求耗时为 9.349 秒（原 88.425 秒），单次模型调用、零 TRANSPORT 重试。
 
 ## 可以做什么
 

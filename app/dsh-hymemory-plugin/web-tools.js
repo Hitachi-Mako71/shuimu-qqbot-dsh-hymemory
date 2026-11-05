@@ -14,9 +14,10 @@ function publicUrl(input){
 // Pinned integration with dsh-web-fetch-http 0.2.1-rc.2. Every hop uses its
 // public-IP/DNS/proxy validation, anonymous request, byte cap and body decoder.
 // No runtime/global provider is mutated. Missing internals fail closed.
-export async function fetchPublicRedirects(provider,url,signal){
+export async function fetchPublicRedirects(provider,url,signal,options={}){
   if(provider?.id!=='http'||typeof provider.requestOnce!=='function'||typeof provider.readBody!=='function'||!provider.limits||typeof provider.fetch!=='function')throw webError('QQ_WEB_ADAPTER_UNAVAILABLE','当前网页提供方不支持跳转恢复。');
   const local=Object.create(provider);
+  if(options.readBody)local.readBody=options.readBody;
   local.followAndRead=async(initial,deadlineSignal)=>{
     let current=publicUrl(initial);const visited=new Set();
     const cap=Math.min(5,Math.max(0,provider.limits.maxRedirects));
@@ -27,7 +28,7 @@ export async function fetchPublicRedirects(provider,url,signal){
       const request=await provider.requestOnce(current,deadlineSignal);
       try{
         const response=request.response;
-        if(!redirects.has(response.status))return await provider.readBody(response,current,deadlineSignal);
+        if(!redirects.has(response.status))return await local.readBody(response,current,deadlineSignal);
         const location=response.headers.get('location');await response.body?.cancel();
         if(hop>=cap)throw webError('WEB_REDIRECT_BLOCKED','网页跳转次数过多，未读到原文。');
         if(!location)throw webError('WEB_PROVIDER_ERROR','跳转响应没有目标链接。');

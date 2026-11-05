@@ -71,6 +71,35 @@ export function normalizeOneBotFileNotice(event){
   return {...event,post_type:'message',message_type:group?'group':'private',sub_type:'friend',message_id:0,message:[{type:'file',data:{file_id:event.file.id,name:event.file.name,url:event.file.url,file_size:event.file.size}}]};
 }
 
+// Pair the gateway's two representations of one upload only. Same-kind
+// retransmissions and any accompanying request text remain independent turns.
+export function createOneBotFileDeduper(config,{now=()=>Date.now()}={}){
+  const pending=new Map(),ttl=30000,maxBytes=21*1024*1024;
+  return (message,event)=>{
+    let kind;
+    if(event?.post_type==='notice'&&['offline_file','group_upload'].includes(event.notice_type))kind='notice';
+    else if(event?.post_type==='message'&&Array.isArray(event.message)&&event.message.length&&event.message.every(s=>s?.type==='file'||s?.type==='text'&&!String(s.data?.text||'').trim()))kind='message';
+    else return false;
+    const files=message?.[LOCAL_FILES];if(files?.length!==1)return false;
+    const item=files[0];if(typeof item.localPath!=='string'||approvedMediaRoot(config,item.localPath)<0)return false;
+    let digest,fd;
+    try{
+      const actual=fs.realpathSync(item.localPath);fd=fs.openSync(actual,'r');
+      const before=fs.fstatSync(fd);if(!before.isFile()||before.size>maxBytes)return false;
+      const hash=createHash('sha256'),buffer=Buffer.allocUnsafe(65536);let read=0,n;
+      while((n=fs.readSync(fd,buffer,0,Math.min(buffer.length,maxBytes+1-read),null))>0){read+=n;if(read>maxBytes)return false;hash.update(buffer.subarray(0,n));}
+      const after=fs.fstatSync(fd);if(read!==before.size||after.size!==before.size||after.mtimeMs!==before.mtimeMs)return false;
+      digest=hash.digest('hex');
+    }catch{return false;}finally{if(fd!==undefined)fs.closeSync(fd);}
+    const at=now(),key=JSON.stringify([message.kind,message.kind==='group'?message.groupOpenid:message.senderId,message.senderId,path.basename(String(item.filename||'')),digest]);
+    for(const [k,queue] of pending){const live=queue.filter(p=>at-p.at>=0&&at-p.at<=ttl);if(live.length)pending.set(k,live);else pending.delete(k);}
+    const queue=pending.get(key)||[],paired=queue.findIndex(p=>p.kind!==kind);
+    if(paired>=0){queue.splice(paired,1);if(queue.length)pending.set(key,queue);else pending.delete(key);return true;}
+    queue.push({kind,at});if(queue.length>8)queue.shift();pending.set(key,queue);
+    if(pending.size>256)pending.delete(pending.keys().next().value);return false;
+  };
+}
+
 export class OneBotConnection{
   constructor(config,{WebSocketClass=WebSocket,status=()=>{},onMessage=async()=>{},onReady=async()=>{}}={}){this.config=config;this.WebSocketClass=WebSocketClass;this.status=status;this.onMessage=onMessage;this.onReady=onReady;this.pending=new Map();this.online=false;this.closed=true;this.generation=0;}
   rpc(action,params={},duringLogin=false){
@@ -82,16 +111,36 @@ export class OneBotConnection{
   connect(){
     if(this.closed)return;const generation=++this.generation;this.status('connecting');const u=new URL(this.config.url);u.searchParams.set('access_token',this.config.token);
     const socket=new this.WebSocketClass(u.href);this.socket=socket;
-    socket.addEventListener('open',async()=>{try{const info=await this.rpc('get_login_info',{},true);if(String(info.user_id)!==this.config.selfId){this.status('wrong_account');this.stop();return;}if(generation!==this.generation||this.closed)return;this.online=true;this.status('ready');await this.onReady(info);}catch{if(!this.closed)socket.close();}});
+    const incoming=[];let incomingBytes=0,accepting=false;
+    this.clearIncoming=()=>{incoming.length=0;incomingBytes=0;accepting=false;};
+    const deliver=packet=>{try{Promise.resolve(this.onMessage(packet)).catch(()=>this.status('message_failed'));}catch{this.status('message_failed');}};
+    socket.addEventListener('open',async()=>{
+      try{
+        const info=await this.rpc('get_login_info',{},true);
+        if(generation!==this.generation||this.closed)return;
+        if(String(info.user_id)!==this.config.selfId){this.status('wrong_account');this.stop();return;}
+        this.online=true;await this.onReady(info);
+        if(generation!==this.generation||this.closed||!this.online)return;
+        accepting=true;
+        for(const item of incoming){if(Date.now()-item.at<=30000)deliver(item.packet);else this.status('message_buffer_expired');}
+        incoming.length=0;incomingBytes=0;this.status('ready');
+      }catch{if(!this.closed)socket.close();}
+    });
     socket.addEventListener('message',event=>{
       if(generation!==this.generation||typeof event.data!=='string'||event.data.length>8*1024*1024)return;let p;try{p=JSON.parse(event.data);}catch{return;}
       if(typeof p.echo==='string'&&this.pending.has(p.echo)){const call=this.pending.get(p.echo);this.pending.delete(p.echo);clearTimeout(call.timer);if(p.status==='ok'&&p.retcode===0)call.resolve(p.data);else call.reject(failure('OneBotAPIRejected','QQ接口拒绝了本次操作（'+String(Number(p.retcode)||'unknown')+'）。'));return;}
-      if(this.online&&['message','notice'].includes(p.post_type)&&String(p.self_id)===this.config.selfId)void this.onMessage(p).catch(()=>this.status('message_failed'));
+      if(!['message','notice'].includes(p.post_type)||String(p.self_id)!==this.config.selfId)return;
+      if(accepting&&this.online){deliver(p);return;}
+      // Only same-socket fresh events are held. They are never dispatched until
+      // the configured account and application readiness have both succeeded.
+      const bytes=Buffer.byteLength(event.data,'utf8');
+      if(incoming.length>=32||incomingBytes+bytes>1024*1024){this.status('message_buffer_full');return;}
+      incoming.push({packet:p,at:Date.now()});incomingBytes+=bytes;
     });
     socket.addEventListener('error',()=>{});
-    socket.addEventListener('close',()=>{if(generation!==this.generation)return;this.online=false;for(const p of this.pending.values()){clearTimeout(p.timer);p.reject(failure('OneBotDisconnected','QQ连接中断，未确认操作不会自动重放。'));}this.pending.clear();if(!this.closed){this.status('reconnecting');this.timer=setTimeout(()=>this.connect(),5000);this.timer.unref();}});
+    socket.addEventListener('close',()=>{if(generation!==this.generation)return;this.clearIncoming?.();this.online=false;for(const p of this.pending.values()){clearTimeout(p.timer);p.reject(failure('OneBotDisconnected','QQ连接中断，未确认操作不会自动重放。'));}this.pending.clear();if(!this.closed){this.status('reconnecting');this.timer=setTimeout(()=>this.connect(),5000);this.timer.unref();}});
   }
-  stop(){this.closed=true;this.online=false;++this.generation;clearTimeout(this.timer);for(const p of this.pending.values()){clearTimeout(p.timer);p.reject(failure('OneBotStopped','QQ接入已停止。'));}this.pending.clear();this.socket?.close();this.resolveStopped?.();}
+  stop(){this.closed=true;this.online=false;this.clearIncoming?.();++this.generation;clearTimeout(this.timer);for(const p of this.pending.values()){clearTimeout(p.timer);p.reject(failure('OneBotStopped','QQ接入已停止。'));}this.pending.clear();this.socket?.close();this.resolveStopped?.();}
 }
 function mediaFile(source){
   if(Buffer.isBuffer(source))return 'base64://'+source.toString('base64');
@@ -107,7 +156,7 @@ export function configureQQTransport(bot,config,options={}){
   try{c=JSON.parse(fs.readFileSync(file,'utf8').replace(/^\uFEFF/,''));}catch(e){if(e.code==='ENOENT')return bot;throw e;}
   if(c.mode==='official')return bot;validateOneBotConfig(c,config.appId);const ids=new OneBotIdentityMap(c);
   const status=state=>{try{const target=path.join(path.dirname(file),'status.json');fs.writeFileSync(target,JSON.stringify({mode:'onebot',state,updatedAt:new Date().toISOString()}),{mode:0o600});}catch{}};
-  const outgoingPeers=new Map();
+  const outgoingPeers=new Map(),duplicateFile=createOneBotFileDeduper(c);
   const connection=new OneBotConnection(c,{...options,status,onReady:async info=>{console.log('[im-onebot] Personal-account transport ready (identity verified)');await bot.emit('ready',{user:{id:ids.user(c.selfId),username:info.nickname},transport:'onebot'});},onMessage:async originalEvent=>{
     const fileNotice=normalizeOneBotFileNotice(originalEvent);const event=fileNotice||originalEvent;
     const message=normalizeOneBotMessage(event,ids);if(!message)return;
@@ -134,6 +183,7 @@ export function configureQQTransport(bot,config,options={}){
       }catch(e){console.warn(`[im-onebot] inbound file resolve failed code=${safeDiagnosticCode(e)}`);}
     }
     if(message.refMsgIdx){try{const ref=event.message.find(s=>s.type==='reply')?.data?.id;const quote=await connection.rpc('get_msg',{message_id:Number(ref)}),sent=outgoingPeers.get(String(ref));const same=message.kind==='group'?String(quote.group_id)===String(event.group_id):quote.message_type==='private'&&([String(quote.user_id),String(quote.sender?.user_id)].includes(String(event.user_id))||(String(quote.sender?.user_id||quote.user_id)===c.selfId&&sent?.scope==='c2c'&&sent.targetId===message.senderId));if(same){const original=normalizeOneBotMessage({...quote,self_id:c.selfId,post_type:'message',message_type:event.message_type,sub_type:'friend',group_id:event.group_id,user_id:quote.user_id||quote.sender?.user_id},ids,{quoted:true});if(original){message.msgElements=[{msg_idx:message.refMsgIdx,content:original.content,attachments:original.attachments}];message.quotedIsSelf=String(quote.user_id||quote.sender?.user_id)===c.selfId;message.quotedSenderId=original.senderId;message.quotedSenderIsBot=message.quotedIsSelf||turnSettings().knownBotIds.includes(original.senderId);message.quotedAt=Number(quote.time)*1000||null;message.quotedText=original.content;message.verifiedQuoteRefMsgIdx=message.refMsgIdx;message.quoteStatus='verified';}}}catch{}}
+    if(duplicateFile(message,originalEvent))return;
     await bot.handleInboundMessage(message);
   }});
   bot.opts.transport=connection;

@@ -22,15 +22,22 @@ test('explicit remember is processed before Agent generation and reports source 
   } finally { globalThis.fetch = original; }
 });
 
-test('memory outage permits normal QQ chat to continue', async () => {
+test('default ordinary chat does not contact an unavailable memory service', async () => {
   assert.equal(typeof plugin.beforeQQTurn, 'function', 'QQ inbound memory hook is missing');
   const original = globalThis.fetch;
   try {
-    globalThis.fetch = async () => { throw new Error('offline'); };
+    let calls=0;globalThis.fetch = async () => { calls++;throw new Error('offline'); };
     const result = await plugin.beforeQQTurn({ identity, text: '今天聊什么？', messageId: 'msg-2' });
     assert.equal(result.handled, false);
-    assert.equal(result.available, false);
+    assert.equal(result.available, true);
+    assert.equal(calls,0);
   } finally { globalThis.fetch = original; }
+});
+
+test('an explicit lookup reports a real memory outage without claiming success',async()=>{
+ const original=globalThis.fetch;
+ try{let calls=0;globalThis.fetch=async()=>{calls++;throw Error('offline');};const result=await plugin.beforeQQTurn({identity,text:'查记忆：合成偏好',messageId:'msg-lookup'});assert.equal(result.handled,true);assert.equal(result.available,false);assert.ok(calls>0);assert.match(result.reply,/暂不可用|未确认成功/);}
+ finally{globalThis.fetch=original;}
 });
 
 test('completed-turn notification does not re-enqueue originals or call the LLM', async () => {

@@ -6,6 +6,8 @@ import {evidenceSourceIds} from './memory-view.js';
 import {recordMetric} from './metrics.js';
 import {isCurrentFileTask} from './file-task-intent.js';
 import {isStandaloneKnowledgeQuery} from './knowledge-task-intent.js';
+import {queryPolicy} from './query-policy.js';
+import {automaticMemoryRecall} from './memory-recall-mode.js';
 export {projectMemoryView} from './memory-view.js';
 
 // Policy contains configuration only. Recalled text is never persisted here.
@@ -22,18 +24,24 @@ export const adaptiveGroup=row=>conversationPolicy().enabled===true && row?.conv
 export function dialogueContext(identity, turn = {}) {
   return conversationPolicy().enabled ? nativeDialoguePrompt(identity, turn) : {context:'',policy:null};
 }
+const INDEPENDENT_RECALL_INTENTS=new Set(['offline','local-task','public-page','public-lookup','current-public-fact','public-identity-or-fact']);
 export function recallNeeded(input) {
-  // Only unambiguous standalone social acknowledgements skip semantic I/O.
-  return !/^(?:你好|嗨|哈[哈]+|嘿嘿|嗯[嗯嗯]*|好[的呀啊]?|谢谢[你呀]?|收到|晚安|早安|在吗)[呀啊哦呢～~!！。,.，?？\s]*$/.test(input.trim());
+  const text=input.trim();
+  if(/^(?:你好|嗨|哈[哈]+|嘿嘿|嗯[嗯嗯]*|好[的呀啊]?|谢谢[你呀]?|收到|晚安|早安|在吗|(?:我)?回来了?|(?:我)?回来(?:啦|咯|喽))[呀啊哦呢～~!！。,.，?？\s]*$/.test(text))return false;
+  // Do not let an offline/local/web task hide an explicit request for personal history.
+  if(/上次|上回|刚才|之前|以前|历史|记忆|原话|还记得|记得|说过|提过|聊过|约定|约好|答应过|那件事|那个|按(?:我|我们|本群)(?:的)?(?:偏好|习惯|约定|历史|记录)/u.test(text))return true;
+  const localTransform=/^(?:(?:请|帮我|麻烦你)\s*)?把.{0,32}(?:翻译|润色|改写|总结|计算|换算)(?:成|为|一下|下|出来)?/u.test(text);
+  return !INDEPENDENT_RECALL_INTENTS.has(queryPolicy(text).kind)&&!localTransform;
 }
 export function memorySourceIds(value) {
   return evidenceSourceIds(value);
 }
-export async function recallConversation({identity,input,request,base}) {
-  if(isCurrentFileTask(input)||isStandaloneKnowledgeQuery(input))return {memories:[],sourceIds:[],context:''};
+export async function recallConversation({identity,input,request,base,onDemand=false}) {
+  if(!onDemand&&!automaticMemoryRecall())return {memories:[],sourceIds:[],context:''};
+  if(!onDemand&&(isCurrentFileTask(input)||isStandaloneKnowledgeQuery(input)))return {memories:[],sourceIds:[],context:''};
   const started=performance.now();
   const enabled=conversationPolicy().enabled===true;
-  if(enabled&&!recallNeeded(input))return {memories:[],sourceIds:[],context:''};
+  if(!onDemand&&enabled&&!recallNeeded(input))return {memories:[],sourceIds:[],context:''};
   const result=await request('/search',{...base,query:input.slice(0,4000),limit:6},30000);
   const seen=new Set();let budget=0;
   const memories=(result.memories||[]).filter(m=>{

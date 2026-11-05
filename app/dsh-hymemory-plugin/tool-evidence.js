@@ -8,7 +8,7 @@ export const UNVERIFIED_WEB_REPLY='这条信息我还没有核实清楚，暂时
 export function installQQToolEvidence(ctx) {
   if(installed.has(ctx))return;installed.add(ctx);
   ctx.on('tools/execute',async(exec,next)=>{
-    const context=exec.agent?.[EVIDENCE],kind=exec.name==='web_search'?'search':exec.name==='web_fetch'?'fetch':['read','glob','grep','qqbot_clock','qqbot_timetable','qqbot_group_members'].includes(exec.name)?'local':null;
+    const context=exec.agent?.[EVIDENCE],kind=exec.name==='web_search'?'search':exec.name==='web_fetch'?'fetch':exec.name==='qqbot_read_pdf'?(exec.arguments?.url?'fetch':'local'):['read','glob','grep','qqbot_clock','qqbot_timetable','qqbot_group_members','qqbot_recall_memory'].includes(exec.name)?'local':null;
     if(!kind||!context||!exec.agent?.[IDENTITY])return next();
     // Capture this turn before awaiting: late completion cannot credit a new turn.
     context.webEvidence||=empty();context.webEvidence[kind]||={attempts:0,successes:0};
@@ -26,6 +26,9 @@ function asserted(text,pattern) {
   for(const match of text.matchAll(pattern)){
     const before=text.slice(Math.max(0,match.index-16),match.index);
     if(/(?:没有|还没|尚未|未|不|不能|不要|无法|如果|假如|例如|比如|除非)\s*$/u.test(before))continue;
+    // A locally qualified historical lookup is not a claim of a current call.
+    // Check each match separately so a later current-tense claim is still gated.
+    if(/(?:上次|之前|此前|以前|先前|那次)(?:的|我|我用的)?\s*$/u.test(before))continue;
     return true;
   }
   return false;
@@ -36,10 +39,17 @@ export function groundedQQReply(value,context) {
   const search=asserted(text,/(?:我|本轮|这次)(?:刚刚|刚才|刚|已经|已|又|也|还)?(?:在网上|联网)?(?:搜索|查询|检索|搜|查)(?:了|过)/gu);
   const negativeFinding=/(?:我|本轮|这次)(?:没有|没|未)(?:搜索到|检索到|搜到)/u.test(text);
   const found=asserted(text,/(?:搜|查|检索)到|(?:搜索|查询|检索)结果(?:显示|表明)/gu);
+  // A successful unrelated local read must never substantiate a web-search
+  // finding. Negative findings also require a completed search, not an attempt.
+  const webFinding=asserted(text,/(?:网上|联网|搜索引擎|网页搜索|搜索结果|搜索到|检索结果|检索到)/gu);
   const page=asserted(text,/(?:我|本轮|这次)(?:刚刚|刚才|刚|已经|已)?(?:打开|读取|看|读)(?:了|过)(?:这个|该|这篇|这张)?(?:网页|链接|页面)|(?:网页|页面)(?:原文)?(?:显示|写着|说明)/gu);
   const explicitWeb=/(?:在网上|联网|搜索引擎)/u.test(text);
   const localAttempts=explicitWeb?0:count(context,'local','attempts'),localSuccesses=explicitWeb?0:count(context,'local','successes');
-  const reason=((search||negativeFinding)&&!count(context,'search','attempts')&&!localAttempts)||(found&&!count(context,'search','successes')&&!localSuccesses)?'unverified_search':page&&!count(context,'fetch','successes')?'unverified_fetch':'';
+  const reason=((search||negativeFinding)&&!count(context,'search','attempts')&&!localAttempts)
+    ||(negativeFinding&&!count(context,'search','successes'))
+    ||(webFinding&&!count(context,'search','successes'))
+    ||(found&&!count(context,'search','successes')&&!localSuccesses)
+    ?'unverified_search':page&&!count(context,'fetch','successes')?'unverified_fetch':'';
   if(!reason)return value;
   recordMetric('grounding',{count:1,status:'blocked',reason});
   return UNVERIFIED_WEB_REPLY;

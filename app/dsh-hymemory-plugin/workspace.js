@@ -10,7 +10,7 @@ import {configureQQTurnBudget,qqTurnToolDenial} from './turn-budget.js';
 
 const IDENTITY = Symbol.for('qqbot.identity');
 const allowed = new Set(['read', 'write', 'edit', 'read_image', 'glob', 'grep', 'working_directory',
-  'web_search', 'web_fetch', 'qqbot_group_members', 'qqbot_clock', 'qqbot_timetable', 'qqbot_send_file', 'qqbot_describe_image', 'ask_user_question', 'todo_write', 'run_code']);
+  'web_search', 'web_fetch', 'qqbot_read_pdf', 'qqbot_recall_memory', 'qqbot_group_members', 'qqbot_clock', 'qqbot_timetable', 'qqbot_send_file', 'qqbot_describe_image', 'ask_user_question', 'todo_write', 'run_code']);
 const within = (root, target) => {
   const relative = path.relative(root, target);
   return !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep);
@@ -87,6 +87,7 @@ export function qqToolDenial(exec) {
     if (args.sandbox_permissions === 'require_escalated') return 'QQ 文件工具不能扩大访问范围。';
     const current = exec.agent.ctx.get('workingDirectory').get(exec.agent.session);
     const cwd = scopedPath(root, current);
+    if(exec.name==='qqbot_read_pdf'&&args.file_path)scopedPath(root,args.file_path,cwd);
     if (['read', 'write', 'edit', 'read_image', 'qqbot_send_file', 'qqbot_describe_image'].includes(exec.name)) {
       scopedPath(root, args.file_path ?? args.image, cwd);
     }

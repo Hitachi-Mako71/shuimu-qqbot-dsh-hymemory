@@ -3,16 +3,16 @@
 **在 QQ 中聊天、管理群参与，并保留可追溯的真实记忆。**
 
 [![Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/deployment/windows.md)
-[![Plugin 0.22.36](https://img.shields.io/badge/plugin-0.22.36-6C5CE7)](app/versions.json)
+[![Plugin 0.22.46](https://img.shields.io/badge/plugin-0.22.46-6C5CE7)](app/versions.json)
 [![Hindsight 1.1.0](https://img.shields.io/badge/memory-Hindsight%201.1.0-00897B)](docs/reference/V2_3_HINDSIGHT_MEMORY.md)
 
 [开始部署](docs/deployment/README.md) · [使用指南](docs/usage/README.md) · [开发文档](docs/development/README.md) · [更新记录](CHANGELOG.md)
 
 柚柚是基于 **DeepSeek Harness（DSH）** 的 QQ AI 助手，使用 **DeepSeek** 进行文字对话，使用 **Hindsight** 管理长期记忆。项目同时支持腾讯官方 QQ Bot，以及个人 QQ + NapCat / OneBot 11 两种接入方式。
 
-当前应用版本为 **V3.5.0**，源码及本机 profile 插件均为 **0.22.36**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
+当前应用版本为 **V3.5.0**，本机 profile 目标版本为 **0.22.46**。可运行工程位于 [`app/`](app/README.md)，安装、配置和启动命令均从该目录执行。
 
-**2026-11-03 本地部署：** 插件 0.22.36 默认回复已启用群的疑问句，并增加当前轮工具依据和普通/流式发送校验，阻止已覆盖的无依据查询声明。群问答合并等待缩至 350 毫秒，自足知识、操作及算式跳过无关长期召回。两条真实未 @ 群问句已取得平台回执：含搜索概念问答 11.474 秒，简单算式 2.635 秒；506 项离线合成核验通过，84 个插件文件安装哈希一致。
+**2026-11-05 更新：** 0.22.46 普通聊天默认快速档，明确要求仔细复查时本轮请求高档思考并重读附件源码；支持查询当前模型与最近请求档位。修复 OneBot 初始化窗口漏交和同一附件两类网关事件重复入库；默认按需记忆、普通回复单段、PDF 专用读取继续生效。工程核验、实际模型探针与真实 QQ 验收分别记录，见[维护交接](docs/development/handoff.md)。
 
 ## 可以做什么
 
@@ -102,3 +102,11 @@ archive/                  旧模块、旧包与历史报告
 ```
 
 凭证、QQ 登录态、OneBot 私有映射、聊天、记忆、附件和日志保存在本机；NapCat / QQ 二进制由部署者自行获取。历史模块不参与当前安装流程，已有运行实例更新前请阅读[升级说明](docs/deployment/upgrading.md)。
+
+2026-11-04：0.22.42 新增会话附件和公开链接的 PDF 正文分页读取。扫描图片页不自动 OCR，真实 QQ 内容验收状态见维护交接。
+
+2026-11-05：0.22.43 在生成消息的发送前统一为单段，删除已观察到的未请求诊断、自我复盘与无关追问；保留明确要求的格式和代码。部署及真实 QQ 验收见维护交接。
+
+2026-11-05：0.22.44 默认不做入站长期记忆和模糊历史预查；当前上下文缺少过往信息、模型准备回答不知道或不记得时，再按需查询。明确查询命令保留，后台保存及隐私规则继续生效。
+
+2026-11-05：0.22.45 为 OneBot 握手及机器人初始化期间的消息增加有界暂存，账号核验及 ready 完成后才交付；不修改模型或思考档位。

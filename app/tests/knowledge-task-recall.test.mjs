@@ -15,9 +15,9 @@ for(const input of ['什么是烟雾训练','训练模型时的烟雾训练是�
     assert.equal(calls,0);assert.deepEqual(r,{memories:[],sourceIds:[],context:''});
   }
 });
-for(const input of ['上次我问的烟雾训练是什么','你刚才说的是什么意思','这个是什么意思','什么是我们约定的接话规则','解释一下我以前的训练记录','查记忆：模型训练','Java','我喜欢什么','这个链接 https://example.invalid 是什么'])test('personal, deictic and unconstrained requests retain memory lookup: '+input,async()=>{
+for(const input of ['上次我问的烟雾训练是什么','你刚才说的是什么意思','这个是什么意思','什么是我们约定的接话规则','解释一下我以前的训练记录','查记忆：模型训练','Java','我喜欢什么','这个链接 https://example.invalid 是什么'])test('on-demand personal and contextual requests retain memory lookup: '+input,async()=>{
   fs.writeFileSync(path.join(root,'conversation-policy.json'),JSON.stringify({enabled:true}));let calls=0;
-  await recallConversation({identity,input,base,request:async()=>{calls++;return {memories:[]};}});assert.equal(calls,1);
+  await recallConversation({identity,input,base,onDemand:true,request:async()=>{calls++;return {memories:[]};}});assert.equal(calls,1);
 });
 
 for(const input of ['1+1等于几','计算 (12+3)*4','柚柚，2+2等于多少？'])test('self-contained calculation avoids memory I/O: '+input,async()=>{let calls=0;await recallConversation({identity,input,base,request:async()=>{calls++;return {memories:[]};}});assert.equal(calls,0);});

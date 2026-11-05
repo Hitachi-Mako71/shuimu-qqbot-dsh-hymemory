@@ -25,10 +25,10 @@ test('explicit original/history lookup remains a real history request',async()=>
   const input='查历史：刚才聊过什么文件';assert.deepEqual(historyPlan(input),{mode:'search',explicit:true});
   let endpoint;const result=await historyTurn({input,base,request:async(e)=>{endpoint=e;return {sources:[]};}});assert.equal(endpoint,'/history/search');assert.equal(result.handled,true);
 });
-for(const input of ['还记得我上次上传的文档吗','结合我以前的偏好总结这个文件'])test('personal history dependency is not silently discarded: '+input,async()=>{
-  assert.equal(historyPlan(input)?.mode,'search');let calls=0;await recallConversation({identity,input,base,request:async()=>{calls++;return {memories:[]};}});assert.equal(calls,1);
+for(const input of ['还记得我上次上传的文档吗','结合我以前的偏好总结这个文件'])test('on-demand personal history remains available: '+input,async()=>{
+  assert.equal(historyPlan(input)?.mode,'search');let calls=0;await recallConversation({identity,input,base,onDemand:true,request:async()=>{calls++;return {memories:[]};}});assert.equal(calls,1);
 });
 
-for(const input of ['按我的偏好总结这个文件','总结这个附件并对比上次的讨论','查记忆：我之前对这个文件的要求'])test('mixed file/history task keeps semantic recall: '+input,async()=>{
-  let calls=0;await recallConversation({identity,input,base,request:async()=>{calls++;return {memories:[]};}});assert.equal(calls,1);
+for(const input of ['按我的偏好总结这个文件','总结这个附件并对比上次的讨论','查记忆：我之前对这个文件的要求'])test('on-demand mixed file/history query keeps semantic recall: '+input,async()=>{
+  let calls=0;await recallConversation({identity,input,base,onDemand:true,request:async()=>{calls++;return {memories:[]};}});assert.equal(calls,1);
 });

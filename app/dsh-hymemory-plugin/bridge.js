@@ -19,6 +19,7 @@ export { prepareQQAgent, isolateQQFiles, stageQQDownloads, qqWorkspace } from '.
 import { beforeImageTurn, registerCodexImages } from './codex-images.js';
 import { characterDescription } from './character.js';
 import { modelRoute, conversationMode } from './model-route.js';
+import {reasoningStatus} from './response-speed.js';
 export { splitQQShortMessages } from './voice.js';
 import { registerQQMedia } from './qq-media.js';
 export { rememberQQMedia, prepareQQImages } from './qq-media.js';
@@ -57,7 +58,10 @@ export async function beforeQQTurn({ identity, text = '', messageId = '', quoted
   const clock = await beforeClockTurn({ identity, text });
   if (clock?.handled) return clock;
   const selectedRoute = modelRoute();
-  if (/^(?:当前模型|模型状态)$/.test(text.trim())) return { handled: true, reply: `当前对话提供方：DeepSeek\n模型：${selectedRoute.model}` };
+  if (/^(?:当前模型|模型状态)$/.test(text.trim())) {
+    const thinking=reasoningStatus(identity);
+    return { handled:true,reply:`当前对话提供方：DeepSeek；模型：${selectedRoute.model}；思考：${thinking.mode==='auto'?'按请求自动选择':'固定档位'}，普通请求 ${thinking.baseline}，仔细复查 ${thinking.mode==='auto'?thinking.carefulEffort:thinking.baseline}${thinking.lastRequested?`；本会话最近请求档位 ${thinking.lastRequested.effort}`:''}` };
+  }
   const image = await beforeImageTurn({ identity, text, messageId });
   if (image?.handled) return image;
   const mode = conversationMode();

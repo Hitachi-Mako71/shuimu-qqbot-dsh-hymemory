@@ -10,7 +10,16 @@ if(-not $root.StartsWith($allowed,[StringComparison]::OrdinalIgnoreCase)){throw 
 $recordFile=Join-Path $project '.run/napcat-launch.private.json'
 if(Test-Path -LiteralPath $recordFile){
     $record=Get-Content -LiteralPath $recordFile -Raw|ConvertFrom-Json
-    $running=Get-CimInstance Win32_Process -Filter ('ProcessId='+[int]$record.pid) -ErrorAction SilentlyContinue
+    try{$running=Get-CimInstance Win32_Process -Filter ('ProcessId='+[int]$record.pid) -ErrorAction Stop}
+    catch{
+        $recordedProcess=Get-Process -Id ([int]$record.pid) -ErrorAction SilentlyContinue
+        if($recordedProcess){
+            $recordedPath=$recordedProcess.Path
+            if(-not $recordedPath){throw 'NapCatProcessIdentityUnavailable'}
+            if([IO.Path]::GetFullPath($recordedPath) -eq (Join-Path $root 'NapCatWinBootMain.exe')){return}
+        }
+        $running=$null
+    }
     if($running -and $running.ExecutablePath -eq (Join-Path $root 'NapCatWinBootMain.exe') -and $running.CommandLine.Contains([string]$cfg.qqExecutable)){return}
 }
 if(-not(Test-Path -LiteralPath $cfg.qqExecutable)){throw 'The configured QQ executable is missing'}

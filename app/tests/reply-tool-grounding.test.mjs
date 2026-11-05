@@ -20,6 +20,10 @@ test('stream updates and completion cannot publish the unsupported claim',async(
 });
 for(const text of ['我还没有搜索，暂时无法核实','不要写“我搜了一下”，除非确实搜过','上次的搜索结果只能作参考','这个概念我不能确定'])test('does not rewrite negation, quotation or explicit history: '+text,async()=>{const f=fixture();await withQQEvidence(f.agent,()=>f.bot.sendMarkdown(target,text));assert.equal(f.sent[0],text);});
 test('successful current-turn search permits an honest search statement',async()=>{const f=fixture({search:{attempts:1,successes:1}}),text='我查到了对应说明，来源在这里';await withQQEvidence(f.agent,()=>f.bot.sendMarkdown(target,text));assert.equal(f.sent[0],text);});
+
+test('a historical disclaimer cannot authorize a later current-turn search claim',async()=>{
+ const f=fixture();await withQQEvidence(f.agent,()=>f.bot.sendMarkdown(target,'上次的搜索结果只能作参考，这次我搜到了新的结论'));assert.doesNotMatch(f.sent[0],/搜到了|新的结论/);assert.match(f.sent[0],/核实/);
+});
 test('failed search permits reporting the attempt but not claiming findings',async()=>{const f=fixture({search:{attempts:1,successes:0}});await withQQEvidence(f.agent,()=>f.bot.sendMarkdown(target,'我搜索了，但这次调用失败'));assert.equal(f.sent[0],'我搜索了，但这次调用失败');await withQQEvidence(f.agent,()=>f.bot.sendMarkdown(target,'我查到了明确解释'));assert.doesNotMatch(f.sent[1],/查到了/);});
 test('a fetched page does not masquerade as a search',async()=>{const f=fixture({fetch:{attempts:1,successes:1}});await withQQEvidence(f.agent,()=>f.bot.sendMarkdown(target,'我搜了一下，这就是答案'));assert.doesNotMatch(f.sent[0],/搜了一下/);});
 

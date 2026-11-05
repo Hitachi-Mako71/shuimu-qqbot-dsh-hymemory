@@ -35,6 +35,8 @@ const result = await generateDialogueReply({
 
 `dialogue-adapter.js` 在父目录连接 QQbot：私聊/直接群聊复用原生 Agent，旁听复用 DeepSeek 回调；所有最终消息继续走原有发送、限流、来源和删除流程。`voice.js` 保留兼容导出，实际表达规则现在由本模块拥有。旧 `skills/yuzu-natural-chat/prompt.md` 是历史参考，不再被运行时读取。
 
+生产 Agent 的分段、列表、步骤、表格与代码排版要求由 `DEFAULT_STYLE` 统一约束，普通聊天和默认说明均保持单段短答；用户本轮明确要求结构格式时才使用相应标记，保留代码。发送端再执行紧凑排版与已知冗余尾句限制。
+
 ## 研究与验证
 
 `research/scenarios.json` 提供16个原创困难场景，没有复制用户真实聊天或 Galgame 台词，不是假称的真人数据集。补充200–300个授权匿名场景是后续研究工作，不能拿这16个场景报告用户盲测提升。

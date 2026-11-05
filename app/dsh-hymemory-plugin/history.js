@@ -1,5 +1,6 @@
 import {queryPolicy} from './query-policy.js';
 import {isCurrentFileTask} from './file-task-intent.js';
+import {automaticMemoryRecall} from './memory-recall-mode.js';
 export function historyPlan(value) {
   const text=value.trim();
   const sources=text.match(/^展开原话\s*[:：]\s*([a-zA-Z0-9_-]{1,128})$/);
@@ -23,9 +24,10 @@ function showSources(result) {
   if(!result.sources?.length)return '没有找到本会话可核对的原话；这不代表以前从未说过。';
   return result.sources.map(s=>`[原话:${s.id}] ${s.role==='user'?'用户':'柚柚'} · ${s.time || '时间未知'}${s.complete?'':'（仅展示部分）'}\n${s.text}`).join('\n\n');
 }
-export async function historyTurn({input,request,base}) {
+export async function historyTurn({input,request,base,onDemand=false}) {
   const plan=historyPlan(input);
   if(!plan)return null;
+  if(plan.mode==='search'&&!plan.explicit&&!onDemand&&!automaticMemoryRecall())return null;
   if(/^(?:false|0|off)$/i.test(process.env.QQBOT_HISTORY_RECALL_ENABLED || 'true'))return plan.mode==='search'&&!plan.explicit?null:{handled:true,reply:'历史证据查询目前已关闭。'};
   if(plan.mode==='sources')return {handled:true,reply:showSources(await request('/history/sources',{...base,source_ids:plan.ids},8000))};
   if(plan.mode==='episode-list'){

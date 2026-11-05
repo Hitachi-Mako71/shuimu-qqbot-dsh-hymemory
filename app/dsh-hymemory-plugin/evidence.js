@@ -18,6 +18,7 @@ import {withQQInboundSignal,qqInboundSignal} from './turn-context.js';
 import {recordMetric} from './metrics.js';
 import {groundedQQReply} from './tool-evidence.js';
 import {stripFinalChineseFullStop} from './voice.js';
+import {compactQQReply} from './reply-output.js';
 
 const trace = new AsyncLocalStorage();
 const EVIDENCE = Symbol.for('qqbot.evidence');
@@ -84,7 +85,7 @@ export class EvidenceStore {
     const identity = qqIdentity(value), namespace = memoryNamespace(identity);
     if (typeof message.messageId !== 'string' || !message.messageId) throw Error('EvidenceMessageIdRequired');
     const id = hash(['qq-inbound-v1', namespace, message.messageId]);
-    const context = { id, identity, namespace, inboundIds: [id], kind: 'inbound', mode: 'chat', eligible, privacyVersion: privacyState(identity).version, control: !eligible };
+    const context = { id, identity, namespace, inboundIds: [id], kind: 'inbound', mode: 'chat', eligible, privacyVersion: privacyState(identity).version, control: !eligible, replyInput: String(message.content || '') };
     return this.#transaction(() => {
       const old = this.#db.prepare('SELECT actor_id FROM evidence_events WHERE id=?').get(id);
       if (old) {
@@ -233,7 +234,16 @@ export function bindQQEvidence(agent, context, sessionId, recalledSources = []) 
   if (context) store().inbox(context, 'processing', sessionId);
 }
 export function withQQEvidence(agent, callback) { return trace.run(agent?.[EVIDENCE] || { skip: true }, callback); }
-export function withQQIdentity(identity, callback, { messageId, messageIds = [], sourceIds = [], kind = 'background', eligible = false, deliveryCheck = undefined } = {}) {
+export function attachQQMemorySources(agent,sourceIds,expectedContext){
+  const context=agent?.[EVIDENCE];
+  if(!context||context!==expectedContext||context.kind!=='agent')throw Error('QQMemoryTurnChanged');
+  assertPrivacyContext(context);
+  const privacy=privacyState(context.identity);
+  if(privacy.pending)throw Error('QQPrivacyCleanupPending');
+  const ids=store().resolveUserSources(context.identity,sourceIds).filter(id=>!privacy.sources.has(id));
+  context.inboundIds=[...new Set([...context.inboundIds,...ids])];
+}
+export function withQQIdentity(identity, callback, { messageId, messageIds = [], sourceIds = [], kind = 'background', eligible = false, deliveryCheck = undefined, replyInput = '' } = {}) {
   identity = qqIdentity(identity);
   if (!permitted(identity)) return trace.run({ skip: true }, callback);
   if(!Array.isArray(sourceIds) || sourceIds.length>4096 || sourceIds.some(id=>typeof id!=='string'||id.length>128))throw Error('QQEvidenceSourcesInvalid');
@@ -242,7 +252,7 @@ export function withQQIdentity(identity, callback, { messageId, messageIds = [],
   if(!Array.isArray(messageIds)||messageIds.length>128||messageIds.some(id=>typeof id!=='string'))throw Error('QQEvidenceMessagesInvalid');
   const turnInboundIds=store().resolveUserSources(identity,[messageId,...messageIds].flatMap(id=>store().related(identity,id))).filter(id=>!privacy.sources.has(id));
   const inboundIds=store().resolveUserSources(identity,[...turnInboundIds,...sourceIds]).filter(id=>!privacy.sources.has(id));
-  const context = { identity, namespace: memoryNamespace(identity), turnInboundIds, inboundIds, kind, eligible, mode: 'chat', privacyVersion: privacy.version,deliveryCheck };
+  const context = { identity, namespace: memoryNamespace(identity), turnInboundIds, inboundIds, kind, eligible, mode: 'chat', privacyVersion: privacy.version,deliveryCheck,replyInput };
   return trace.run(context, callback);
 }
 export function captureQQDraft(agent, event, sessionId) {
@@ -276,7 +286,7 @@ async function dispatch(context, target, text, payload, kind, send) {
 }
 
 function normalizeAssistantSendArgs(method, args, context) {
-  if (!['agent', 'group'].includes(context?.kind)) return args;
+  if (!['agent', 'group', 'background'].includes(context?.kind)) return args;
   const next = [...args];
   if (method === 'send' || method === 'sendMedia') {
     const source = next[0];
@@ -284,16 +294,16 @@ function normalizeAssistantSendArgs(method, args, context) {
     const payload = { ...source };
     let changed = false;
     if (typeof payload.content === 'string') {
-      payload.content = stripFinalChineseFullStop(groundedQQReply(payload.content,context));
+      payload.content = stripFinalChineseFullStop(compactQQReply(groundedQQReply(payload.content,context),context));
       changed = true;
     }
     if (typeof payload.markdown?.content === 'string') {
-      payload.markdown = { ...payload.markdown, content: stripFinalChineseFullStop(groundedQQReply(payload.markdown.content,context)) };
+      payload.markdown = { ...payload.markdown, content: stripFinalChineseFullStop(compactQQReply(groundedQQReply(payload.markdown.content,context),context)) };
       changed = true;
     }
     if (changed) next[0] = payload;
   } else if (typeof next[1] === 'string') {
-    next[1] = stripFinalChineseFullStop(groundedQQReply(next[1],context));
+    next[1] = stripFinalChineseFullStop(compactQQReply(groundedQQReply(next[1],context),context));
   }
   return next;
 }
@@ -326,14 +336,14 @@ export function instrumentQQEvidence(bot, appId) {
     const streamId = randomUUID(); let text = '', counter = 0, finished = false;
     return {
       update: async fullText => {
-        text = groundedQQReply(fullText,context);
+        text = compactQQReply(groundedQQReply(fullText,context),context);
         if(context)store().draft(context, `${streamId}:${++counter}`, text, { streamId, text }, 'stream_snapshot');
         return session.update(text);
       },
       complete: async () => {
         if (finished) return session.complete();
         finished = true;
-        const finalText = ['agent', 'group'].includes(context?.kind) ? stripFinalChineseFullStop(text) : text;
+        const finalText = ['agent', 'group', 'background'].includes(context?.kind) ? stripFinalChineseFullStop(text) : text;
         return limitGroupSend(groupReplyContext(context,appId,options.target),()=>dispatch(context, options.target, finalText, { streamId, target: options.target, text: finalText }, 'stream', () => trace.run({...context,sending:true},async()=>{
           if (finalText !== text && typeof session.update === 'function') await session.update(finalText);
           return session.complete();
@@ -350,6 +360,7 @@ export function mergeQQEvidence(contexts) {
   const texts = contexts.filter(c => c.message.content).map(c => c.message.kind === 'group'
     ? `[${actorLabel(c.state.qqEvidence?.identity || { appId: process.env.QQBOT_APPID, scope: 'group', peerId: c.message.groupOpenid, senderId: c.message.senderId })}] ${c.message.content}` : c.message.content);
   first.message.content = texts.join('\n');
+  if(first.state.qqEvidence)first.state.qqEvidence.replyInput=first.message.content;
   first.message.attachments = contexts.flatMap(c => c.message.attachments || []);
   first.message.msgElements=contexts.flatMap(c=>c.message.msgElements||[]);
   const local=Symbol.for('qqbot.onebot.local-files');first.message[local]=contexts.flatMap(c=>c.message[local]||[]);

@@ -27,8 +27,8 @@ test('ambient reply reaches the send boundary with terminal full stops removed a
     const deadline=Date.now()+4000;
     while(Date.now()<deadline){const row=read('groups/registry.json',{}).rooms[key];if(row.sent===1||row.backoffUntil)break;await delay(20);}
     const row=read('groups/registry.json',{}).rooms[key];
-    assert.equal(models,1);assert.equal(memoryCalls,1);
-    assert.deepEqual(sent,['这个思路可以。先从简单的开始','慢慢完善就好'],row.status);
+    assert.equal(models,1);assert.equal(memoryCalls,0);
+    assert.deepEqual(sent,['这个思路可以。先从简单的开始。 慢慢完善就好'],row.status);
     assert.equal(row.sent,1);assert.equal(row.lastTimings.sent,true);
     assert.equal(read('groups/rooms/'+key+'.json',{}).lastAmbient.status,'accepted');
   }finally{
